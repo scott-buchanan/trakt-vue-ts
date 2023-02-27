@@ -1,0 +1,59 @@
+$primary: #14213d;
+$secondary: #fca311;
+$accent: #a7a7a7;
+
+$dark: #000;
+
+$positive: #21ba45;
+$negative: #c10015;
+$info: #31ccec;
+$warning: #f2c037;
+
+$opacity-back: 0.5;
+
+$yellow: #f3ce13;
+
+// $breakpoint-xs: 599px !default;
+// $breakpoint-sm: 1023px !default;
+// $breakpoint-md: 1439px !default;
+// $breakpoint-lg: 1919px !default;
+// $breakpoint-xl: 1920px !default;
+
+@mixin background-style {
+    border-radius: 5px;
+    background: rgba(0, 0, 0, $opacity-back);
+}
+
+@mixin darkText {
+    text-transform: uppercase;
+    color: $accent;
+    font-weight: 500;
+}
+
+@mixin text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@mixin heading-reset {
+    all: revert !important;
+    margin: 0 0 8px 0 !important;
+}
+
+// h1,
+// h2,
+// h3 {
+//     all: revert;
+//     margin: 0 0 $space-sm 0;
+// }
+
+// @mixin h1 {
+//     all: revert !important;
+//     margin: $space-sm 0 !important;
+// }
+
+// @mixin h2 {
+//     all: revert !important;
+//     margin: $space-sm 0 !important;
+// }
