@@ -3,10 +3,13 @@ import type { Ref } from 'vue'
 import dayjs from 'dayjs'
 import type { ShowDetails } from '~/api/combinedCall.types'
 import type Tmdb from '~/api/tmdb.types'
+
 // store
 import { useStore } from '~/store/index'
+
 // api
 import { getShowDetails } from '~/api/combinedCalls'
+
 // components
 import DetailsTemplate from '~/components/DetailsTemplate.vue'
 
@@ -58,13 +61,13 @@ const genreListString = computed(() => {
 async function getData() {
   store.updateLoading(false)
 
-  info.value = await getShowDetails(store.currentIds!.trakt ? store.currentIds!.trakt : route.params.show as string)
+  info.value = await getShowDetails(store.currentIds?.trakt ? store.currentIds.trakt : route.params.show as string)
   arrDetails.value = [
     { label: 'status', value: info.value.tmdb_data.status },
     { label: 'seasons', value: info.value.tmdb_data.number_of_seasons },
     { label: 'episodes', value: info.value.tmdb_data.number_of_episodes },
     { label: 'premiered', value: formattedDate(info.value.tmdb_data.first_air_date) },
-    { label: 'runtime', value: `${info.value.tmdb_data.episode_run_time[0]} minutes` },
+    { label: 'runtime', value: `${info.value.runtime} minutes` },
     { label: 'genres', value: genreListString },
     { label: 'country', value: info.value.tmdb_data.origin_country[0].toUpperCase() },
     { label: 'network', value: info.value.network },
@@ -72,20 +75,21 @@ async function getData() {
   ]
   seasons.value = [...info.value.tmdb_data.seasons]
   // set watched progress for each season and add delay (animation)
-  info.value.watched_progress.seasons?.forEach((season, index) => {
-    if (seasons.value[index]) {
-      const delay = season.number > 1 ? season.number * 200 + 500 : 500
-      seasons.value[index].watched_progress = 0
+  if (info.value.watched_progress) {
+    info.value.watched_progress.seasons?.forEach((season, index) => {
+      if (seasons.value[index]) {
+        const delay = season.number > 1 ? season.number * 200 + 500 : 500
+        seasons.value[index].watched_progress = 0
 
-      useTimeoutFn(() => {
-        seasons.value[index].watched_progress = season.completed / season.aired
-        seasons.value[
-          index
-        ].watched_percent = `${season.completed} out of ${season.aired} watched`
-      }, delay)
-    }
-  })
-
+        useTimeoutFn(() => {
+          seasons.value[index].watched_progress = season.completed / season.aired
+          seasons.value[
+            index
+          ].watched_percent = `${season.completed} out of ${season.aired} watched`
+        }, delay)
+      }
+    })
+  }
   store.updateLoading(true)
 }
 

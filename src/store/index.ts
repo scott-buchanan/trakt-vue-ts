@@ -10,7 +10,9 @@ export const useStore = defineStore('main', {
       show: [
         { label: 'Trending', val: 'trending', auth: false } as Filter,
         { label: 'Watch History', val: 'history', auth: true } as Filter,
+        { label: 'Anticipated', val: 'anticipated', auth: false } as Filter,
         { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
+        { label: 'Community Recommended', val: 'trakt_recommended', auth: false } as Filter,
       ],
       movie: [
         { label: 'Trending', val: 'trending', auth: false } as Filter,

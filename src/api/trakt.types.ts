@@ -93,6 +93,7 @@ export namespace Trakt {
     ids: Ids
     title: string
     year: number
+    runtime: number
   }
 
   export interface Movie {

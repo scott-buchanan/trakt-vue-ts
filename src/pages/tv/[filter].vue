@@ -1,26 +1,30 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import { useQuasar } from 'quasar'
+
 // api
-import { getRecommendationsFromMe, getTrending, getWatchedHistory } from '~/api/trakt'
+import { getAnticipated, getCommunityRecommended, getRecommendationsFromMe, getTrending, getWatchedHistory } from '~/api/trakt'
 import { getEpisodeInfoCard, getShowInfoCard } from '~/api/combinedCalls'
+
 // store
 import { useStore } from '~/store/index'
+
 // components
 import CardContainer from '~/components/CardContainer.vue'
 
-import type { Ratings } from '~/api/trakt.types'
+import type Trakt from '~/api/trakt.types'
 
 const props = defineProps<{ filter: string }>()
 const route = useRoute()
 const router = useRouter()
-
 const $q = useQuasar()
 const store = useStore()
+
+// data
 const data = ref({})
 const filter = ref(store.filter)
 const maxPages = ref(10)
-const myEpRatings: Ref<Ratings | null> = ref(null)
+const myEpRatings: Ref<Trakt.Ratings | null> = ref(null)
 const myShowRatings = ref(null)
 const page = ref(store.page)
 const tokens = ref(store.tokens)
@@ -52,7 +56,7 @@ onMounted(() => {
   loadData()
 
   if (route.query.page && typeof route.query.page === 'string')
-    page.value = parseInt(route.query.page, 10)
+    page.value = Number.parseInt(route.query.page, 10)
 })
 
 async function loadData() {
@@ -60,6 +64,7 @@ async function loadData() {
 
   // this makes it so the card container always has a full last line
   localStorage.setItem('item-limit', '18')
+
   if (store.filterType === 'show' && filter.value?.val === 'history') {
     // get Trakt data
     data.value = await getWatchedHistory('episodes', page.value)
@@ -77,6 +82,13 @@ async function loadData() {
   }
   else {
     switch (filter.value?.val) {
+      case 'anticipated':
+
+        data.value = await getAnticipated('shows', page.value)
+        break
+      case 'trakt_recommended':
+        data.value = await getCommunityRecommended('shows', page.value)
+        break
       case 'recommended':
         data.value = await getRecommendationsFromMe('shows', page.value)
         break
@@ -89,7 +101,7 @@ async function loadData() {
     }
 
     // get show ratings object from local storage
-    myShowRatings.value = JSON.parse(localStorage.getItem('trakt-vue-show-ratings'))
+    myShowRatings.value = JSON.parse(localStorage.getItem('trakt-vue-show-ratings')!)
     // get images and ratings
     const items = await fetchCardInfo('show', myShowRatings.value)
     if (filter.value.val === 'recommended')
@@ -102,7 +114,7 @@ async function loadData() {
   store.updateLoading(true)
 }
 
-async function fetchCardInfo(mType: string, ratingsObj: Ratings) {
+async function fetchCardInfo(mType: string, ratingsObj: Trakt.Ratings) {
   const items = []
   await Promise.all(
     data.value.items.map(async (item) => {

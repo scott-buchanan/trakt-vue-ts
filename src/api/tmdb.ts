@@ -1,4 +1,5 @@
 import axios from 'axios'
+import dayjs from 'dayjs'
 import { getMovieBackground, getTvBackground } from './fanart'
 import { getIdLookupActorTmdb, getIdLookupTmdb, getMovieSummary, getShowSummary } from './trakt'
 import type { Actor } from './tmdb.types'
@@ -7,7 +8,7 @@ import type { Episode, Movie, Show } from '~/api/trakt.types'
 import type Trakt from '~/api/trakt.types'
 import { MediaType } from '~/types/types'
 
-export async function getAppBackgroundImg(): Promise<{ id: number; title: string; backgroundUrl: string; type: string; posterUrl: string }> {
+export async function getAppBackgroundImg(): Promise<{ id: number; title: string; backgroundUrl: string; type: string; year: string; posterUrl: string }> {
   const response = await axios({
     method: 'GET',
     url: 'https://api.themoviedb.org/3/trending/all/day?api_key=89c6bd3331244e97eed61741fc798ab5',
@@ -17,7 +18,8 @@ export async function getAppBackgroundImg(): Promise<{ id: number; title: string
     id: response.data.results[rando].id,
     title: response.data.results[rando].title ? response.data.results[rando].title : response.data.results[rando].name,
     type: response.data.results[rando].media_type,
-    posterUrl: `https://image.tmdb.org/t/p/w200${response.data.results[rando].poster_path}`,
+    year: dayjs(response.data.results[rando].release_date).format('YYYY'),
+    posterUrl: `https://image.tmdb.org/t/p/w300${response.data.results[rando].poster_path}`,
     backgroundUrl: `https://image.tmdb.org/t/p/original${response.data.results[rando].backdrop_path}`,
   }
 }

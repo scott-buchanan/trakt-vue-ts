@@ -16,8 +16,9 @@ const route = useRoute()
 const store = useStore()
 const defaultBack = defaultImage
 const drawer = ref(true)
-interface backgroundInfoType { backgroundUrl: string; posterUrl: string; ids: Trakt.Ids | null; id: number; title: string; type: string }
+interface backgroundInfoType { backgroundUrl: string; posterUrl: string; ids: Trakt.Ids | null; id: number; title: string; type: string; year: string }
 const backgroundInfo: Ref<backgroundInfoType> = ref({} as backgroundInfoType)
+const transparentBack = ref(false)
 
 // computed
 const backgroundImgTo = computed(() => {
@@ -44,6 +45,9 @@ function handleMenuClick(item: Filter, filterType: string) {
     path: filterType === 'movie' ? `/movie/${item.val}` : `/tv/${item.val}`,
   })
 }
+function goHome() {
+  router.push('/')
+}
 
 // lifecycle hooks
 onMounted(async () => {
@@ -68,7 +72,7 @@ onMounted(async () => {
       :breakpoint="1"
       :overlay="false"
       class="app-drawer q-pa-sm"
-      :width="200"
+      :width="250"
       persistent
       dark
     >
@@ -82,14 +86,15 @@ onMounted(async () => {
           style="height: 150px"
           referrerpolicy="no-referrer"
         >
-          <div v-if="store.myInfo" class="absolute-bottom bg-transparent">
-            <q-avatar size="60px" class="q-mb-sm">
+          <div v-if="store.myInfo">
+            <q-item clickable manual-focus class="btn-avatar p-0" @click="goHome">
               <q-img
+                class="avatar-img"
                 :src="store.myInfo?.user.images.avatar.full"
                 :alt="store.myInfo?.user.name"
                 referrerpolicy="no-referrer"
               />
-            </q-avatar>
+            </q-item>
             <div>
               <div class="text-weight-bold">
                 {{ store.myInfo?.user.name }}
@@ -142,14 +147,14 @@ onMounted(async () => {
 
           <q-space />
 
-          <q-item-label header class="pb-2">
-            Background
-          </q-item-label>
           <q-item
             dense
+            manual-focus
             :clickable="backgroundImgTo !== null"
             :to="backgroundImgTo"
-            class="pb-3"
+            class="background-poster pb-3 full-width"
+            @mouseover="transparentBack = true"
+            @mouseleave="transparentBack = false"
           >
             <q-item-section dark :class="{ 'background-link': backgroundInfo.posterUrl }">
               <q-img
@@ -157,9 +162,11 @@ onMounted(async () => {
                 :src="backgroundInfo.posterUrl"
                 :alt="backgroundInfo.title"
                 referrerpolicy="no-referrer"
+                :ratio="9 / 16"
               />
               <span v-else>{{ backgroundInfo.title }}</span>
             </q-item-section>
+            <q-tooltip>{{ backgroundInfo.title }} ({{ backgroundInfo.year }})</q-tooltip>
           </q-item>
         </q-list>
 
@@ -182,8 +189,7 @@ onMounted(async () => {
         </div>
       </div>
     </q-drawer>
-
-    <q-page-container class="full-height" h90>
+    <q-page-container class="page-container full-height" :class="[{ 'background-animate': backgroundImgTo }, { 'blur opacity-30': transparentBack && backgroundImgTo }]" h90>
       <div v-if="!store.loaded" class="loader q-pa-sm">
         <div class="full-height full-width">
           <LoaderFingers />
@@ -200,7 +206,7 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .background-link {
-  height: 250px;
+  width: 100%;
 }
 </style>
 
@@ -299,6 +305,22 @@ onMounted(async () => {
       border-radius: 5px;
       overflow: hidden;
     }
+    .btn-avatar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200px;
+    }
+  }
+  .page-container {
+    &.background-animate {
+      transition-property: opacity, filter;
+      transition-duration: 0.5s;
+      transition-timing-function: ease-in-out;
+      &.blur{
+        filter: blur(10px);
+      }
+  }
   }
   .loader {
     height: 100%;
@@ -338,4 +360,3 @@ onMounted(async () => {
     min-height: 0;
   }
   </style>
-

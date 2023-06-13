@@ -157,7 +157,9 @@ function goToLogin() {
         = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&redirect_uri=http://localhost:8080'
 }
 function logout() {
+  console.log('logout')
   localStorage.clear()
+  store.updateMyInfo(null)
   router.push('/')
 }
 function backgroundGradient() {

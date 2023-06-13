@@ -23,6 +23,8 @@ export interface CardInfo {
   show?: Trakt.Show
   movie?: Trakt.Movie
   episode?: Trakt.Episode
+  list_count?: number
+  user_count?: number
 }
 
 export interface ShowDetails {

@@ -1,4 +1,3 @@
-import type { MyInfo } from '~/types/localStorage'
 import type Trakt from '~/api/trakt.types'
 
 export interface Filter {
@@ -14,7 +13,7 @@ export interface StateObj {
   filterType: string | null
   loaded: boolean
   tokens: object | null
-  myInfo: MyInfo | null
+  myInfo: Trakt.MyInfo | null
   menuVisible: boolean
   currentIds: Trakt.Ids | null
 }

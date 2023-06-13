@@ -120,6 +120,7 @@ router.beforeEach(async (to, from, next) => {
   checkToken()
 
   if (urlParams.get('code')) {
+    console.log('url contains CODE')
     // if no tokens were present and we fell into the else, we get redirected
     // with query: code and put tokens into local storage
     const authTokens = await getToken(urlParams.get('code')!)
