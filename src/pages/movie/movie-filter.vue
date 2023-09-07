@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import { useQuasar } from 'quasar'
+
 // api
 import { getRecommendationsFromMe, getTrending, getWatchedHistory } from '~/api/trakt'
 import { getMovieInfoCard } from '~/api/combinedCalls'
+
 // store
 import { useStore } from '~/store/index'
+
 // components
 import CardContainer from '~/components/CardContainer.vue'
+
 // types
 import type Trakt from '~/api/trakt.types'
 
-const props = defineProps<{ filter: string }>()
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
@@ -42,7 +45,7 @@ store.$subscribe((mutated, state) => {
 onMounted(() => {
   store.updateFilterType('movie')
 
-  const foundFilter = store.filterOptions.show.find(filter => filter.val === props.filter)
+  const foundFilter = store.filterOptions.show.find(filter => filter.val === route.params?.filter)
   if (foundFilter)
     store.updateFilter(foundFilter)
 

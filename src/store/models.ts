@@ -1,4 +1,5 @@
 import type Trakt from '~/api/trakt.types'
+import type { EpisodeDetails, MovieDetails, SeasonDetails, ShowDetails } from '~/api/combinedCall.types'
 
 export interface Filter {
   label: string | null
@@ -16,4 +17,12 @@ export interface StateObj {
   myInfo: Trakt.MyInfo | null
   menuVisible: boolean
   currentIds: Trakt.Ids | null
+  pageData: PageData
+}
+
+export interface PageData {
+  episodes: EpisodeDetails
+  shows: ShowDetails
+  seasons: SeasonDetails
+  movies: MovieDetails
 }

@@ -4,24 +4,28 @@ import { YoutubeIframe } from '@vue-youtube/component'
 import axios from 'axios'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
+
 // store
 import { useStore } from '~/store/index'
+
 // components
 import Actors from '~/components/Actors.vue'
 import Rating from '~/components/Rating.vue'
 import Reviews from '~/components/Reviews.vue'
+
 // assets
 import trailerErrorBack from '~/assets/trailer-error.jpg'
 import imdb from '~/assets/imdb_tall.png'
 import trakt from '~/assets/trakt-icon-red.svg'
 import tmdb from '~/assets/tmdb_tall.svg'
+
 // types
 import type Trakt from '~/api/trakt.types'
 import type { TechnicalDetails } from '~/types/types'
-import type { EpisodeDetails, SeasonDetails, ShowDetails } from '~/api/combinedCall.types'
+import type { EpisodeDetails, MovieDetails, SeasonDetails, ShowDetails } from '~/api/combinedCall.types'
 
 const props = defineProps<{
-  info: ShowDetails | EpisodeDetails | SeasonDetails
+  info: ShowDetails | EpisodeDetails | SeasonDetails | MovieDetails
   title: string
   subTitle?: string | number
   poster: string
@@ -35,7 +39,7 @@ const $q = useQuasar()
 const store = useStore()
 const user: Ref<Trakt.User> = ref(JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user)
 const watchedProgress: Ref<number> = ref(0)
-const trailerUrl: Ref<string> = ref('')
+const trailerUrl: Ref<string> = ref(null)
 const showTrailer: Ref<boolean> = ref(false)
 const trailerVisible: Ref<boolean> = ref(false)
 const trailerHasError: Ref<boolean> = ref(false)
@@ -43,8 +47,36 @@ const seeMoreDetails: Ref<boolean> = ref(false)
 
 // computed
 const links = computed(() => {
-  const linkSeason = props.info.type === 'season'
-  const trakt = props.info.type === 'episode' ? 'trakt' : 'slug'
+  const linkSeason = 'season' in props.info
+  const traktType = props.info.type === 'episode' ? 'trakt' : 'slug'
+  const tmdb = () => {
+    let strTmdb = `https://themoviedb.org/${props.info.type === 'movie' ? props.info.type : 'tv'}/${props.linkIds.tmdb}`
+    if ('season' in props.info && 'number' in props.info) {
+      // episode
+      strTmdb += props.info.season ? `/season/${props.info.season}` : ''
+      strTmdb += props.info.type === 'episode' ? `/episode/${props.info.number}` : ''
+    }
+    else if ('number' in props.info) {
+      // season
+      strTmdb += props.info.number ? `/season/${props.info.number}` : ''
+    }
+    return strTmdb
+  }
+  const trakt = () => {
+    let strTrakt = `https://trakt.tv/${props.info.type === 'movie' ? props.info.type : 'show'}s/${
+            props.linkIds.slug
+          }`
+    if ('season' in props.info && 'number' in props.info) {
+      // episode
+      strTrakt += `/seasons/${props.info.season}`
+      strTrakt += `/episodes/${props.info.number}`
+    }
+    else if ('number' in props.info) {
+      // season
+      strTrakt += `/seasons/${props.info.number}`
+    }
+    return strTrakt
+  }
   return {
     imdb: {
       label: 'IMDb',
@@ -54,19 +86,11 @@ const links = computed(() => {
     },
     tmdb: {
       label: 'TMDb',
-      value: `https://themoviedb.org/${props.info.type === 'movie' ? props.info.type : 'tv'}/${
-            props.linkIds.tmdb
-          }${props.info.season ? `/season/${props.info.season}` : ''}${
-            props.info.type === 'episode' ? `/episode/${props.info.number}` : ''
-          }`,
+      value: tmdb(),
     },
-    [trakt]: {
+    [traktType]: {
       label: 'Trakt',
-      value: `https://trakt.tv/${props.info.type === 'movie' ? props.info.type : 'show'}s/${
-            props.linkIds.slug
-          }${props.info.season ? `/seasons/${props.info.season}` : ''}${
-            props.info.type === 'episode' ? `/episodes/${props.info.number}` : ''
-          }`,
+      value: trakt(),
     },
   }
 })
@@ -79,6 +103,12 @@ const detailsBackground = computed(() => {
 })
 const technicalDetailsFiltered = computed(() => props.technicalDetails.filter(item => item.value))
 const isTrailerVisible = computed(() => trailerVisible.value)
+const isReleased = computed(() => {
+  if (store.filterType === 'movie')
+    return props.info.tmdb_data.status.toLowerCase() === 'released'
+  else
+    return new Date(props.info.tmdb_data.first_air_date) < new Date()
+})
 
 // methods
 function formattedDateTime(wDate: string) {
@@ -94,7 +124,7 @@ function trailerReady(event: Event) {
   }, 500)
 }
 async function trailerError() {
-  if (trailerUrl.value === props.info.trailer.split('v=')[1]) {
+  if (trailerUrl.value === props.info.tmdb_data.videos[0].key) {
     const newTrailer = await axios.get(
           `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${process.env.YOUTUBE_API_KEY}`,
     )
@@ -116,7 +146,10 @@ onMounted(() => {
   store.updateMenuVisible(false)
   store.updateFilter({ label: null, value: null })
 
-  trailerUrl.value = props.info.trailer?.split('v=')[1]
+  console.log(props.info)
+  if (props.type !== 'episode')
+    trailerUrl.value = props.info.tmdb_data.videos[0].key
+
   // for animation purposes
   if (props.info?.watched_progress) {
     useTimeoutFn(() => {
@@ -129,16 +162,15 @@ onMounted(() => {
 
 <template>
   <div class="full-height q-pl-sm">
-    <div class="details-container q-pt-sm q-pr-sm">
-      <q-scroll-area
+    <div class="details-container q-pt-sm q-pr-sm q-pb-sm">
+      <div
         class="background text-white"
         :style="{
           backgroundImage: detailsBackground,
         }"
-        :thumb-style="{ opacity: '0.5' }"
       >
-        <div class="flex no-wrap q-pa-md">
-          <div v-if="$q.screen.gt.md" class="poster q-pr-md">
+        <div class="flex no-wrap full-height relative">
+          <div v-if="$q.screen.gt.md" class="poster q-py-md q-pl-md">
             <router-link
               v-if="props.type === 'episode'"
               :to="{
@@ -149,13 +181,13 @@ onMounted(() => {
             </router-link>
             <q-img v-else class="poster-image" :src="props.poster" alt="" />
           </div>
-          <div class="full-width">
+          <q-scroll-area class="scroll-area full-width full-height q-pa-md" :thumb-style="{ opacity: '0.5' }">
             <div class="flex" :class="[{ 'no-wrap': $q.screen.gt.xs }]">
               <div v-if="$q.screen.gt.md === false" class="float-left q-pr-md q-pb-md">
                 <router-link
                   v-if="props.type === 'episode'"
                   :to="{
-                    path: `show/${info.show.ids.slug}/season/${props.info.season}`,
+                    path: `/tv/show/${info.show.ids.slug}/season/${props.info.season}`,
                   }"
                 >
                   <q-img class="poster-small" width="20vw" :ratio="1 / 1.5" :src="props.poster" alt="" />
@@ -270,7 +302,7 @@ onMounted(() => {
                     </div>
                   </div>
                   <q-space />
-                  <div v-if="info.watched_progress?.type === 'show'">
+                  <div v-if="info.watched_progress?.aired > 0 && info.watched_progress?.type === 'show'">
                     <q-knob
                       v-model="watchedProgress"
                       readonly
@@ -294,7 +326,7 @@ onMounted(() => {
                 </div>
                 <div class="flex">
                   <!-- RATINGS -->
-                  <div class="ratings">
+                  <div v-if="isReleased" class="ratings">
                     <div v-if="info.imdb_rating">
                       <img :src="imdb" alt="IMDb">
                       <div>{{ info.imdb_rating }}</div>
@@ -309,10 +341,10 @@ onMounted(() => {
                     </div>
                   </div>
                   <div class="flex q-mb-lg">
-                    <div v-if="user" class="q-mr-sm">
+                    <div v-if="isReleased && user" class="q-mr-sm">
                       <Rating :item="info" :type="props.type" :rating="info.my_rating" />
                     </div>
-                    <div v-if="info.trailer">
+                    <div v-if="trailerUrl">
                       <q-btn
                         icon="o_slideshow"
                         label="Trailer"
@@ -341,11 +373,11 @@ onMounted(() => {
                 :actors="info.actors"
                 horizontal
               />
-              <Reviews class="q-mt-lg" :reviews="info.reviews" :review-count="info.comment_count" />
+              <Reviews class="q-mt-lg" :reviews="info.reviews.comments" :review-count="info.reviews.total" />
             </div>
-          </div>
+          </q-scroll-area>
         </div>
-      </q-scroll-area>
+      </div>
       <Actors v-if="$q.screen.gt.sm && info.actors?.length > 0" :actors="info.actors" />
     </div>
   </div>
@@ -401,7 +433,7 @@ button {
     width: 100%;
     width: 250px;
     height: 97px;
-    // filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))
   }
 }
 .break {
@@ -429,6 +461,7 @@ button {
   width: 40%;
   min-width: 200px;
   max-width: 600px;
+  position: static;
   & .poster-image {
     border-radius: 5px;
     overflow: hidden;

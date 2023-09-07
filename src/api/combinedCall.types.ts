@@ -34,7 +34,6 @@ export interface ShowDetails {
   backdrop: backdrop
   certification: string
   clear_logo: string
-  comment_count: number
   country: string
   first_aired: string
   ids: Trakt.Ids
@@ -55,6 +54,35 @@ export interface ShowDetails {
   type: MediaType
   watched_progress: Trakt.WatchedProgress
   year: string
+}
+
+export interface MovieDetails {
+  actors: Tmdb.Actor[]
+  backdrop: backdrop
+  certification: string
+  clear_logo: string
+  country: string
+  released: string
+  ids: Trakt.Ids
+  imdb_rating: string
+  language: string
+  my_rating: number
+  network: string
+  overview: string
+  reviews: Trakt.Comment[]
+  runtime: number
+  show: Trakt.Show
+  show_poster: string
+  title: string
+  tagline: string
+  tmdb_data: Tmdb.MovieDetails
+  tmdb_rating: string
+  trailer: string
+  trakt_rating: string
+  type: MediaType
+  watched_progress: Trakt.WatchedProgress
+  year: string
+  poster: string
 }
 
 export interface EpisodeDetails {

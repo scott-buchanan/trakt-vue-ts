@@ -22,7 +22,7 @@ const transparentBack = ref(false)
 
 // computed
 const backgroundImgTo = computed(() => {
-  const to = `/${backgroundInfo.value.type === 'movie' ? 'movies' : 'tv/show'}/${backgroundInfo.value.ids?.slug}`
+  const to = `/${backgroundInfo.value.type === 'movie' ? 'movie' : 'tv/show'}/${backgroundInfo.value.ids?.slug}`
   return route.path === to ? null : to
 })
 const filterOptions = computed(() => {
@@ -86,15 +86,7 @@ onMounted(async () => {
           style="height: 150px"
           referrerpolicy="no-referrer"
         >
-          <div v-if="store.myInfo">
-            <q-item clickable manual-focus class="btn-avatar p-0" @click="goHome">
-              <q-img
-                class="avatar-img"
-                :src="store.myInfo?.user.images.avatar.full"
-                :alt="store.myInfo?.user.name"
-                referrerpolicy="no-referrer"
-              />
-            </q-item>
+          <div v-if="store.myInfo" class="absolute-bottom">
             <div>
               <div class="text-weight-bold">
                 {{ store.myInfo?.user.name }}

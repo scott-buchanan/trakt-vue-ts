@@ -54,9 +54,14 @@ function clickDetails(item: CardInfo) {
     })
   }
   else {
-    router.push({
-      path: `${store.filterType === 'movie' ? 'movie' : 'show'}/${ids.slug}`,
-    })
+    if (store.filterType === 'movie') {
+      router.push({ name: 'movie-details', params: { movie: ids.slug } })
+    }
+    else {
+      router.push({
+        path: `show/${ids.slug}`,
+      })
+    }
   }
 }
 

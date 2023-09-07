@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Filter, MyInfo, StateObj } from './models'
+import type { Filter, MyInfo, PageData, StateObj } from './models'
 import type Trakt from '~/api/trakt.types'
 
 export const useStore = defineStore('main', {
@@ -26,6 +26,15 @@ export const useStore = defineStore('main', {
     myInfo: null,
     menuVisible: false,
     currentIds: null,
+    pageData: {
+      episodes: {},
+      shows: {},
+      seasons: {},
+      movies: {},
+    },
+    genres: null,
+    imageUrls: null,
+    searchPage: null,
   }),
   actions: {
     updatePage(page: number) {
@@ -51,6 +60,22 @@ export const useStore = defineStore('main', {
     },
     updateCurrentIds(value: Trakt.Ids) {
       this.currentIds = value
+    },
+    updatePageData(value: PageData, mType: string) {
+      switch (mType) {
+        case 'episode':
+          this.pageData.episodes = { ...this.pageData.episodes, ...value }
+          break
+      }
+    },
+    updateGenres(value: { tv: { id: number; name: string }[]; movie: { id: number; name: string }[] }) {
+      this.genres = value
+    },
+    updateImageUrls(value: any[]) {
+      this.imageUrls = value
+    },
+    updateSearchPage(value: any) {
+      this.searchPage = value
     },
   },
 })

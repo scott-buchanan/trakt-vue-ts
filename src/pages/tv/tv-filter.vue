@@ -44,11 +44,12 @@ store.$subscribe((mutated, state) => {
 
 onMounted(() => {
   store.updateFilterType('show')
-  // if (route.params?.filter) {
-  //   store.updateFilter(
-  //     store.filterOptions.show.find(filter => filter.val === route.params.filter),
-  //   )
-  // }
+
+  if (route.params?.filter) {
+    store.updateFilter(
+      store.filterOptions.show.find(filter => filter.val === route.params.filter),
+    )
+  }
   const foundFilter = store.filterOptions.show.find(filter => filter.val === props.filter)
   if (foundFilter)
     store.updateFilter(foundFilter)
@@ -129,7 +130,6 @@ async function fetchCardInfo(mType: string, ratingsObj: Trakt.Ratings) {
 
         return rating.episode.ids.trakt === item.episode.ids.trakt
       })
-      // console.log({ ...item, ...cardInfo, ...myRating })
       items.push({ ...item, ...cardInfo, ...myRating })
     }),
   )

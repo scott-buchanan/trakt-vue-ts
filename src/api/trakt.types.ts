@@ -61,6 +61,7 @@ export namespace Trakt {
     user_stats: {
       rating: number
     }
+    user_rating: number
     user: {
       username: string
       name: string

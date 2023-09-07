@@ -54,7 +54,6 @@ export async function getBanner(showId) {
       method: 'GET',
       url: `https://webservice.fanart.tv/v3/tv/${showId}?api_key=6c7b80e914b8b4a7f630895236272ee0`,
     })
-    console.log(response.data)
     return response.data.tvbanner[0].url
   }
   catch (error) {

@@ -36,6 +36,27 @@ namespace Tmdb {
     episode_run_time: number[]
   }
 
+  export interface MovieDetails {
+    backdrop_path: string
+    belongs_to_collection: Collection
+    budget: number
+    first_air_date: string
+    genres: Genre[]
+    production_companies: ProductionCompany[]
+    number_of_episodes: number
+    number_of_seasons: number
+    poster_path: string
+    release_date: string
+    spoken_languages: SpokenLanguage[]
+    production_countries: string[]
+    overview: string
+    status: string
+    tagline: string
+    runtime: number
+    revenue: number
+    videos:
+  }
+
   export interface SeasonDetails {
     id: number
     air_date: string
@@ -67,6 +88,22 @@ namespace Tmdb {
     english_name: string
     iso_639_1: string
     name: string
+  }
+
+  export interface ProductionCompany {
+    name: string
+  }
+
+  export interface Collection {
+    id: number
+    name: string
+    poster_path: string
+  }
+
+  export interface Video {
+    iso_639_1: string
+    key: string
+    type: string
   }
 }
 export default Tmdb

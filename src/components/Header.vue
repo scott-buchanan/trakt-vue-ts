@@ -7,8 +7,10 @@ import type { autocompleteResult } from '~/types/header'
 import fallbackPoster from '~/assets/fallback-tv.jpg'
 import traktIcon from '~/assets/trakt-icon-red.svg'
 import defaultImage from '~/assets/drawer-image-1.jpg'
+
 // store
 import { useStore } from '~/store/index'
+
 // api
 import { getSearchResults } from '~/api/tmdb'
 
@@ -18,9 +20,9 @@ const router = useRouter()
 const store = useStore()
 const autocompleteApiResults: Ref<Array<autocompleteResult>> = ref([])
 const searchHasFocus = ref(false)
-const searchTypedValue: Ref<string> = ref('')
+const searchTypedValue: Ref<string> | Ref<null> | Ref<number> = ref('')
 const menuVisible = ref(store.menuVisible)
-const { ready: autocompleteReady, start: autocompleteStart, stop: autocompleteStop } = useTimeout(300, { controls: true })
+const { ready: autocompleteReady, start: autocompleteStart, stop: autocompleteStop } = useTimeout(0, { controls: true })
 
 store.$subscribe((mutated, state) => {
   menuVisible.value = state.menuVisible
@@ -76,7 +78,7 @@ const backgroundStyle = computed(() => {
 // watch
 watch(autocompleteReady, async () => {
   if (autocompleteReady.value === true)
-    fireSearch()
+    await fireSearch()
 })
 
 // methods
@@ -103,28 +105,28 @@ async function preSearchCheck(value: string | number | null) {
   }
 }
 async function fireSearch() {
-  const results = await getSearchResults(searchTypedValue.value)
   store.updateMenuVisible(true)
-  autocompleteApiResults.value = []
-  results.forEach(async (result) => {
-    autocompleteApiResults.value.push({
+  const results = await getSearchResults(searchTypedValue.value)
+  autocompleteApiResults.value = results.map((result) => {
+    const genres = store.genres[result.media_type].filter(genre => result.genre_ids.includes(genre.id)).map(g => g.name)
+    return {
       ids: result.ids,
       label: result.media_type === 'movie' ? result.title : result.name,
       value: result.id,
       type: result.media_type,
       thumbnail: result.poster_path
-        ? `https://image.tmdb.org/t/p/w200/${result.poster_path}`
+        ? `${store.imageUrls.images.base_url}${store.imageUrls.images.poster_sizes[0]}${result.poster_path}`
         : fallbackPoster,
       year: dayjs(
         result.media_type === 'movie' ? result.release_date : result.first_air_date,
       ).format('YYYY'),
-      genres: result.genres,
-    })
-  })
+      genres,
+    }
+  }).slice(0, 10)
 }
 async function goToDetails(item: autocompleteResult) {
   const mType = item.type === 'movie' ? 'movie' : 'show'
-  const urlTitle = item.ids.slug
+  const urlTitle = item.ids.ids.slug
   const params = {
     [mType]: urlTitle,
   }
@@ -135,15 +137,27 @@ async function goToDetails(item: autocompleteResult) {
   if (mType === 'show' && item.episode) {
     params.season = item.episode.season
     params.episode = item.episode.number
+    router.push({
+      path: `/show/${urlTitle}/season/${params.season}/episode/${params.episode}`,
+      params,
+    })
   }
-  router.push({
-    name: `${mType}-details`,
-    params,
-  })
+  else if (mType === 'show') {
+    router.push({
+      path: `/show/${urlTitle}`,
+      params,
+    })
+  }
+  else {
+    router.push({
+      path: `/movie/${urlTitle}`,
+      params,
+    })
+  }
 }
-function goSearch(event: Event) {
-  if (searchTypedValue.value.length > 0) {
-    if ((event as KeyboardEvent).key?.toLowerCase() === 'enter' || event.type === 'click') {
+function goSearch(event: Event | null = null) {
+  if (searchTypedValue.value?.length > 0) {
+    if (!event || (event as KeyboardEvent).key?.toLowerCase() === 'enter' || event.type === 'click') {
       store.updateMenuVisible(false)
       const searchTerm = searchTypedValue.value
       searchTypedValue.value = ''
@@ -157,7 +171,6 @@ function goToLogin() {
         = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&redirect_uri=http://localhost:8080'
 }
 function logout() {
-  console.log('logout')
   localStorage.clear()
   store.updateMyInfo(null)
   router.push('/')
@@ -212,8 +225,7 @@ function backgroundGradient() {
         persistent
         no-refocus
         class="autocomplete-menu"
-        transition-show="jump-up"
-        transition-hide="jump-down"
+        transition-duration="80"
       >
         <q-list>
           <q-item
@@ -256,6 +268,14 @@ function backgroundGradient() {
               </div>
             </q-item-section>
           </q-item>
+          <q-item
+            v-close-popup
+            class="autocomplete-item"
+            clickable
+            @click="goSearch()"
+          >
+            See all results for "{{ searchTypedValue }}"
+          </q-item>
         </q-list>
       </q-menu>
       <q-select
@@ -283,10 +303,9 @@ function backgroundGradient() {
       </q-select>
       <q-btn-dropdown v-if="store.myInfo" flat no-caps dense :ripple="false" class="col-auto">
         <template #label>
-          <!-- <q-avatar size="md">
-            <img :src="store.myInfo?.user.images.avatar.full" alt="" referrerpolicy="no-referrer" />
-          </q-avatar> -->
-          <span class="q-ml-sm">{{ store.myInfo.user.name }}</span>
+          <q-avatar size="md">
+            <img :src="store.myInfo?.user.images.avatar.full" :alt="store.myInfo?.user.name" referrerpolicy="no-referrer">
+          </q-avatar>
         </template>
         <q-list class="bg-grey-10">
           <q-item v-close-popup clickable @click="logout">

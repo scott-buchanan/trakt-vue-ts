@@ -32,6 +32,8 @@ import type Trakt from '~/api/trakt.types'
 import { MediaType } from '~/types/types'
 import type { CardInfo, EpisodeDetails, SeasonDetails, ShowDetails } from '~/api/combinedCall.types'
 
+import { useStore } from '~/store/index'
+
 /**
  * Gets the info needed to display episode info in the CardContainer component.
  * @function
@@ -112,8 +114,12 @@ export async function getMovieInfoCard(movie: Trakt.Movie) {
 export async function getEpisodeDetails(traktId: number | string, season: string, episode: string) {
   const res: EpisodeDetails = {} as EpisodeDetails
   const summary = await getEpisodeSummary(traktId, season, episode)
-  const { show } = await getIdLookupTrakt(summary.ids.trakt)
+  const store = useStore()
 
+  if (store.pageData.episodes[summary.ids.trakt])
+    return store.pageData.episodes[summary.ids.trakt]
+
+  const { show } = await getIdLookupTrakt(summary.ids.trakt)
   summary.type = MediaType.episode
   summary.slug = show.ids.slug
 
@@ -123,7 +129,7 @@ export async function getEpisodeDetails(traktId: number | string, season: string
     getShowClearLogo(show.ids.tvdb),
     getImdbRating(summary.ids.imdb),
     getEpisodeRating(show.ids.trakt, summary.season, summary.number),
-    getComments(summary),
+    getComments(summary, 'episode'),
     tmdbEpisodeActors(show, summary),
     tmdbEpisodeDetails(show, summary),
     getShowWatchedProgress(show.ids.trakt),
@@ -175,6 +181,8 @@ export async function getEpisodeDetails(traktId: number | string, season: string
       res.my_rating = myRating
   }
 
+  console.log({ [summary.ids.trakt]: { ...{ show }, ...summary, ...res } })
+  store.updatePageData({ [summary.ids.trakt]: { ...{ show }, ...summary, ...res } }, 'episode')
   return { ...{ show }, ...summary, ...res }
 }
 
@@ -231,7 +239,7 @@ export async function getShowDetails(traktId: number | string): Promise<ShowDeta
     getImdbRating(summary.ids.imdb),
     getShowRating(summary.ids.trakt),
     tmdbShowDetails(summary),
-    getComments(summary),
+    getComments(summary, 'show'),
     tmdbActors(summary),
     getShowWatchedProgress(summary.ids.trakt),
   ]).then((results) => {
@@ -306,7 +314,6 @@ export async function getMovieDetails(slug) {
     const { ratings } = JSON.parse(localStorage.getItem('trakt-vue-movie-ratings'))
     res.my_rating = ratings.find(rating => rating.movie.ids.trakt === summary.ids.trakt)?.rating
   }
-
   return { ...summary, ...res }
 }
 
@@ -317,11 +324,11 @@ export async function getMovieCollection(collectionId) {
 
   await Promise.all(
     collection.parts.map(async (item) => {
-      const ids = await getIdLookupTmdb(item.id, 'movie')
+      const trakt = await getIdLookupTmdb(item.id, 'movie')
       parts.push({
         ...item,
         ...{
-          slug: ids.slug,
+          slug: trakt.ids?.slug,
           poster_path: `https://image.tmdb.org/t/p/w200${item.poster_path}`,
           watched_progress: watched?.find(
             watchedItems => watchedItems.movie.ids.tmdb === item.id,
@@ -332,6 +339,5 @@ export async function getMovieCollection(collectionId) {
   )
 
   collection.parts = parts.sort((a, b) => new Date(a.release_date) - new Date(b.release_date))
-
   return collection
 }

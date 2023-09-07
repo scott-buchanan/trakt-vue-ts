@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import routes from 'virtual:generated-pages'
+import routes from './routes'
 import { useStore } from '~/store/index'
 import {
   getMyEpisodeRatings,
@@ -14,6 +14,7 @@ import {
 } from '~/api/trakt'
 
 import type Trakt from '~/api/trakt.types'
+import { getGenres, getImageUrls } from '~/api/tmdb'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,18 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  console.log(routes)
+  if (to.name === 'movie-filter') {
+    switch (to.params.filter) {
+      case 'trending':
+      case 'history':
+      case 'recommended':
+        next()
+        break
+      default:
+        next({ name: 'movie-details', params: { movie: to.params.filter } })
+    }
+  }
   const store = useStore()
   const urlParams = new URLSearchParams(window.location.search)
 
@@ -35,6 +48,14 @@ router.beforeEach(async (to, from, next) => {
     return
   }
   // ------------------
+
+  // get tmdb genres and store in state
+  if (!store.genres)
+    store.updateGenres(await getGenres())
+
+  // get tmdb image urls and store in state
+  if (!store.imageUrls)
+    store.updateImageUrls(await getImageUrls())
 
   const checkToken = async () => {
     if (localStorage.getItem('trakt-vue-token')) {
@@ -120,7 +141,6 @@ router.beforeEach(async (to, from, next) => {
   checkToken()
 
   if (urlParams.get('code')) {
-    console.log('url contains CODE')
     // if no tokens were present and we fell into the else, we get redirected
     // with query: code and put tokens into local storage
     const authTokens = await getToken(urlParams.get('code')!)

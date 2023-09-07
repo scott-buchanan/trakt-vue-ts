@@ -92,11 +92,14 @@ async function getData() {
   }
   store.updateLoading(true)
 }
-
 function formattedDate(wDate: string) {
   return dayjs(wDate).format('MMM DD, YYYY')
 }
+function watchedProgress(index: number) {
+  return seasons.value[index]?.watched_progress ? seasons.value[index]?.watched_progress : 0
+}
 
+// lifecycle methods
 onMounted(async () => {
   store.updateLoading(false)
   store.updateFilterType('show')
@@ -137,7 +140,7 @@ onMounted(async () => {
                   <q-knob
                     readonly
                     :max="1"
-                    :model-value="seasons[index]?.watched_progress"
+                    :model-value="watchedProgress(index)"
                     show-value
                     size="30px"
                     :thickness="0.2"
@@ -145,7 +148,7 @@ onMounted(async () => {
                     track-color="grey-9"
                     class="text-white"
                   >
-                    <q-icon name="o_check_circle_outline" size="xs" color="positive" />
+                    <q-icon v-if="watchedProgress(index) === 1" name="o_check_circle_outline" size="xs" color="positive" />
                   </q-knob>
                   <q-tooltip>
                     {{ seasons[index]?.watched_percent }}

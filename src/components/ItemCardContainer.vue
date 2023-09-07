@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 .card-container {
   display: grid;
-  grid-gap: map.get($space-md, x);
+  grid-gap: map.get($space-sm, x);
   grid-template-columns: repeat(1, 1fr);
   &.short-row {
     @media only screen and (min-width: $breakpoint-md) {

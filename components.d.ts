@@ -19,6 +19,7 @@ declare module 'vue' {
     ItemCard: typeof import('./src/components/ItemCard.vue')['default']
     ItemCardContainer: typeof import('./src/components/ItemCardContainer.vue')['default']
     LoaderFingers: typeof import('./src/components/LoaderFingers.vue')['default']
+    MovieCollection: typeof import('./src/components/MovieCollection.vue')['default']
     Rating: typeof import('./src/components/Rating.vue')['default']
     ReviewCardDetailsDialog: typeof import('./src/components/ReviewCardDetailsDialog.vue')['default']
     Reviews: typeof import('./src/components/Reviews.vue')['default']

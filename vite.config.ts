@@ -3,7 +3,6 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
-import Pages from 'vite-plugin-pages'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Unocss from 'unocss/vite'
@@ -26,13 +25,13 @@ export default defineConfig({
 
     // https://github.com/hannoeru/vite-plugin-pages
     // Pages(),
-    Pages({
-      dirs: [
-        { dir: 'src/pages', baseRoute: '' },
-        { dir: 'src/pages/tv/show/season', baseRoute: 'tv/show/:show/season' },
-        { dir: 'src/pages/tv/show/season/episode', baseRoute: 'tv/show/:show/season/:season/episode' },
-      ],
-    }),
+    // Pages({
+    //   dirs: [
+    //     { dir: 'src/pages', baseRoute: '' },
+    //     { dir: 'src/pages/tv/show/season', baseRoute: 'tv/show/:show/season' },
+    //     { dir: 'src/pages/tv/show/season/episode', baseRoute: 'tv/show/:show/season/:season/episode' },
+    //   ],
+    // }),
 
     // https://github.com/antfu/unplugin-auto-import
     AutoImport({

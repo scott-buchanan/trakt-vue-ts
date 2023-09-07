@@ -3,38 +3,39 @@ import { ref } from 'vue'
 import * as emoji from 'node-emoji'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
+import type Trakt from '~/api/trakt.types'
+
 // api
 import { getComments, likeComment } from '~/api/trakt'
+
 // components
 import ReviewCardDetails from '~/components/ReviewCardDetailsDialog.vue'
 
 interface Props {
-  reviews: object[] // TODO define object
-  reviewCount: number
+  reviews: Trakt.Comment[]
+  reviewCount: string
   reply?: boolean
 }
 const props = withDefaults(defineProps<Props>(), {
-  reviews: [],
-  reviewCount: 0,
+  reviewCount: '0',
   reply: false,
 })
 
 const $q = useQuasar()
-const reviewsMore = ref(false)
+const reviewsMore: Ref<boolean> = ref(false)
 const reviewDetails = ref(null)
 const reviewReplies = ref({})
-const episodeBackdrop = ref(null)
 const showUnrated = ref(false)
 const showUnratedButton = ref(true)
-const likes = ref(JSON.parse(localStorage.getItem('trakt-vue-likes')))
+const likes = ref(JSON.parse(localStorage.getItem('trakt-vue-likes')!))
 const user = localStorage.getItem('trakt-vue-user')
 
 const filteredReviews = computed(() => {
   if (showUnrated.value || props.reply)
     return props.reviews
-  return props.reviews.filter(review => review.user_rating !== null)
+  return props.reviews?.filter(comment => comment.user_rating !== null)
 })
-const truncateReviews = computed(() => reviewsMore.value ? filteredReviews : filteredReviews.value.slice(0, 2))
+const truncateReviews = computed(() => reviewsMore.value ? filteredReviews.value : filteredReviews.value.slice(0, 2))
 const modalData = computed({
   get() {
     return reviewDetails.value
@@ -123,7 +124,7 @@ onMounted(() => {
           <q-badge color="secondary" class="text-dark"> {{ props.reviewCount }} </q-badge>
         </sup>
       </q-timeline-entry>
-      <div v-show="showUnratedButton" class="unrated-toggle">
+      <div v-if="showUnratedButton" class="unrated-toggle">
         Unrated <q-toggle v-model="showUnrated" class="q-ml-xs" color="secondary" dark dense />
       </div>
     </div>
@@ -135,14 +136,14 @@ onMounted(() => {
               <q-img :src="review.avatar" alt="" referrerpolicy="no-referrer" />
             </q-avatar>
             <div class="username">
-              {{ review.user.name ? review.user.name : review.user.username }}<br>
+              {{ review.user?.name ? review.user.name : review.user.username }}<br>
               <small>{{ formattedDate(review.created_at) }}</small>
             </div>
           </div>
           <q-space />
           <div class="column" :class="[$q.screen.gt.sm ? 'items-end' : 'items-start']">
             <div
-              v-show="review.user_rating || review.user_stats.rating"
+              v-show="review.user_rating || review.user_stats?.rating"
               class="review-rating q-mb-sm" :class="[
                 $q.screen.gt.sm ? 'justify-end' : 'justify-start',
               ]"
@@ -152,7 +153,7 @@ onMounted(() => {
               </div>
               <div>
                 <span>
-                  {{ review.userating ? review.user_rating : review.user_stats.rating }}
+                  {{ review.userating ? review.user_rating : review.user_stats?.rating }}
                 </span>
                 <small>&nbsp;/10</small>
               </div>
@@ -218,7 +219,7 @@ onMounted(() => {
     </q-timeline-entry>
     <div class="text-right">
       <q-btn
-        v-if="reviews.length > 2"
+        v-if="filteredReviews.length > 2"
         color="secondary"
         outline
         no-caps
@@ -291,6 +292,7 @@ sup {
   }
 }
 .unrated-toggle {
+  margin-right: 5px;
   @include darkText;
 }
 .review-reply {

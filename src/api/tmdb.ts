@@ -1,12 +1,20 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
 import { getMovieBackground, getTvBackground } from './fanart'
-import { getIdLookupActorTmdb, getIdLookupTmdb, getMovieSummary, getShowSummary } from './trakt'
+import { getIdLookupActorTmdb, getIdLookupTmdb } from './trakt'
 import type { Actor } from './tmdb.types'
 import * as fallback from '~/assets/fallback-tv.jpg'
 import type { Episode, Movie, Show } from '~/api/trakt.types'
 import type Trakt from '~/api/trakt.types'
 import { MediaType } from '~/types/types'
+
+export async function getImageUrls() {
+  const response = await axios({
+    method: 'GET',
+    url: 'https://api.themoviedb.org/3/configuration?api_key=89c6bd3331244e97eed61741fc798ab5',
+  })
+  return response.data
+}
 
 export async function getAppBackgroundImg(): Promise<{ id: number; title: string; backgroundUrl: string; type: string; year: string; posterUrl: string }> {
   const response = await axios({
@@ -176,7 +184,7 @@ export async function tmdbShowDetails(show: Show) {
   try {
     const response = await axios({
       method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5`,
+      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5&append_to_response=videos`,
     })
     const { data } = response
     const seasons = []
@@ -202,6 +210,8 @@ export async function tmdbShowDetails(show: Show) {
       data.seasons.push(specials)
     }
 
+    data.videos = data.videos.results.filter(v => v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser')
+
     return data
   }
   catch {
@@ -215,7 +225,6 @@ export async function tmdbShowSeasonDetails(show, season) {
       method: 'GET',
       url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${season}?api_key=89c6bd3331244e97eed61741fc798ab5`,
     })
-    console.log(response.data)
     const episodes = []
     await Promise.all(
       response.data.episodes.map(async (episode) => {
@@ -234,12 +243,13 @@ export async function tmdbShowSeasonDetails(show, season) {
   }
 }
 
-export async function tmdbMovieDetails(movie) {
+export async function tmdbMovieDetails(movie: Trakt.Movie) {
   try {
     const response = await axios({
       method: 'GET',
-      url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5`,
+      url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5&append_to_response=videos`,
     })
+    response.data.videos = response.data.videos.results.filter(v => v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser')
     return response.data
   }
   catch {
@@ -323,34 +333,46 @@ export async function getShowVideos(showId) {
   return response.data.results
 }
 
-export async function getSearchResults(keyword, page = 1) {
-  const response = await axios({
+export async function getGenres() {
+  const response = await Promise.all([
+    axios({
+      method: 'GET',
+      url: 'https://api.themoviedb.org/3/genre/tv/list?api_key=89c6bd3331244e97eed61741fc798ab5&language=en',
+    }),
+    axios({
+      method: 'GET',
+      url: 'https://api.themoviedb.org/3/genre/movie/list?api_key=89c6bd3331244e97eed61741fc798ab5&language=en',
+    }),
+  ])
+  return {
+    tv: response[0].data.genres,
+    movie: response[1].data.genres,
+  }
+}
+
+export async function getSearchResults(keyword: string, page = 1) {
+  const response = await Promise.all([axios({
     method: 'GET',
-    url: `https://api.themoviedb.org/3/search/multi?api_key=89c6bd3331244e97eed61741fc798ab5&query=${encodeURIComponent(
+    url: `https://api.themoviedb.org/3/search/tv?api_key=89c6bd3331244e97eed61741fc798ab5&query=${encodeURIComponent(
       keyword,
-    )}&page=${page}`,
-  })
-  const noPeople = response.data.results.filter(item => item.media_type !== 'person')
-  const returnVal = []
-  await Promise.all(
-    noPeople.map(async (item) => {
-      let result
-      const ids = await getIdLookupTmdb(item.id, item.media_type === 'movie' ? 'movie' : 'show')
-      if (ids) {
-        if (item.media_type === 'movie') {
-          result = await getMovieSummary(ids.trakt)
-          if (result)
-            returnVal.push({ ...{ ids }, ...item, ...{ genres: result.genres } })
-        }
-        else {
-          result = await getShowSummary(ids.trakt)
-          if (result)
-            returnVal.push({ ...{ ids }, ...item, ...{ genres: result.genres } })
-        }
-      }
+    )}&page=${page}&language=en-US`,
+  }),
+  axios({
+    method: 'GET',
+    url: `https://api.themoviedb.org/3/search/movie?api_key=89c6bd3331244e97eed61741fc798ab5&query=${encodeURIComponent(
+      keyword,
+    )}&page=${page}&language=en-US`,
+  }),
+  ])
+  const returnVal = await Promise.all(
+    response.flatMap(result => result.data.results).map(async (result) => {
+      // movies have release_date, shows have first_air_date
+      const trakt = await getIdLookupTmdb(result.id, 'release_date' in result ? 'movie' : 'tv')
+      if (trakt.ids && 'trakt' in trakt.ids)
+        return { ...{ ids: trakt.ids }, ...result, ...{ media_type: 'release_date' in result ? 'movie' : 'tv' } }
     }),
   )
-  return returnVal.sort((a, b) => b.popularity - a.popularity)
+  return returnVal.filter(r => r).sort((a, b) => b.popularity - a.popularity)
 }
 
 export async function getMovieCollection(collectionId) {
@@ -358,5 +380,6 @@ export async function getMovieCollection(collectionId) {
     method: 'GET',
     url: `https://api.themoviedb.org/3/collection/${collectionId}?api_key=89c6bd3331244e97eed61741fc798ab5`,
   })
+  response.data.parts = response.data.parts.filter(c => c.release_date !== '').sort((a, b) => a.id < b.id ? 1 : -1)
   return response.data
 }

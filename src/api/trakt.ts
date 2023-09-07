@@ -3,7 +3,6 @@ import type Trakt from '~/api/trakt.types'
 
 // -------- <AUTHENTICATION> -----------
 export async function getToken(code: string) {
-  console.log(code)
   const response = await axios({
     method: 'POST',
     url: 'https://api.trakt.tv/oauth/token',
@@ -16,7 +15,6 @@ export async function getToken(code: string) {
       grant_type: 'authorization_code',
     },
   })
-  console.log(response)
   return response.data
 }
 
@@ -89,7 +87,6 @@ export async function getTrending(mType: string, page: number): Promise<{ items:
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  console.log(response.data)
   return {
     items: response.data,
     page: Number.parseInt(response.headers['x-pagination-page'], 10),
@@ -108,7 +105,6 @@ export async function getAnticipated(mType: string, page: number) {
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  console.log('anticipated', response.data)
   return {
     items: response.data,
     page: Number.parseInt(response.headers['x-pagination-page'], 10),
@@ -127,7 +123,6 @@ export async function getCommunityRecommended(mType: string, page: number): Prom
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  console.log('community recommended', response.data)
   return {
     items: response.data,
     page: Number.parseInt(response.headers['x-pagination-page'], 10),
@@ -169,18 +164,22 @@ export async function getTvCollection() {
   return response.data
 }
 
-export async function getShowSummary(showId: number | string): Promise<Trakt.Show> {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.trakt.tv/shows/${showId}?extended=full`,
-    headers: {
-      'Content-Type': 'application/json',
-      'trakt-api-version': '2',
-      'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
-    },
-  })
-  console.log(response)
-  return { ids: response.data.ids, title: response.data.title, year: response.data.year, runtime: response.data.runtime }
+export async function getShowSummary(showId: number | string): Promise<Trakt.Show | null> {
+  try {
+    const response = await axios({
+      method: 'GET',
+      url: `https://api.trakt.tv/shows/${showId}?extended=full`,
+      headers: {
+        'Content-Type': 'application/json',
+        'trakt-api-version': '2',
+        'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
+      },
+    })
+    return response.data
+  }
+  catch {
+    return null
+  }
 }
 
 export async function getMovieSummary(movieId: string) {
@@ -397,19 +396,18 @@ export async function getMyLikes(page?: number) {
   return likes
 }
 
-export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, reply = false) {
+export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, mType, reply = false) {
   let url
   if (reply)
     url = `https://api.trakt.tv/comments/${item}/replies`
-  else if (item.type === 'episode')
+  else if (mType === 'episode')
     url = `https://api.trakt.tv/shows/${item.slug}/seasons/${item.season}/episodes/${item.number}/comments/likes`
-  else if (item.type === 'season')
+  else if (mType === 'season')
     url = `https://api.trakt.tv/shows/${item.ids.slug}/seasons/${item.season}/comments/likes`
-  else if (item.type === 'show')
+  else if (mType === 'show')
     url = `https://api.trakt.tv/shows/${item.ids.trakt}/comments/likes`
   else
     url = `https://api.trakt.tv/movies/${item.ids.trakt}/comments/likes`
-
   const response = await axios({
     method: 'GET',
     url,
@@ -419,8 +417,8 @@ export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Seaso
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  return Promise.all(
-    response.data.map(async (comment) => {
+  const returnVal = await Promise.all(
+    response.data.map(async (comment: Trakt.Comment) => {
       try {
         const info = await axios({
           method: 'GET',
@@ -450,6 +448,7 @@ export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Seaso
       }
     }),
   )
+  return { total: response.headers['x-pagination-item-count'], comments: returnVal }
 }
 
 export async function getShowWatchedProgress(showId) {
@@ -485,7 +484,6 @@ export async function getMyWatchedMovies() {
 }
 
 export async function getIdLookupTmdb(id: number, mType: string | null = null): Promise<{ ids: Trakt.Ids | null }> {
-  console.log(mType)
   const mediaType = mType === 'tv' ? 'show' : 'movie'
   const response = await axios({
     method: 'GET',
