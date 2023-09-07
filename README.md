@@ -26,5 +26,5 @@ More will be added to this list as I think of things to add.
 pnpm i
 pnpm run dev
 ```
-![appback](https://user-images.githubusercontent.com/7110108/221603275-4d1104ef-7b41-4295-af29-526a9f4a56f3.jpg)
-![appback-mobile](https://user-images.githubusercontent.com/7110108/221603280-bdc7cdc5-7af2-4165-bdcb-56526ce10d7f.jpg)
+![app](https://github.com/scott-buchanan/trakt-vue-ts/assets/7110108/01e8ccb9-dd9b-486e-9308-e2ae212677bc)
+![app](https://github.com/scott-buchanan/trakt-vue-ts/assets/7110108/216ce4c7-224f-4f36-be22-0fd61ef18bcf)
