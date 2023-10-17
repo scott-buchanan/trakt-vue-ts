@@ -126,7 +126,7 @@ async function fireSearch() {
 }
 async function goToDetails(item: autocompleteResult) {
   const mType = item.type === 'movie' ? 'movie' : 'show'
-  const urlTitle = item.ids.ids.slug
+  const urlTitle = item.ids.slug
   const params = {
     [mType]: urlTitle,
   }
@@ -149,10 +149,7 @@ async function goToDetails(item: autocompleteResult) {
     })
   }
   else {
-    router.push({
-      path: `/movie/${urlTitle}`,
-      params,
-    })
+    router.push({ name: 'movie-details', params: { movie: item.ids.slug } })
   }
 }
 function goSearch(event: Event | null = null) {
@@ -162,7 +159,7 @@ function goSearch(event: Event | null = null) {
       const searchTerm = searchTypedValue.value
       searchTypedValue.value = ''
       autocompleteApiResults.value = []
-      router.push({ name: 'search', query: { term: searchTerm } })
+      router.push({ name: 'search', params: { term: searchTerm } })
     }
   }
 }
@@ -172,8 +169,8 @@ function goToLogin() {
 }
 function logout() {
   localStorage.clear()
-  store.updateMyInfo(null)
-  router.push('/')
+  store.reset()
+  router.push('/tv/trending')
 }
 function backgroundGradient() {
   return `linear-gradient(to top right, rgba(0,0,0,.8), rgba(0,0,0,.5) 70%, rgba(0,0,0,.3)),

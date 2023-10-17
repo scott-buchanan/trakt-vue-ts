@@ -3,19 +3,24 @@ import type Trakt from '~/api/trakt.types'
 
 // -------- <AUTHENTICATION> -----------
 export async function getToken(code: string) {
-  const response = await axios({
-    method: 'POST',
-    url: 'https://api.trakt.tv/oauth/token',
-    headers: { 'Content-Type': 'application/json' },
-    data: {
-      code,
-      client_id: '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
-      client_secret: '93e1f2eb9e3c9e43cb06db7fd98feb630e8c90157579fa9af723d7181884ecb1',
-      redirect_uri: 'http://localhost:8080',
-      grant_type: 'authorization_code',
-    },
-  })
-  return response.data
+  try {
+    const response = await axios({
+      method: 'POST',
+      url: 'https://api.trakt.tv/oauth/token',
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        code,
+        client_id: '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
+        client_secret: '93e1f2eb9e3c9e43cb06db7fd98feb630e8c90157579fa9af723d7181884ecb1',
+        redirect_uri: 'http://localhost:8080',
+        grant_type: 'authorization_code',
+      },
+    })
+    return response.data
+  }
+  catch {
+    return null
+  }
 }
 
 export async function getTokenFromRefresh(refreshToken: string, path: string) {
@@ -396,8 +401,9 @@ export async function getMyLikes(page?: number) {
   return likes
 }
 
-export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, mType, reply = false) {
+export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, mType: string, reply = false) {
   let url
+  console.log(mType)
   if (reply)
     url = `https://api.trakt.tv/comments/${item}/replies`
   else if (mType === 'episode')
@@ -417,6 +423,7 @@ export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Seaso
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
+  console.log(response)
   const returnVal = await Promise.all(
     response.data.map(async (comment: Trakt.Comment) => {
       try {

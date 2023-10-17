@@ -42,7 +42,7 @@ function handleMenuClick(item: Filter, filterType: string) {
   store.updatePage(1)
   store.updateFilter(item)
   router.push({
-    path: filterType === 'movie' ? `/movie/${item.val}` : `/tv/${item.val}`,
+    path: filterType === 'movie' ? `/movies/${item.val}` : `/tv/${item.val}`,
   })
 }
 function goHome() {
@@ -203,7 +203,7 @@ onMounted(async () => {
 </style>
 
 <style lang="scss">
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400&family=Gabarito:wght@400;600&&display=swap');
   @import '~/quasar-variables.scss';
 
   * {
@@ -228,10 +228,14 @@ onMounted(async () => {
     text-decoration: underline;
   }
   h1 {
+    font-family: 'Gabarito', sans-serif;
+    font-weight: 600;
     font-size: 24px;
     line-height: 1;
   }
   h2 {
+    font-family: 'Gabarito', sans-serif;
+    font-weight: 600;
     font-size: 24px;
     line-height: 1;
   }

@@ -125,4 +125,5 @@ export interface SeasonDetails {
   type: string
   show: Trakt.Show
   network: string
+  watched_progress: Trakt.WatchedProgress
 }

@@ -22,31 +22,29 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  console.log(routes)
-  if (to.name === 'movie-filter') {
-    switch (to.params.filter) {
-      case 'trending':
-      case 'history':
-      case 'recommended':
-        next()
-        break
-      default:
-        next({ name: 'movie-details', params: { movie: to.params.filter } })
-    }
-  }
+  // if (to.name === 'movie-filter') {
+  //   switch (to.params.filter) {
+  //     case 'trending':
+  //     case 'history':
+  //     case 'recommended':
+  //       next()
+  //       break
+  //     default:
+  //       next({ name: 'movie-details', params: { movie: to.params.filter } })
+  //   }
+  // }
   const store = useStore()
-  const urlParams = new URLSearchParams(window.location.search)
 
   // redirect if needed
-  const filterType = to.path.includes('/tv/') ? 'show' : 'movie'
-  const urlLastPart = to.path.split('/')[to.path.split('/').length - 1]
-  const isFilter
-    = store.filterOptions[filterType].find(filter => filter.val === urlLastPart) !== undefined
-    // TODO will need to fix
-  if ((to.name === 'show-details' || to.name === 'movie-details') && isFilter) {
-    next({ name: `${filterType}-list`, params: { filter: urlLastPart } })
-    return
-  }
+  // const filterType = to.path.includes('/tv/') ? 'show' : 'movie'
+  // const urlLastPart = to.path.split('/')[to.path.split('/').length - 1]
+  // const isFilter
+  //   = store.filterOptions[filterType].find(filter => filter.val === urlLastPart) !== undefined
+  //   // TODO will need to fix
+  // if ((to.name === 'show-details' || to.name === 'movie-details') && isFilter) {
+  //   next({ name: `${filterType}-list`, params: { filter: urlLastPart } })
+  //   return
+  // }
   // ------------------
 
   // get tmdb genres and store in state
@@ -138,15 +136,20 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  checkToken()
+  await checkToken()
 
-  if (urlParams.get('code')) {
+  if (to.query?.code) {
     // if no tokens were present and we fell into the else, we get redirected
     // with query: code and put tokens into local storage
-    const authTokens = await getToken(urlParams.get('code')!)
-    localStorage.setItem('trakt-vue-token', JSON.stringify(authTokens))
-    store.updateTokens(authTokens)
-    checkToken()
+    if (!localStorage.getItem('trakt-vue-token')) {
+      const authTokens = await getToken(to.query.code! as string)
+      if (authTokens) {
+        localStorage.setItem('trakt-vue-token', JSON.stringify(authTokens))
+        store.updateTokens(authTokens)
+        await checkToken()
+      }
+    }
+    next({ path: '/tv/trending' })
   }
 
   // remove trailing slash
@@ -160,6 +163,8 @@ router.beforeEach(async (to, from, next) => {
 router.afterEach(() => {
   const store = useStore()
   store.updateLoading(false)
+  // console.log(router.replace({ query: null }))
+  // console.log(router.currentRoute.value.query.code)
 })
 
 export default router

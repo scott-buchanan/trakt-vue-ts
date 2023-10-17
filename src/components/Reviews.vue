@@ -8,23 +8,22 @@ import type Trakt from '~/api/trakt.types'
 // api
 import { getComments, likeComment } from '~/api/trakt'
 
-// components
-import ReviewCardDetails from '~/components/ReviewCardDetailsDialog.vue'
-
 interface Props {
   reviews: Trakt.Comment[]
   reviewCount: string
   reply?: boolean
+  mType: string | null
 }
 const props = withDefaults(defineProps<Props>(), {
   reviewCount: '0',
   reply: false,
+  mType: null,
 })
 
 const $q = useQuasar()
 const reviewsMore: Ref<boolean> = ref(false)
-const reviewDetails = ref(null)
 const reviewReplies = ref({})
+const reviewSeeMore = ref([])
 const showUnrated = ref(false)
 const showUnratedButton = ref(true)
 const likes = ref(JSON.parse(localStorage.getItem('trakt-vue-likes')!))
@@ -36,23 +35,10 @@ const filteredReviews = computed(() => {
   return props.reviews?.filter(comment => comment.user_rating !== null)
 })
 const truncateReviews = computed(() => reviewsMore.value ? filteredReviews.value : filteredReviews.value.slice(0, 2))
-const modalData = computed({
-  get() {
-    return reviewDetails.value
-  },
-  set(data) {
-    // const cardBack = await getTvThumb(this.ids.tvdb);
-    reviewDetails.value = {
-      review: data.review,
-      // background: cardBack,
-      show: true,
-    }
-  },
-})
 
 async function getReplies(review) {
   if (!reviewReplies.value[review.id]) {
-    const replies = await getComments(review.id, true)
+    const replies = await getComments(review.id, props.mType, true)
     reviewReplies.value[review.id] = { show: true, replies }
   }
   else {
@@ -100,10 +86,15 @@ function formatReviews(text) {
 function formattedDate(wDate) {
   return dayjs(wDate).format('MMM DD, YYYY')
 }
-function closeReviewDetails() {
-  reviewDetails.value.show = false
+function toggleActive(review) {
+  if (review.id in reviewSeeMore.value)
+    reviewSeeMore.value[review.id] = !reviewSeeMore.value[review.id]
+
+  else
+    reviewSeeMore.value[review.id] = true
 }
 
+// lifecycle hooks
 onMounted(() => {
   if (!props.reply) {
     const onlyRated = props.reviews.filter(review => review.user_rating !== null)
@@ -203,9 +194,14 @@ onMounted(() => {
           </div>
         </div>
       </template>
-      <div v-if="formatReviews(review.comment).length > 300" class="review-bubble q-pa-md">
-        {{ truncateReviewCard(formatReviews(review.comment), 300) }}
-        <a href="#" @click="modalData = { review }">Read more</a>
+      <div v-if="formatReviews(review.comment).length > 400" class="review-bubble q-pa-md">
+        {{ reviewSeeMore[review.id] === true ? formatReviews(review.comment) : truncateReviewCard(formatReviews(review.comment), 400) }}
+        <button
+          role="link"
+          @click="toggleActive(review)"
+        >
+          {{ reviewSeeMore[review.id] === true ? 'Read less' : 'Read more' }}
+        </button>
       </div>
       <div v-else class="review-bubble q-pa-md">
         {{ formatReviews(review.comment) }}
@@ -229,7 +225,6 @@ onMounted(() => {
         @click="reviewsMore = !reviewsMore"
       />
     </div>
-    <ReviewCardDetails v-if="modalData" :data="modalData" @closeDialog="closeReviewDetails" />
   </q-timeline>
 </template>
 
@@ -304,15 +299,6 @@ sup {
     margin-bottom: 0;
   }
 }
-// .review-title {
-//   & > .username {
-//     width: 100px;
-//     max-width: 100px;
-//     overflow: hidden;
-//     white-space: nowrap;
-//     text-overflow: ellipsis;
-//   }
-// }
 .review-bubble {
   @include background-style;
   position: relative;

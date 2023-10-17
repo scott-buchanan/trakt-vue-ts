@@ -14,7 +14,6 @@ import CardContainer from '~/components/CardContainer.vue'
 
 import type Trakt from '~/api/trakt.types'
 
-const props = defineProps<{ filter: string }>()
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
@@ -47,12 +46,9 @@ onMounted(() => {
 
   if (route.params?.filter) {
     store.updateFilter(
-      store.filterOptions.show.find(filter => filter.val === route.params.filter),
+      store.filterOptions.show.find(filter => filter.val === route.params.filter)!,
     )
   }
-  const foundFilter = store.filterOptions.show.find(filter => filter.val === props.filter)
-  if (foundFilter)
-    store.updateFilter(foundFilter)
 
   loadData()
 
@@ -66,6 +62,7 @@ async function loadData() {
   // this makes it so the card container always has a full last line
   localStorage.setItem('item-limit', '18')
 
+  // if watched history
   if (store.filterType === 'show' && filter.value?.val === 'history') {
     // get Trakt data
     data.value = await getWatchedHistory('episodes', page.value)
@@ -74,7 +71,7 @@ async function loadData() {
     myEpRatings.value = JSON.parse(localStorage.getItem('trakt-vue-episode-ratings')!)
 
     // get images and ratings
-    const items = await fetchCardInfo('episode', myEpRatings.value)
+    const items = await fetchCardInfo('episode', myEpRatings.value!)
 
     // sort by watched date (no logic here because only one filter)
     items.sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at))

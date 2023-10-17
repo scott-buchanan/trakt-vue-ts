@@ -29,6 +29,7 @@ const router = useRouter()
 const store = useStore()
 const user: Ref<Trakt.User> = ref(JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user)
 const sortedData: Ref<CardInfo[]> = ref([])
+const ratingsBox: Ref<any> = ref([])
 
 // computed
 const isEpisode = computed(() => {
@@ -41,6 +42,9 @@ function formattedDate(wDate: string) {
 }
 function formattedDateTime(wDate: string) {
   return `${dayjs(wDate).format('MMM DD, YYYY')} at ${dayjs(wDate).format('h:mma')}`
+}
+function hasRatings(index: number) {
+  return ratingsBox.value[index]?.children.length !== 0
 }
 function clickDetails(item: CardInfo) {
   const mType: keyof CardInfo = item.type === MediaType.movie ? MediaType.movie : MediaType.show
@@ -65,6 +69,7 @@ function clickDetails(item: CardInfo) {
   }
 }
 
+// lifecycle methods
 onMounted(() => {
   switch (store.filter.val) {
     case 'anticipated':
@@ -96,6 +101,16 @@ onMounted(() => {
           fit="cover"
           :ratio="16 / 9"
         >
+          <div v-if="item.clear_logo" class="clearlogo">
+            <q-img
+              no-spinner
+              :ratio="2.58 / 1"
+              height="100%"
+              :src="item.clear_logo"
+              fit="cover"
+              alt=""
+            />
+          </div>
           <div v-if="store.filter.val === 'anticipated'" class="card-top-info anticipated absolute-top-right q-ma-sm">
             <q-icon name="o_circle" size="xl" />
             <q-tooltip>
@@ -105,7 +120,7 @@ onMounted(() => {
               {{ index + 1 }}
             </div>
           </div>
-          <div v-else class="card-top-info absolute-top-right q-ma-sm">
+          <div v-else ref="ratingsBox" class="card-top-info absolute-top-right q-ma-sm" :class="[{ invisible: !hasRatings(index) }]">
             <div v-if="store.filter.val === 'trakt_recommended'">
               <q-icon name="o_verified" size="24px" class="block q-mt-n q-mb-xs q-ma-none" />
               {{ item.user_count }}
@@ -150,18 +165,11 @@ onMounted(() => {
           <div
             class="absolute-bottom caption flex justify-between items-center no-wrap"
           >
-            <div v-if="item.clear_logo" class="clearlogo">
-              <q-img
-                no-spinner
-                :ratio="2.58 / 1"
-                height="100%"
-                :src="item.clear_logo"
-                fit="cover"
-                alt=""
-              />
-            </div>
-            <div v-else class="clearlogo-no-img flex items-center">
-              {{ item[mType]?.title }}
+            <div class="flex flex-col justify-between">
+              <h1 class="card-title">
+                {{ item[mType]?.title }}
+              </h1>
+              <div>{{ item[mType]?.year }}</div>
             </div>
             <div v-if="isEpisode" class="title q-pl-sm">
               <b>
@@ -208,6 +216,14 @@ onMounted(() => {
 .show-card {
   cursor: pointer;
   position: relative;
+  & .card-title {
+    font-size: 18px;
+    & span {
+      font-size: 14px;
+      vertical-align: text-top;
+      font-weight: 400;
+    }
+  }
 }
 .caption > div::first-letter {
   text-transform: uppercase;
@@ -219,10 +235,10 @@ onMounted(() => {
   text-overflow: ellipsis;
 }
 .clearlogo {
-  width: 100px;
+  width: 30%;
   min-width: 100px;
-  height: 39px;
-  // filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+  background-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 .clearlogo-no-img {
   height: 39px;

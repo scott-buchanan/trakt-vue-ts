@@ -39,7 +39,7 @@ function backgroundGradient() {
 </script>
 
 <template>
-  <button class="text-left" @click="$emit('click')">
+  <button class="text-left ma-1" @click="$emit('click')">
     <div
       class="card"
       :style="{
@@ -117,8 +117,12 @@ button {
   border: none;
   padding: 0;
   display: flex;
+  // border: 1px solid transparent;
   & .card-content {
     min-width: 0;
+  }
+  &:hover {
+    outline: 1px solid orange;
   }
 }
 .truncate-text {

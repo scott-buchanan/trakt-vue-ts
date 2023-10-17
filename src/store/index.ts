@@ -2,40 +2,42 @@ import { defineStore } from 'pinia'
 import type { Filter, MyInfo, PageData, StateObj } from './models'
 import type Trakt from '~/api/trakt.types'
 
+const defaultState: StateObj = {
+  page: 1,
+  filter: { label: null, val: null, auth: null } as Filter,
+  filterOptions: {
+    show: [
+      { label: 'Trending', val: 'trending', auth: false } as Filter,
+      { label: 'Watch History', val: 'history', auth: true } as Filter,
+      { label: 'Anticipated', val: 'anticipated', auth: false } as Filter,
+      { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
+      { label: 'Community Recommended', val: 'trakt_recommended', auth: false } as Filter,
+    ],
+    movie: [
+      { label: 'Trending', val: 'trending', auth: false } as Filter,
+      { label: 'Watch History', val: 'history', auth: true } as Filter,
+      { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
+    ],
+  },
+  filterType: null,
+  loaded: false,
+  tokens: null,
+  myInfo: null,
+  menuVisible: false,
+  currentIds: null,
+  pageData: {
+    episodes: {},
+    shows: {},
+    seasons: {},
+    movies: {},
+  },
+  genres: null,
+  imageUrls: null,
+  searchPage: null,
+}
+
 export const useStore = defineStore('main', {
-  state: (): StateObj => ({
-    page: 1,
-    filter: { label: null, val: null, auth: null } as Filter,
-    filterOptions: {
-      show: [
-        { label: 'Trending', val: 'trending', auth: false } as Filter,
-        { label: 'Watch History', val: 'history', auth: true } as Filter,
-        { label: 'Anticipated', val: 'anticipated', auth: false } as Filter,
-        { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
-        { label: 'Community Recommended', val: 'trakt_recommended', auth: false } as Filter,
-      ],
-      movie: [
-        { label: 'Trending', val: 'trending', auth: false } as Filter,
-        { label: 'Watch History', val: 'history', auth: true } as Filter,
-        { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
-      ],
-    },
-    filterType: null,
-    loaded: false,
-    tokens: null,
-    myInfo: null,
-    menuVisible: false,
-    currentIds: null,
-    pageData: {
-      episodes: {},
-      shows: {},
-      seasons: {},
-      movies: {},
-    },
-    genres: null,
-    imageUrls: null,
-    searchPage: null,
-  }),
+  state: () => ({ ...defaultState }),
   actions: {
     updatePage(page: number) {
       this.page = page
@@ -76,6 +78,9 @@ export const useStore = defineStore('main', {
     },
     updateSearchPage(value: any) {
       this.searchPage = value
+    },
+    reset() {
+      Object.assign(this, defaultState)
     },
   },
 })

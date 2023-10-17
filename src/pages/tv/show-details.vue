@@ -165,6 +165,9 @@ onMounted(async () => {
         </div>
       </div>
     </template>
+    <template #more-like-this>
+      <h2>More like this</h2>
+    </template>
   </DetailsTemplate>
 </template>
 

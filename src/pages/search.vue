@@ -32,7 +32,7 @@ const screenGreaterThan = computed(() => {
 // methods
 async function getData() {
   store.updateLoading(false)
-  searchResults.value = await getSearchResults(route.query.term, searchPage.value)
+  searchResults.value = await getSearchResults(route.params.term, searchPage.value)
   setTimeout(() => {
     store.updateLoading(true)
   }, 1000)
@@ -46,12 +46,13 @@ async function goToDetails(item) {
     },
   })
 }
-function handleRemoveTerm(term) {
+function handleRemoveTerm(term: string) {
+  console.log(searchTerm.value)
   searchTerm.value = searchTerm.value
     .split(' ')
-    .filter(word => word !== term)
+    .filter((word: string) => word !== term)
     .join(' ')
-  router.push({ name: 'search', query: { term: searchTerm.value } })
+  router.push({ name: 'search', params: { term: searchTerm.value } })
 }
 function changePage() {
   // loadData();
@@ -67,18 +68,18 @@ function changePage() {
 // }
 
 // lifecycle methods
-onMounted(() => {
+onMounted(async () => {
   store.$subscribe((mutated, state) => {
     searchPage.value = state.searchPage
     loaded.value = state.loaded
   })
-  searchTerm.value = route.query.term
-  getData()
+  searchTerm.value = route.params.term
+  await getData()
 })
-onUpdated(() => {
-  if (route.query.term !== searchTerm.value) {
-    searchTerm.value = route.query.term
-    getData()
+onUpdated(async () => {
+  if (route.params.term !== searchTerm.value) {
+    searchTerm.value = route.params.term
+    await getData()
   }
 })
 </script>
@@ -96,7 +97,7 @@ onUpdated(() => {
           :label="term"
           size="md"
           color="secondary"
-          class="text-capitalize"
+          class="text-capitalize p-4 pl-2 rounded-2"
           :removable="searchTerm.split(' ').length > 1"
           outline
           square

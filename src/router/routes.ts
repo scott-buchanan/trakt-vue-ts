@@ -4,6 +4,7 @@ import SeasonDetails from '~/pages/tv/season-details.vue'
 import EpisodeDetails from '~/pages/tv/episode-details.vue'
 import MovieFilter from '~/pages/movie/movie-filter.vue'
 import MovieDetails from '~/pages/movie/movie-details.vue'
+import Search from '~/pages/search.vue'
 import NotFound from '~/pages/notfound.vue'
 
 export default [
@@ -33,7 +34,7 @@ export default [
     component: EpisodeDetails,
   },
   {
-    path: '/movie/:filter',
+    path: '/movies/:filter',
     name: 'movie-filter',
     component: MovieFilter,
   },
@@ -41,6 +42,11 @@ export default [
     path: '/movie/:movie',
     name: 'movie-details',
     component: MovieDetails,
+  },
+  {
+    path: '/search/:term',
+    name: 'search',
+    component: Search,
   },
   {
     path: '/:pathMatch(.*)*',

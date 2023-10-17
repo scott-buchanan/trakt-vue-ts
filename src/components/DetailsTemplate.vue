@@ -124,10 +124,12 @@ function trailerReady(event: Event) {
   }, 500)
 }
 async function trailerError() {
-  if (trailerUrl.value === props.info.tmdb_data.videos[0].key) {
+  if (trailerUrl.value === props.info.tmdb_data.videos[0]?.key) {
+    console.log(process.env)
     const newTrailer = await axios.get(
           `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${process.env.YOUTUBE_API_KEY}`,
     )
+    console.log(newTrailer)
     if (newTrailer.status === 200) {
       trailerUrl.value = newTrailer.data.items[0].id.videoId
     }
@@ -144,17 +146,18 @@ function closeTrailer() {
 
 onMounted(() => {
   store.updateMenuVisible(false)
-  store.updateFilter({ label: null, value: null })
+  store.updateFilter({ label: null, val: null, auth: null })
 
-  console.log(props.info)
-  if (props.type !== 'episode')
-    trailerUrl.value = props.info.tmdb_data.videos[0].key
+  if ('videos' in props.info.tmdb_data)
+    trailerUrl.value = props.info.tmdb_data.videos[0]?.key
 
   // for animation purposes
-  if (props.info?.watched_progress) {
+  if ('watched_progress' in props.info) {
     useTimeoutFn(() => {
-      const wp = props.info.watched_progress
-      watchedProgress.value = wp.completed / wp.aired
+      if (props.info.watched_progress) {
+        const wp = props.info.watched_progress
+        watchedProgress.value = wp.completed! / wp.aired!
+      }
     }, 500)
   }
 })
@@ -254,9 +257,9 @@ onMounted(() => {
                     </q-badge>
                   </span>
                 </div>
-                <div class="flex q-mb-md">
+                <div class="flex q-mb-md items-center">
                   <!-- LINKS -->
-                  <div class="info q-mr-md">
+                  <div class="info q-mr-sm">
                     <span>Links: </span>
                     <template v-for="(value, key) in linkIds" :key="key">
                       <template v-if="links[key]">
@@ -268,20 +271,45 @@ onMounted(() => {
                       </template>
                     </template>
                   </div>
-                  <!-- WATCHED INFO -->
-                  <div v-if="info.watched_progress?.last_watched_at" class="flex info">
-                    <div>
-                      <span>last watched:&nbsp;</span>
-                      {{ formattedDateTime(info.watched_progress.last_watched_at) }}
-                    </div>
-                    <div v-if="info.watched_progress?.type === 'movie'">
-                      <span>plays:&nbsp;</span>
-                      {{ info.watched_progress.plays }}
-                    </div>
+                  <div class="info">
+                    <template v-if="info.watched_progress?.aired > 0 && info.watched_progress?.type === 'show'">
+                      <span>watched:</span>
+                      <q-knob
+                        v-model="watchedProgress"
+                        readonly
+                        :max="1"
+                        show-value
+                        size="24px"
+                        :thickness="0.2"
+                        color="secondary"
+                        track-color="grey-8"
+                        class="text-white q-ml-sm"
+                      >
+                        <q-icon name="o_check" size="16px" color="positive" />
+                      </q-knob>
+                      <q-tooltip :delay="500">
+                        {{ watchedPercent }}
+                      </q-tooltip>
+                    </template>
+                    <template v-else-if="info.watched_progress?.last_watched_at">
+                      <span>watched:</span>
+                      <q-icon name="o_check_circle_outline" size="sm" color="positive" class="q-ml-sm" />
+                    </template>
                   </div>
                 </div>
                 <div class="flex no-wrap q-mb-lg">
                   <div class="flex info">
+                    <!-- WATCHED INFO -->
+                    <div v-if="info.watched_progress?.last_watched_at" class="flex info">
+                      <div>
+                        <span>last play:&nbsp;</span>
+                        {{ formattedDateTime(info.watched_progress.last_watched_at) }}
+                      </div>
+                      <div v-if="info.watched_progress?.type === 'movie'">
+                        <span>plays:&nbsp;</span>
+                        {{ info.watched_progress.plays }}
+                      </div>
+                    </div>
                     <!-- TECHNICAL DETAILS -->
                     <div
                       v-for="item in technicalDetailsFiltered"
@@ -300,28 +328,6 @@ onMounted(() => {
                         >{{ seeMoreDetails ? 'See less' : 'See more' }}</a>
                       </template>
                     </div>
-                  </div>
-                  <q-space />
-                  <div v-if="info.watched_progress?.aired > 0 && info.watched_progress?.type === 'show'">
-                    <q-knob
-                      v-model="watchedProgress"
-                      readonly
-                      :max="1"
-                      show-value
-                      size="50px"
-                      :thickness="0.2"
-                      color="secondary"
-                      track-color="grey-8"
-                      class="text-white"
-                    >
-                      <q-icon name="o_check_circle_outline" size="sm" color="positive" />
-                    </q-knob>
-                    <q-tooltip :delay="500">
-                      {{ watchedPercent }}
-                    </q-tooltip>
-                  </div>
-                  <div v-else-if="info.watched_progress?.last_watched_at">
-                    <q-icon name="o_check_circle_outline" size="lg" color="positive" />
                   </div>
                 </div>
                 <div class="flex">
@@ -368,12 +374,14 @@ onMounted(() => {
               <slot name="show-seasons" />
               <!-- SEASONS EPISODES -->
               <slot name="season-episode-list" />
+              <!-- MORE LIKE THIS -->
+              <slot name="more-like-this" />
               <Actors
                 v-if="$q.screen.gt.sm === false && info.actors?.length > 0"
                 :actors="info.actors"
                 horizontal
               />
-              <Reviews class="q-mt-lg" :reviews="info.reviews.comments" :review-count="info.reviews.total" />
+              <Reviews class="q-mt-lg" :reviews="info.reviews.comments" :review-count="info.reviews.total" :m-type="type" />
             </div>
           </q-scroll-area>
         </div>

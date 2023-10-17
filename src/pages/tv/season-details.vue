@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import dayjs from 'dayjs'
+
 // store
 import { useStore } from '~/store/index'
+
 // api
 import { getSeasonDetails } from '~/api/combinedCalls'
+
 // components
 import DetailsTemplate from '~/components/DetailsTemplate.vue'
 import ItemCard from '~/components/ItemCard.vue'
@@ -85,6 +88,7 @@ onMounted(async () => {
     :poster="info.tmdb_data.poster_path"
     :technical-details="arrDetails"
     :link-ids="info.show.ids"
+    type="season"
   >
     <template #season-episode-list>
       <div class="q-mt-lg">
