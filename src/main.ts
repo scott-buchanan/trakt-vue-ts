@@ -11,7 +11,7 @@ import { createManager } from '@vue-youtube/core'
 import '@quasar/extras/material-icons-outlined/material-icons-outlined.css'
 import 'quasar/src/css/index.sass'
 
-// import '@unocss/reset/tailwind.css'
+import '@unocss/reset/tailwind.css'
 import './styles/main.css'
 import 'uno.css'
 

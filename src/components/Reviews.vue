@@ -107,20 +107,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <q-timeline v-if="props.reviews?.length > 0" color="secondary" dark>
+  <div v-if="props.reviews?.length > 0" color="secondary" dark>
     <div v-if="props.reply === false" class="flex items-start justify-between no-wrap">
-      <q-timeline-entry heading tag="h2">
+      <h2>
         User Reviews
         <sup>
           <q-badge color="secondary" class="text-dark"> {{ props.reviewCount }} </q-badge>
         </sup>
-      </q-timeline-entry>
+      </h2>
       <div v-if="showUnratedButton" class="unrated-toggle">
         Unrated <q-toggle v-model="showUnrated" class="q-ml-xs" color="secondary" dark dense />
       </div>
     </div>
-    <q-timeline-entry v-for="review in truncateReviews" :key="review.id">
-      <template #subtitle>
+    <div class="grid grid-cols-2 grid-cols-sm-1 gap-4">
+      <div v-for="review in truncateReviews" :key="review.id">
         <div class="flex items-center">
           <div class="flex q-mb-sm" :class="[{ 'full-width wrap ': !$q.screen.gt.sm }]">
             <q-avatar class="q-mr-sm">
@@ -149,83 +149,83 @@ onMounted(() => {
                 <small>&nbsp;/10</small>
               </div>
             </div>
-            <div class="likes-replies">
-              <div class="q-mr-sm">
-                <q-btn
-                  v-if="user"
-                  :icon="likedReview(review) ? 'o_thumb_up_alt' : 'o_thumb_up_off_alt'"
-                  color="secondary"
-                  size="md"
-                  flat
-                  dense
-                  round
-                  :ripple="false"
-                  @click="likeReview(review)"
-                />
-                <q-icon v-else name="o_thumb_up_off_alt" color="secondary" size="24px" />
-                {{ review.likes === 1 ? `${review.likes} like` : `${review.likes} likes` }}
-              </div>
-              <div v-if="review.replies > 0">
-                <q-btn
-                  class="review-likes-comments"
-                  flat
-                  dense
-                  no-caps
-                  :ripple="false"
-                  @click="getReplies(review)"
-                >
-                  <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
-                  {{
-                    review.replies === 1 ? `${review.replies} reply` : `${review.replies} replies`
-                  }}
-                  <q-icon
-                    :class="reviewReplies[review.id]?.show ? 'expand-less' : 'expand-more'"
-                    name="o_expand_less"
-                    size="xs"
-                    color="white"
-                  />
-                </q-btn>
-              </div>
-              <div v-else>
-                <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
-                {{ `${review.replies} replies` }}
-              </div>
-            </div>
           </div>
         </div>
-      </template>
-      <div v-if="formatReviews(review.comment).length > 400" class="review-bubble q-pa-md">
-        {{ reviewSeeMore[review.id] === true ? formatReviews(review.comment) : truncateReviewCard(formatReviews(review.comment), 400) }}
-        <button
-          role="link"
-          @click="toggleActive(review)"
-        >
-          {{ reviewSeeMore[review.id] === true ? 'Read less' : 'Read more' }}
-        </button>
+        <div class="flex items-center justify-end">
+          <div class="q-mr-sm">
+            <q-btn
+              v-if="user"
+              :icon="likedReview(review) ? 'o_thumb_up_alt' : 'o_thumb_up_off_alt'"
+              color="secondary"
+              size="md"
+              flat
+              dense
+              round
+              :ripple="false"
+              @click="likeReview(review)"
+            />
+            <q-icon v-else name="o_thumb_up_off_alt" color="secondary" size="24px" />
+            {{ review.likes === 1 ? review.likes : review.likes }}
+          </div>
+          <div v-if="review.replies > 0">
+            <q-btn
+              class="review-likes-comments"
+              flat
+              dense
+              no-caps
+              :ripple="false"
+              @click="getReplies(review)"
+            >
+              <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
+              {{
+                review.replies === 1 ? review.replies : review.replies
+              }}
+              <q-icon
+                :class="reviewReplies[review.id]?.show ? 'expand-less' : 'expand-more'"
+                name="o_expand_less"
+                size="xs"
+                color="white"
+              />
+            </q-btn>
+          </div>
+          <div v-else>
+            <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
+            {{ `${review.replies} replies` }}
+          </div>
+        </div>
+        <div v-if="formatReviews(review.comment).length > 400" class="review-bubble q-pa-md">
+          {{ reviewSeeMore[review.id] === true ? formatReviews(review.comment) : truncateReviewCard(formatReviews(review.comment), 400) }}
+          <button
+            role="link"
+            @click="toggleActive(review)"
+          >
+            {{ reviewSeeMore[review.id] === true ? 'Read less' : 'Read more' }}
+          </button>
+        </div>
+        <div v-else class="review-bubble q-pa-md">
+          {{ formatReviews(review.comment) }}
+        </div>
+        <Reviews
+          v-if="reviewReplies[review.id]?.show"
+          reply
+          :reviews="reviewReplies[review.id]?.replies"
+          class="review-reply"
+        />
+        <div class="text-right">
+          <q-btn
+            v-if="filteredReviews.length > 2"
+            color="secondary"
+            outline
+            no-caps
+            size="md"
+            :icon-right="reviewsMore ? 'o_expand_less' : 'o_expand_more'"
+            :label="reviewsMore ? 'See Less' : 'See More'"
+            @click="reviewsMore = !reviewsMore"
+          />
+        </div>
       </div>
-      <div v-else class="review-bubble q-pa-md">
-        {{ formatReviews(review.comment) }}
-      </div>
-      <Reviews
-        v-if="reviewReplies[review.id]?.show"
-        reply
-        :reviews="reviewReplies[review.id]?.replies"
-        class="review-reply"
-      />
-    </q-timeline-entry>
-    <div class="text-right">
-      <q-btn
-        v-if="filteredReviews.length > 2"
-        color="secondary"
-        outline
-        no-caps
-        size="md"
-        :icon-right="reviewsMore ? 'o_expand_less' : 'o_expand_more'"
-        :label="reviewsMore ? 'See Less' : 'See More'"
-        @click="reviewsMore = !reviewsMore"
-      />
     </div>
-  </q-timeline>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -271,10 +271,6 @@ sup {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-.likes-replies {
-  display: flex;
-  align-items: center;
 }
 .review-likes-comments {
   & .expand-more {
