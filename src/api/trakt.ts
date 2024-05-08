@@ -180,6 +180,7 @@ export async function getShowSummary(showId: number | string): Promise<Trakt.Sho
         'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
       },
     })
+    response.data.type = 'show';
     return response.data
   }
   catch {
@@ -198,6 +199,7 @@ export async function getMovieSummary(movieId: string) {
         'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
       },
     })
+    response.data.type = 'movie';
     return response.data
   }
   catch {
@@ -205,7 +207,7 @@ export async function getMovieSummary(movieId: string) {
   }
 }
 
-export async function getEpisodeSummary(showId, season, episode) {
+export async function getEpisodeSummary(showId: string, season: number, episode: number): Promise<Trakt.Episode> {
   const response = await axios({
     method: 'GET',
     url: `https://api.trakt.tv/shows/${showId}/seasons/${season}/episodes/${episode}?extended=full`,
@@ -215,6 +217,7 @@ export async function getEpisodeSummary(showId, season, episode) {
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
+  response.data.type = 'episode'
   return response.data
 }
 
@@ -231,7 +234,7 @@ export async function getSeasonSummary(slug: string, season: number) {
   return response.data.find((item: Trakt.Episode) => item.number === season)
 }
 
-export async function getEpisodeRating(showId, season, episode) {
+export async function getEpisodeRating(showId: string, season: number, episode: number) {
   try {
     const response = await axios({
       method: 'GET',
@@ -262,7 +265,7 @@ export async function getShowRating(showId: string) {
   return response.data.rating.toFixed(1)
 }
 
-export async function getMovieRating(movieId) {
+export async function getMovieRating(movieId: string) {
   const response = await axios({
     method: 'GET',
     url: `https://api.trakt.tv/movies/${movieId}/ratings`,
@@ -302,7 +305,7 @@ export async function getMyEpisodeRatings(page?: number) {
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  const ratings: Ratings = {
+  const ratings: Trakt.Ratings = {
     lastModified: response.headers['last-modified']!,
     total: response.headers['x-pagination-item-count']
       ? response.headers['x-pagination-item-count']
@@ -313,7 +316,7 @@ export async function getMyEpisodeRatings(page?: number) {
 }
 
 export async function getMySeasonRatings(page?: number) {
-  const uName = JSON.parse(localStorage.getItem('trakt-vue-user'))?.user.username
+  const uName = JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user.username
   const url = page
     ? `https://api.trakt.tv/users/${uName}/ratings/seasons?limit=10&page=${page}`
     : `https://api.trakt.tv/users/${uName}/ratings/seasons`
@@ -326,7 +329,7 @@ export async function getMySeasonRatings(page?: number) {
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  const ratings: Ratings = {
+  const ratings: Trakt.Ratings = {
     lastModified: response.headers['last-modified']!,
     total: response.headers['x-pagination-item-count']
       ? response.headers['x-pagination-item-count']
@@ -392,7 +395,7 @@ export async function getMyLikes(page?: number) {
     url,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${JSON.parse(localStorage.getItem('trakt-vue-token')).access_token}`,
+      'Authorization': `Bearer ${JSON.parse(localStorage.getItem('trakt-vue-token')!).access_token}`,
       'trakt-api-version': '2',
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
@@ -401,16 +404,15 @@ export async function getMyLikes(page?: number) {
   return likes
 }
 
-export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, mType: string, reply = false) {
+export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Season | Trakt.Movie, reply = false) {
   let url
-  console.log(mType)
   if (reply)
     url = `https://api.trakt.tv/comments/${item}/replies`
-  else if (mType === 'episode')
+  else if (item.type === 'episode')
     url = `https://api.trakt.tv/shows/${item.slug}/seasons/${item.season}/episodes/${item.number}/comments/likes`
-  else if (mType === 'season')
+  else if (item.type === 'season')
     url = `https://api.trakt.tv/shows/${item.ids.slug}/seasons/${item.season}/comments/likes`
-  else if (mType === 'show')
+  else if (item.type === 'show')
     url = `https://api.trakt.tv/shows/${item.ids.trakt}/comments/likes`
   else
     url = `https://api.trakt.tv/movies/${item.ids.trakt}/comments/likes`
@@ -423,7 +425,6 @@ export async function getComments(item: Trakt.Show | Trakt.Episode | Trakt.Seaso
       'trakt-api-key': '8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3',
     },
   })
-  console.log(response)
   const returnVal = await Promise.all(
     response.data.map(async (comment: Trakt.Comment) => {
       try {
@@ -491,7 +492,7 @@ export async function getMyWatchedMovies() {
 }
 
 export async function getIdLookupTmdb(id: number, mType: string | null = null): Promise<{ ids: Trakt.Ids | null }> {
-  const mediaType = mType === 'tv' ? 'show' : 'movie'
+  const mediaType = mType === 'tv' ? 'show' : mType;
   const response = await axios({
     method: 'GET',
     url: `https://api.trakt.tv/search/tmdb/${id}${mType !== null ? `?type=${mediaType}` : ''}`,

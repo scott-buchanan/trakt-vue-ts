@@ -1,12 +1,11 @@
 /// <reference types="vitest" />
 
-import path from 'path'
-import { defineConfig } from 'vite'
-import Vue from '@vitejs/plugin-vue'
-import Components from 'unplugin-vue-components/vite'
-import AutoImport from 'unplugin-auto-import/vite'
-import Unocss from 'unocss/vite'
-import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
+import path from "path";
+import { defineConfig } from "vite";
+import Vue from "@vitejs/plugin-vue";
+import Components from "unplugin-vue-components/vite";
+import AutoImport from "unplugin-auto-import/vite";
+import { quasar, transformAssetUrls } from "@quasar/vite-plugin";
 
 export default defineConfig({
   css: {
@@ -14,13 +13,18 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '~/': `${path.resolve(__dirname, 'src')}/`,
+      "~/": `${path.resolve(__dirname, "src")}/`,
     },
   },
   plugins: [
     Vue({
       reactivityTransform: true,
-      template: { transformAssetUrls },
+      template: {
+        transformAssetUrls,
+        compilerOptions: {
+          isCustomElement: (tag) => ["iconify-icon"].includes(tag),
+        },
+      },
     }),
 
     // https://github.com/hannoeru/vite-plugin-pages
@@ -35,12 +39,7 @@ export default defineConfig({
 
     // https://github.com/antfu/unplugin-auto-import
     AutoImport({
-      imports: [
-        'vue',
-        'vue/macros',
-        'vue-router',
-        '@vueuse/core',
-      ],
+      imports: ["vue", "vue/macros", "vue-router", "@vueuse/core"],
       dts: true,
       // dirs: [
       //   './src/composables',
@@ -52,18 +51,13 @@ export default defineConfig({
     Components({
       dts: true,
     }),
-
-    // https://github.com/antfu/unocss
-    // see unocss.config.ts for config
-    Unocss(),
-
     quasar({
-      sassVariables: 'src/quasar-variables.scss',
+      sassVariables: "src/quasar-variables.scss",
     }),
   ],
 
   // https://github.com/vitest-dev/vitest
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
   },
-})
+});

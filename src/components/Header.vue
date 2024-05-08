@@ -1,380 +1,316 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
-import dayjs from 'dayjs'
-import { useQuasar } from 'quasar'
-import type { Filter } from '~/store/models'
-import type { autocompleteResult } from '~/types/header'
-import fallbackPoster from '~/assets/fallback-tv.jpg'
-import traktIcon from '~/assets/trakt-icon-red.svg'
-import defaultImage from '~/assets/drawer-image-1.jpg'
+import type { Ref } from "vue";
+import type { Filter } from "~/store/models";
+import type { autocompleteResult } from "~/types/header";
+import type Tmdb from "~/api/tmdb.types";
 
+import dayjs from "dayjs";
 // store
-import { useStore } from '~/store/index'
-
+import { useStore } from "~/store/index";
 // api
-import { getSearchResults } from '~/api/tmdb'
+import { getSearchResults } from "~/api/tmdb";
+// assets
+import fallbackPoster from "~/assets/fallback-tv.jpg";
+import defaultImage from "~/assets/drawer-image-1.jpg";
 
 // data
-const $q = useQuasar()
-const router = useRouter()
-const store = useStore()
-const autocompleteApiResults: Ref<Array<autocompleteResult>> = ref([])
-const searchHasFocus = ref(false)
-const searchTypedValue: Ref<string> | Ref<null> | Ref<number> = ref('')
-const menuVisible = ref(store.menuVisible)
-const { ready: autocompleteReady, start: autocompleteStart, stop: autocompleteStop } = useTimeout(0, { controls: true })
+const router = useRouter();
+const store = useStore();
 
+const autocompleteApiResults: Ref<Array<autocompleteResult>> = ref([]);
+const searchTypedValue: Ref<string> = ref("");
+const selectFilterModel: Ref<Filter> = ref(store.filterOptions.show[0]);
+const showMobileFilterMenu: Ref<boolean> = ref(false);
+const showMenu: Ref<boolean> = ref(false);
+
+// subscribe to store updates
 store.$subscribe((mutated, state) => {
-  menuVisible.value = state.menuVisible
-})
+  selectFilterModel.value = state.filter;
+});
 
 // computed
-const selectFilterModel = computed(() => store.filter.label ? store.filter.label : 'Make a selection')
-const selectFilterLabel = computed(() => {
-  if (store.filter.label)
-    return store.filterType === 'movie' ? 'Movies' : 'TV'
-
-  return 'Filter'
-})
-const selectFilterOptions = computed(() => {
-  const arrOptions: Array<object> = []
-  Object.entries(store.filterOptions).forEach((filter) => {
-    filter[1].forEach((item, index) => {
-      const header: { filter: string | null; isFirst: boolean | null } = { filter: null, isFirst: null }
-      header.filter = filter[0] === 'movie' ? 'Movies' : 'TV'
-      if (index === 0)
-        header.isFirst = true
-
-      if (!store.myInfo) {
-        if (!item.auth)
-          arrOptions.push({ ...header, ...item })
-      }
-      else {
-        arrOptions.push({ ...header, ...item })
-      }
-    })
-  })
-  return arrOptions
-})
-const showMenu = computed(() => {
-  return searchHasFocus.value && menuVisible && autocompleteApiResults.value.length > 0
-})
 const backgroundStyle = computed(() => {
-  if ($q.screen.gt.xs === false) {
-    if (store.myInfo?.account.cover_image) {
-      return {
-        backgroundImage: `${backgroundGradient()} url(${
-              store.myInfo?.account.cover_image
-            }.webp)`,
-      }
-    }
+  if (store.myInfo?.account.cover_image) {
     return {
-      backgroundImage: `${backgroundGradient()} url(${defaultImage})`,
-    }
+      backgroundImage: `${backgroundGradient()} url(${
+        store.myInfo?.account.cover_image
+      }.webp)`,
+    };
   }
-  return ''
-})
-
-// watch
-watch(autocompleteReady, async () => {
-  if (autocompleteReady.value === true)
-    await fireSearch()
-})
+  return {
+    backgroundImage: `${backgroundGradient()} url(${defaultImage})`,
+  };
+});
 
 // methods
-function handleMenuClick(item: Filter, filterType: string) {
-  store.updateLoading(false)
-  store.updateFilterType(filterType === 'Movies' ? 'movie' : 'show')
-  store.updatePage(1)
-  store.updateFilter(item)
-  router.push({
-    path: filterType === 'Movies' ? `/movie/${item.val}` : `/tv/${item.val}`,
-  })
-}
-function handleSearchBlur() {
-  if (!document.activeElement?.className.includes('autocomplete-item'))
-    searchHasFocus.value = false
-}
-async function preSearchCheck(value: string | number | null) {
-  if (typeof value === 'string') {
-    autocompleteStop()
-    searchTypedValue.value = value
-    if (value?.length > 1)
-      autocompleteStart()
-    else autocompleteApiResults.value = []
-  }
-}
-async function fireSearch() {
-  store.updateMenuVisible(true)
-  const results = await getSearchResults(searchTypedValue.value)
-  autocompleteApiResults.value = results.map((result) => {
-    const genres = store.genres[result.media_type].filter(genre => result.genre_ids.includes(genre.id)).map(g => g.name)
-    return {
-      ids: result.ids,
-      label: result.media_type === 'movie' ? result.title : result.name,
-      value: result.id,
-      type: result.media_type,
-      thumbnail: result.poster_path
-        ? `${store.imageUrls.images.base_url}${store.imageUrls.images.poster_sizes[0]}${result.poster_path}`
-        : fallbackPoster,
-      year: dayjs(
-        result.media_type === 'movie' ? result.release_date : result.first_air_date,
-      ).format('YYYY'),
-      genres,
-    }
-  }).slice(0, 10)
-}
-async function goToDetails(item: autocompleteResult) {
-  const mType = item.type === 'movie' ? 'movie' : 'show'
-  const urlTitle = item.ids.slug
-  const params = {
-    [mType]: urlTitle,
-  }
+async function dropSearch() {
+  autocompleteApiResults.value = (
+    await getSearchResults(searchTypedValue.value)
+  )
+    .map((result: any) => {
+      showMenu.value = true;
 
-  searchTypedValue.value = ''
-  autocompleteApiResults.value = []
+      // if result is a person
+      if (result.media_type === "person") {
+        return {
+          ...result,
+          label: result.name,
+          thumbnail: result.profile_path
+            ? `${store.tmdbConfig?.images.secure_base_url}${store.tmdbConfig?.images.poster_sizes[0]}${result.profile_path}`
+            : fallbackPoster,
+        };
+      } else {
+        // take genre ids from show/movie and map them to store state data
+        console.log(store.genres);
+        const genres: string[] = store.genres[
+          result.media_type === "movie" ? "movie" : "tv"
+        ]
+          .filter((genre: Tmdb.Genre) => result.genre_ids.includes(genre.id))
+          .map((g: Tmdb.Genre) => g.name);
 
-  if (mType === 'show' && item.episode) {
-    params.season = item.episode.season
-    params.episode = item.episode.number
-    router.push({
-      path: `/show/${urlTitle}/season/${params.season}/episode/${params.episode}`,
-      params,
+        return {
+          ...result,
+          label: result.media_type === "movie" ? result.title : result.name,
+          thumbnail: result.poster_path
+            ? `${store.tmdbConfig?.images.secure_base_url}${store.tmdbConfig?.images.poster_sizes[0]}${result.poster_path}`
+            : fallbackPoster,
+          year: dayjs(
+            result.media_type === "movie"
+              ? result.release_date
+              : result.first_air_date,
+          ).format("YYYY"),
+          genres,
+        };
+      }
     })
-  }
-  else if (mType === 'show') {
-    router.push({
-      path: `/show/${urlTitle}`,
-      params,
-    })
-  }
-  else {
-    router.push({ name: 'movie-details', params: { movie: item.ids.slug } })
-  }
+    .slice(0, 10);
 }
-function goSearch(event: Event | null = null) {
-  if (searchTypedValue.value?.length > 0) {
-    if (!event || (event as KeyboardEvent).key?.toLowerCase() === 'enter' || event.type === 'click') {
-      store.updateMenuVisible(false)
-      const searchTerm = searchTypedValue.value
-      searchTypedValue.value = ''
-      autocompleteApiResults.value = []
-      router.push({ name: 'search', params: { term: searchTerm } })
+function goToDetails(item: autocompleteResult) {
+  if (item.media_type === "person") {
+    window.open(`https://imdb.com/name/${item.ids.imdb}`, "_blank");
+    return;
+  } else {
+    // clear top search value
+    searchTypedValue.value = "";
+    autocompleteApiResults.value = [];
+
+    if (item.media_type === "tv") {
+      router.push({
+        name: "show-details",
+        params: {
+          show: item.ids.slug,
+        },
+      });
+    } else {
+      router.push({ name: "movie-details", params: { movie: item.ids.slug } });
     }
   }
+}
+function searchFocus() {
+  showMenu.value = autocompleteApiResults.value.length > 0;
+}
+function searchBlur() {
+  showMenu.value = false;
+}
+function searchSubmit(e: Event) {
+  if (searchTypedValue.value.length > 1) {
+    router.push({ name: "search", params: { term: searchTypedValue.value } });
+  }
+  e.preventDefault();
 }
 function goToLogin() {
-  window.location.href
-        = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&redirect_uri=http://localhost:8080'
+  window.location.href =
+    "https://trakt.tv/oauth/authorize?response_type=code&client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&redirect_uri=http://localhost:8080";
 }
 function logout() {
-  localStorage.clear()
-  store.reset()
-  router.push('/tv/trending')
+  localStorage.clear();
+  store.reset();
+  router.push("/tv/trending");
 }
 function backgroundGradient() {
   return `linear-gradient(to top right, rgba(0,0,0,.8), rgba(0,0,0,.5) 70%, rgba(0,0,0,.3)),
          linear-gradient(to top      , rgba(0,0,0,.5), rgba(0,0,0,.2) 70%, rgba(0,0,0,0)),
-         linear-gradient(to right    , rgba(0,0,0,.5), rgba(0,0,0,.2) 70%, rgba(0,0,0,0)),`
+         linear-gradient(to right    , rgba(0,0,0,.5), rgba(0,0,0,.2) 70%, rgba(0,0,0,0)),`;
+}
+function handleClickFilterDropdown(e: Event) {
+  showMobileFilterMenu.value = !showMobileFilterMenu.value;
+  e.preventDefault();
+}
+function handleClickFilterItem(e: Event, key: string, option: Filter) {
+  store.updateLoading(false);
+  store.updateFilterType(key);
+  store.updatePage(1);
+  store.updateFilter(option);
+  router.push({
+    path: key === "movie" ? `/movie/${option.val}` : `/tv/${option.val}`,
+  });
+  e.preventDefault();
 }
 </script>
 
 <template>
-  <q-header reveal height-hint="98" class="header q-pa-sm">
-    <div
-      class="header-back row items-center justify-between q-pa-sm"
-      :style="backgroundStyle"
-    >
-      <q-input
-        ref="searchInput"
-        v-model="searchTypedValue"
-        color="secondary"
-        label-color="white"
-        label="Search"
-        outlined
-        dense
-        dark
-        class="col-xs-grow col-xs-shrink col-sm-6 q-mr-sm" :class="[
-          { 'order-last full-width': $q.screen.gt.xs === false },
-          $q.screen.gt.xs === false ? 'q-mt-sm' : 'aq-my-sm',
-        ]"
-        clearable
-        @update:model-value="preSearchCheck"
-        @focus="searchHasFocus = true"
-        @blur="handleSearchBlur"
-        @clear="autocompleteApiResults = []"
-        @keydown="goSearch"
+  <header class="pb-0 p-2 bg-transparent">
+    <div class="relative flex p-2 bg-black/50 rounded-md h-16">
+      <div
+        class="absolute inset-x-0 inset-y-0 z-0 sm:hidden bg-cover bg-center rounded-md"
+        :style="backgroundStyle"
+      />
+      <form
+        class="flex flex-col sm:flex-row grow items-center justify-between z-10"
+        @submit="searchSubmit"
       >
-        <template #append>
-          <button @click="goSearch">
-            <q-icon name="o_search" />
-          </button>
-        </template>
-      </q-input>
-      <q-menu
-        :model-value="showMenu"
-        :target="$refs.searchInput as string"
-        no-parent-event
-        no-focus
-        :offset="[0, 5]"
-        max-height="90vh"
-        fit
-        persistent
-        no-refocus
-        class="autocomplete-menu"
-        transition-duration="80"
-      >
-        <q-list>
-          <q-item
-            v-for="result in autocompleteApiResults"
-            :key="result.value"
-            v-close-popup
-            class="autocomplete-item"
-            clickable
-            @click="goToDetails(result)"
+        <div class="flex flex-col w-full h-full sm:w-auto mb-2 sm:mb-0">
+          <div class="flex border h-full border-white rounded-md">
+            <input
+              name="txtSearch"
+              v-model="searchTypedValue"
+              :class="['p-3 bg-transparent border-0 focus:ring-0 grow h-full']"
+              @focus="searchFocus"
+              @blur="searchBlur"
+              @keydown="dropSearch"
+            />
+            <button class="flex items-center pr-2">
+              <iconify-icon icon="mdi:search" height="2em" />
+            </button>
+          </div>
+          <div class="relative">
+            <Transition name="slide-up">
+              <div
+                v-if="showMenu"
+                class="block fixed mt-1 max-h-fit z-50 rounded-md overflow-hidden"
+              >
+                <ul>
+                  <li
+                    v-for="result in autocompleteApiResults"
+                    :key="JSON.stringify(result)"
+                    class="flex h-32 bg-gray-900 hover:bg-gray-800 border-b border-black last:border-0 p-3"
+                    role="button"
+                    @click="goToDetails(result)"
+                  >
+                    <img
+                      class="object-cover object-center max-h-full aspect-[2/3]"
+                      :src="result.thumbnail"
+                      aria-hidden="true"
+                    />
+                    <div class="flex flex-col justify-center pl-3">
+                      <div>
+                        <iconify-icon
+                          :icon="
+                            result.media_type === 'movie'
+                              ? 'icon-park-outline:movie'
+                              : 'wpf:retro-tv'
+                          "
+                          class="mr-1"
+                        />
+                        <b>{{ result.label }}</b>
+                      </div>
+                      <div v-if="result.year">{{ result.year }}</div>
+                      <div>
+                        <small v-if="result.known_for">
+                          <template v-for="(item, index) in result.known_for">
+                            {{ item.original_title || item.original_name
+                            }}<template
+                              v-if="index !== result.known_for.length - 1"
+                              >,
+                            </template>
+                          </template>
+                        </small>
+                        <small
+                          v-else
+                          v-for="(genre, index) in result.genres"
+                          :key="genre"
+                          class="text-capitalize"
+                        >
+                          {{ genre
+                          }}<template v-if="index !== result.genres.length - 1"
+                            >,
+                          </template>
+                        </small>
+                      </div>
+                    </div>
+                  </li>
+                  <li
+                    class="px-3 py-5 bg-gray-900 hover:bg-gray-800"
+                    role="button"
+                    type="submit"
+                  >
+                    See all results for "{{ searchTypedValue }}"
+                  </li>
+                </ul>
+              </div>
+            </Transition>
+          </div>
+        </div>
+
+        <!-- if mobile show dropdown for filter -->
+        <div class="sm:hidden w-full">
+          <button
+            aria-label="Filter"
+            class="rounded-md border-solid border border-white p-3 w-full"
+            @click="handleClickFilterDropdown"
+            @blur="showMobileFilterMenu = false"
           >
-            <q-item-section
-              :style="{
-                height: '90px',
-              }"
-              class="q-pl-sm"
-              thumbnail
-            >
-              <img class="full-height" :src="result.thumbnail" alt="">
-            </q-item-section>
-            <q-item-section>
-              <div class="q-mb-xs flex items-center">
-                <b>{{ result.label }}</b>
-                <q-chip
-                  :label="result.type === 'movie' ? 'Movie' : 'TV Show'"
-                  square
-                  color="white"
-                  dense
-                  size="sm"
-                  :icon="result.type === 'movie' ? 'o_theaters' : 'o_tv'"
-                  class="q-ml-sm"
+            <div class="flex no-wrap justify-between items-center">
+              <div>{{ selectFilterModel.label }}</div>
+              <div>
+                <iconify-icon
+                  icon="bi:caret-down-fill"
+                  width="1.2em"
+                  height="1.2em"
+                  class="inline-block vertical-middle transition-all"
+                  :class="{
+                    'rotate-180 duration-300 ease-in-out': showMobileFilterMenu,
+                  }"
                 />
               </div>
-              <div>{{ result.year }}</div>
-              <div>
-                <template v-for="(genre, index) in result.genres" :key="genre">
-                  <small class="text-capitalize">
-                    {{ genre }}<template v-if="index !== result.genres.length - 1">, </template>
-                  </small>
+            </div>
+          </button>
+          <div class="relative w-full">
+            <Transition name="slide-up">
+              <ul
+                v-if="showMobileFilterMenu"
+                class="absolute w-full mt-1 top-0 left-0 bg-black/80 rounded-md z-50 border border-dark-list"
+              >
+                <template v-for="(filter, key) in store.filterOptions">
+                  <li class="text-dark-list py-2 px-3 uppercase">
+                    {{ key === "movie" ? "movies" : "tv shows" }}
+                  </li>
+                  <li
+                    v-for="option in filter"
+                    :key="JSON.stringify(option)"
+                    class="p-1 hover:bg-slate-200/10"
+                    role="button"
+                    @click="(e) => handleClickFilterItem(e, key, option)"
+                  >
+                    <div class="p-2">{{ option.label }}</div>
+                  </li>
                 </template>
-              </div>
-            </q-item-section>
-          </q-item>
-          <q-item
-            v-close-popup
-            class="autocomplete-item"
-            clickable
-            @click="goSearch()"
-          >
-            See all results for "{{ searchTypedValue }}"
-          </q-item>
-        </q-list>
-      </q-menu>
-      <q-select
-        v-if="$q.screen.gt.xs === false"
-        v-model="selectFilterModel"
-        :options="selectFilterOptions"
-        :label="selectFilterLabel"
-        color="secondary"
-        label-color="white"
-        class="filter-select"
-        dense
-        dark
-        outlined
-      >
-        <template #option="data">
-          <q-list>
-            <q-item-label v-if="data.opt.isFirst" header>
-              {{ data.opt.filter }}
-            </q-item-label>
-            <q-item clickable @click="handleMenuClick(data.opt, data.opt.filter)">
-              <span class="q-ml-md">{{ data.opt.label }}</span>
-            </q-item>
-          </q-list>
-        </template>
-      </q-select>
-      <q-btn-dropdown v-if="store.myInfo" flat no-caps dense :ripple="false" class="col-auto">
-        <template #label>
-          <q-avatar size="md">
-            <img :src="store.myInfo?.user.images.avatar.full" :alt="store.myInfo?.user.name" referrerpolicy="no-referrer">
-          </q-avatar>
-        </template>
-        <q-list class="bg-grey-10">
-          <q-item v-close-popup clickable @click="logout">
-            <q-item-section>
-              <q-item-label>Logout</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-icon name="o_logout" color="white" />
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-      <q-btn
-        v-else
-        class="login-button"
-        text-color="white"
-        outline
-        :ripple="false"
-        @click="goToLogin"
-      >
-        <q-avatar size="20px">
-          <img :src="traktIcon" alt="">
-        </q-avatar>
-        <div class="q-pl-sm">
-          Login
+              </ul>
+            </Transition>
+          </div>
         </div>
-      </q-btn>
+      </form>
+
+      <div class="self-center flex h-full">
+        <Button v-if="store.myInfo" @click="logout">
+          <iconify-icon
+            icon="ic:round-logout"
+            width="1.5em"
+            height="1.5em"
+            class="mr-2"
+          />
+          <div>logout</div>
+        </Button>
+        <Button v-else @click="goToLogin">
+          <iconify-icon
+            icon="simple-icons:trakt"
+            width="1.5em"
+            height="1.5em"
+            class="text-trakt mr-2"
+          />
+          <div>login</div>
+        </Button>
+      </div>
     </div>
-  </q-header>
+  </header>
 </template>
-
-<style lang="scss" scoped>
-@import '~/quasar-variables.scss';
-
-.header {
-  background: transparent;
-  padding-bottom: 0;
-  & > div {
-    @include background-style;
-  }
-  & .header-back {
-    background-size: cover;
-    background-position: center center;
-  }
-  & .login-button {
-    height: 40px;
-    &::before {
-      border-color: rgba(255, 255, 255, 0.6);
-    }
-  }
-}
-.scroll-area {
-  width: 100%;
-  height: 90vh;
-}
-.autocomplete-item {
-  background-color: #1f1f1f;
-  border-bottom: 1px solid $accent;
-  font-size: 1.2em;
-  &:hover {
-    background-color: #313131;
-  }
-  &:last-child {
-    border: none;
-  }
-  & :first-child {
-    width: auto;
-    padding: 0;
-  }
-  & img {
-    object-fit: cover;
-    aspect-ratio: 1/1.5;
-  }
-}
-</style>

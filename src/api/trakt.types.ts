@@ -20,7 +20,7 @@ export namespace Trakt {
   }
 
   export interface Ids {
-    trakt: number
+    trakt: string
     slug: string
     tmdb: number
     imdb: string
@@ -79,15 +79,19 @@ export namespace Trakt {
 
   export interface Episode {
     ids: Ids
-    title: string
-    season: string
+    title?: string
+    season: number
     number: number
     year?: number
+    slug?: string
+    type?: string
   }
 
   export interface Season {
     ids: Ids
     number: number
+    slug: string
+    type: string
   }
 
   export interface Show {
@@ -95,16 +99,20 @@ export namespace Trakt {
     title: string
     year: number
     runtime: number
+    slug: string
+    type: string
   }
 
   export interface Movie {
     ids: Ids
     title: string
     year: number
+    slug: string
+    type: string
   }
 
   export interface WatchedProgress {
-    aired?: number
+    aired: number
     completed?: number
     last_watched_at: string
     seasons?: {
@@ -118,6 +126,7 @@ export namespace Trakt {
       number: number
     }[]
     type: MediaType
+    plays: number
   }
 }
 

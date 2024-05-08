@@ -1,404 +1,406 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
-import { YoutubeIframe } from '@vue-youtube/component'
-import axios from 'axios'
-import dayjs from 'dayjs'
-import { useQuasar } from 'quasar'
-
+import type { Ref } from "vue";
+import { YoutubeIframe } from "@vue-youtube/component";
+import axios from "axios";
+import dayjs from "dayjs";
+import { useQuasar } from "quasar";
 // store
-import { useStore } from '~/store/index'
-
+import { useStore } from "~/store/index";
 // components
-import Actors from '~/components/Actors.vue'
-import Rating from '~/components/Rating.vue'
-import Reviews from '~/components/Reviews.vue'
-
+import Actors from "./Actors.vue";
+import Rating from "./Rating.vue";
+import Reviews from "./Reviews.vue";
+import DarkList from "./DarkList.vue";
 // assets
-import trailerErrorBack from '~/assets/trailer-error.jpg'
-import imdb from '~/assets/imdb_tall.png'
-import trakt from '~/assets/trakt-icon-red.svg'
-import tmdb from '~/assets/tmdb_tall.svg'
-
+import trailerErrorBack from "~/assets/trailer-error.jpg";
+import imdb from "~/assets/imdb_tall.png";
+import trakt from "~/assets/trakt-icon-red.svg";
+import tmdb from "~/assets/tmdb_tall.svg";
 // types
-import type Trakt from '~/api/trakt.types'
-import type { TechnicalDetails } from '~/types/types'
-import type { EpisodeDetails, MovieDetails, SeasonDetails, ShowDetails } from '~/api/combinedCall.types'
+import type Trakt from "~/api/trakt.types";
+import type { TechnicalDetails } from "~/types/types";
+import type {
+  EpisodeDetails,
+  MovieDetails,
+  SeasonDetails,
+  ShowDetails,
+} from "~/api/combinedCall.types";
+import Badge from "./Badge.vue";
 
 const props = defineProps<{
-  info: ShowDetails | EpisodeDetails | SeasonDetails | MovieDetails
-  title: string
-  subTitle?: string | number
-  poster: string
-  technicalDetails: TechnicalDetails[]
-  linkIds: Trakt.Ids
-  type?: string
-}>()
+  info: ShowDetails | EpisodeDetails | SeasonDetails | MovieDetails;
+  title: string;
+  year: number;
+  poster: string;
+  technicalDetails: TechnicalDetails[];
+  linkIds: Trakt.Ids;
+  type?: string;
+}>();
 
 // data
-const $q = useQuasar()
-const store = useStore()
-const user: Ref<Trakt.User> = ref(JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user)
-const watchedProgress: Ref<number> = ref(0)
-const trailerUrl: Ref<string> = ref(null)
-const showTrailer: Ref<boolean> = ref(false)
-const trailerVisible: Ref<boolean> = ref(false)
-const trailerHasError: Ref<boolean> = ref(false)
-const seeMoreDetails: Ref<boolean> = ref(false)
+const $q = useQuasar();
+const store = useStore();
+const user: Ref<Trakt.User> = ref(
+  JSON.parse(localStorage.getItem("trakt-vue-user")!)?.user,
+);
+const watchedProgress: Ref<number> = ref(0);
+const trailerUrl: Ref<string | null> = ref(null);
+const showTrailer: Ref<boolean> = ref(false);
+const trailerVisible: Ref<boolean> = ref(false);
+const trailerHasError: Ref<boolean> = ref(false);
+const seeMoreDetails: Ref<boolean> = ref(false);
 
 // computed
 const links = computed(() => {
-  const linkSeason = 'season' in props.info
-  const traktType = props.info.type === 'episode' ? 'trakt' : 'slug'
+  const linkSeason = "season" in props.info;
+  const traktType = props.info.type === "episode" ? "trakt" : "slug";
   const tmdb = () => {
-    let strTmdb = `https://themoviedb.org/${props.info.type === 'movie' ? props.info.type : 'tv'}/${props.linkIds.tmdb}`
-    if ('season' in props.info && 'number' in props.info) {
+    let strTmdb = `https://themoviedb.org/${
+      props.info.type === "movie" ? props.info.type : "tv"
+    }/${props.linkIds.tmdb}`;
+    if ("season" in props.info && "number" in props.info) {
       // episode
-      strTmdb += props.info.season ? `/season/${props.info.season}` : ''
-      strTmdb += props.info.type === 'episode' ? `/episode/${props.info.number}` : ''
-    }
-    else if ('number' in props.info) {
+      strTmdb += props.info.season ? `/season/${props.info.season}` : "";
+      strTmdb +=
+        props.info.type === "episode" ? `/episode/${props.info.number}` : "";
+    } else if ("number" in props.info) {
       // season
-      strTmdb += props.info.number ? `/season/${props.info.number}` : ''
+      strTmdb += props.info.number ? `/season/${props.info.number}` : "";
     }
-    return strTmdb
-  }
+    return strTmdb;
+  };
   const trakt = () => {
-    let strTrakt = `https://trakt.tv/${props.info.type === 'movie' ? props.info.type : 'show'}s/${
-            props.linkIds.slug
-          }`
-    if ('season' in props.info && 'number' in props.info) {
+    let strTrakt = `https://trakt.tv/${
+      props.info.type === "movie" ? props.info.type : "show"
+    }s/${props.linkIds.slug}`;
+    if ("season" in props.info && "number" in props.info) {
       // episode
-      strTrakt += `/seasons/${props.info.season}`
-      strTrakt += `/episodes/${props.info.number}`
-    }
-    else if ('number' in props.info) {
+      strTrakt += `/seasons/${props.info.season}`;
+      strTrakt += `/episodes/${props.info.number}`;
+    } else if ("number" in props.info) {
       // season
-      strTrakt += `/seasons/${props.info.number}`
+      strTrakt += `/seasons/${props.info.number}`;
     }
-    return strTrakt
-  }
+    return strTrakt;
+  };
   return {
     imdb: {
-      label: 'IMDb',
+      label: "IMDb",
       value: `https://www.imdb.com/title/${props.linkIds.imdb}${
-            linkSeason ? `/episodes?season=${props.info.season}` : ''
-          }`,
+        linkSeason ? `/episodes?season=${props.info.season}` : ""
+      }`,
     },
     tmdb: {
-      label: 'TMDb',
+      label: "TMDb",
       value: tmdb(),
     },
     [traktType]: {
-      label: 'Trakt',
+      label: "Trakt",
       value: trakt(),
     },
-  }
-})
-const watchedPercent = computed(() => `${props.info.watched_progress?.completed} of ${props.info.watched_progress?.aired} episodes watched`)
+  };
+});
 const detailsBackground = computed(() => {
   return `linear-gradient(to top right, rgba(0,0,0,.8), rgba(0,0,0,.5) 70%, rgba(0,0,0,.3)),
               linear-gradient(to top      , rgba(0,0,0,.5), rgba(0,0,0,.2) 70%, rgba(0,0,0,0)),
               linear-gradient(to right    , rgba(0,0,0,.5), rgba(0,0,0,.2) 70%, rgba(0,0,0,0)),
-              url(${props.info?.backdrop.backdrop_lg})`
-})
-const technicalDetailsFiltered = computed(() => props.technicalDetails.filter(item => item.value))
-const isTrailerVisible = computed(() => trailerVisible.value)
+              url(${props.info?.backdrop.backdrop_lg})`;
+});
+const technicalDetailsFiltered = computed(() =>
+  props.technicalDetails.filter((item) => item.value),
+);
+const isTrailerVisible = computed(() => trailerVisible.value);
 const isReleased = computed(() => {
-  if (store.filterType === 'movie')
-    return props.info.tmdb_data.status.toLowerCase() === 'released'
-  else
-    return new Date(props.info.tmdb_data.first_air_date) < new Date()
-})
+  if (store.filterType === "movie")
+    return props.info.tmdb_data.status.toLowerCase() === "released";
+  else return new Date(props.info.tmdb_data.first_air_date) < new Date();
+});
 
 // methods
+function technicalDetails() {
+  console.log(props.technicalDetails.filter((item) => item.value));
+  return props.technicalDetails.filter((item) => item.value);
+}
+function watchedInfo() {
+  const arr = [];
+  const progress = props.info.watched_progress;
+  let watchedValue;
+
+  if (progress) {
+    // add number of episodes watched
+    if (progress.aired > 0 && progress.type === "show") {
+      watchedValue = `${progress.completed}/${progress.aired} episodes`;
+      arr.push({ label: "watched", value: watchedValue });
+    }
+    // add last watched date
+    if (progress?.last_watched_at) {
+      arr.push({
+        label: "last watch",
+        value: formattedDateTime(progress.last_watched_at),
+      });
+    }
+    // if movie, add number of plays
+    if (progress.type === "movie") {
+      arr.push({
+        label: "plays",
+        value: progress.plays,
+      });
+    }
+  }
+  return arr;
+}
 function formattedDateTime(wDate: string) {
-  return `${dayjs(wDate).format('MMM DD, YYYY')} at ${dayjs(wDate).format('h:mma')}`
+  return `${dayjs(wDate).format("MMM DD, YYYY")} at ${dayjs(wDate).format(
+    "h:mma",
+  )}`;
 }
-function truncateDetails(details) {
-  return seeMoreDetails.value ? details : details.split(',', 2).toString()
+function truncateDetails(details: string) {
+  return seeMoreDetails.value ? details : details.split(",", 2).toString();
 }
-function trailerReady(event: Event) {
-  event.target?.playVideo()
+function trailerReady(event: any) {
+  event.target?.playVideo();
   useTimeoutFn(() => {
-    trailerVisible.value = true
-  }, 500)
+    trailerVisible.value = true;
+  }, 500);
 }
 async function trailerError() {
   if (trailerUrl.value === props.info.tmdb_data.videos[0]?.key) {
-    console.log(process.env)
+    console.log(process.env);
     const newTrailer = await axios.get(
-          `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${process.env.YOUTUBE_API_KEY}`,
-    )
-    console.log(newTrailer)
+      `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${process.env.YOUTUBE_API_KEY}`,
+    );
+    console.log(newTrailer);
     if (newTrailer.status === 200) {
-      trailerUrl.value = newTrailer.data.items[0].id.videoId
-    }
-    else {
-      trailerVisible.value = true
-      trailerHasError.value = true
+      trailerUrl.value = newTrailer.data.items[0].id.videoId;
+    } else {
+      trailerVisible.value = true;
+      trailerHasError.value = true;
     }
   }
 }
 function closeTrailer() {
-  trailerVisible.value = false
-  trailerHasError.value = false
+  trailerVisible.value = false;
+  trailerHasError.value = false;
 }
 
 onMounted(() => {
-  store.updateMenuVisible(false)
-  store.updateFilter({ label: null, val: null, auth: null })
+  store.updateMenuVisible(false);
+  store.updateFilter({ label: null, val: null, auth: null });
 
-  if ('videos' in props.info.tmdb_data)
-    trailerUrl.value = props.info.tmdb_data.videos[0]?.key
+  if ("videos" in props.info.tmdb_data)
+    trailerUrl.value = props.info.tmdb_data.videos[0]?.key;
 
   // for animation purposes
-  if ('watched_progress' in props.info) {
+  if ("watched_progress" in props.info) {
     useTimeoutFn(() => {
       if (props.info.watched_progress) {
-        const wp = props.info.watched_progress
-        watchedProgress.value = wp.completed! / wp.aired!
+        const wp = props.info.watched_progress;
+        watchedProgress.value = wp.completed! / wp.aired!;
       }
-    }, 500)
+    }, 500);
   }
-})
+});
 </script>
 
 <template>
-  <div class="full-height q-pl-sm">
-    <div class="details-container q-pt-sm q-pr-sm q-pb-sm">
-      <div
-        class="background text-white"
-        :style="{
-          backgroundImage: detailsBackground,
-        }"
-      >
-        <div class="flex no-wrap full-height relative">
-          <div v-if="$q.screen.gt.md" class="poster q-py-md q-pl-md">
-            <router-link
-              v-if="props.type === 'episode'"
-              :to="{
-                path: `show/${info.show.ids.slug}/season/${props.info.season}`,
-              }"
+  <div class="details-container full-height q-pa-sm">
+    <div
+      class="background text-white"
+      :style="{
+        backgroundImage: detailsBackground,
+      }"
+    >
+      <div class="flex no-wrap full-height relative">
+        <div v-if="$q.screen.gt.md" class="poster q-py-md q-pl-md">
+          <router-link
+            v-if="props.type === 'episode'"
+            :to="{
+              path: `show/${info.show.ids.slug}/season/${props.info.season}`,
+            }"
+          >
+            <q-img class="poster-image" :src="poster" alt="" />
+          </router-link>
+          <q-img v-else class="poster-image" :src="props.poster" alt="" />
+        </div>
+        <q-scroll-area
+          class="scroll-area full-width full-height q-pa-md"
+          :thumb-style="{ opacity: '0.5' }"
+        >
+          <div class="flex" :class="{ 'no-wrap': $q.screen.gt.xs }">
+            <div
+              v-if="$q.screen.gt.md === false"
+              class="float-left q-pr-md q-pb-md"
             >
-              <q-img class="poster-image" :src="poster" alt="" />
-            </router-link>
-            <q-img v-else class="poster-image" :src="props.poster" alt="" />
-          </div>
-          <q-scroll-area class="scroll-area full-width full-height q-pa-md" :thumb-style="{ opacity: '0.5' }">
-            <div class="flex" :class="[{ 'no-wrap': $q.screen.gt.xs }]">
-              <div v-if="$q.screen.gt.md === false" class="float-left q-pr-md q-pb-md">
-                <router-link
-                  v-if="props.type === 'episode'"
-                  :to="{
-                    path: `/tv/show/${info.show.ids.slug}/season/${props.info.season}`,
-                  }"
-                >
-                  <q-img class="poster-small" width="20vw" :ratio="1 / 1.5" :src="props.poster" alt="" />
-                </router-link>
+              <router-link
+                v-if="props.type === 'episode'"
+                :to="{
+                  path: `/tv/show/${info.show.ids.slug}/season/${props.info.season}`,
+                }"
+              >
                 <q-img
-                  v-else
                   class="poster-small"
-                  width="16vw"
+                  width="20vw"
                   :ratio="1 / 1.5"
                   :src="props.poster"
                   alt=""
                 />
-              </div>
-              <!-- TITLES -->
-              <div class="break full-width">
-                <div class="q-mb-md">
-                  <router-link
-                    v-if="props.type === 'episode' || props.type === 'season'"
-                    :to="{
-                      path: `/tv/show/${info.show.ids.slug}`,
-                    }"
-                  >
-                    <q-img
-                      v-if="info.clear_logo && $q.screen.gt.xs"
-                      role="heading"
-                      aria-level="1"
-                      class="clear-logo"
-                      :src="info.clear_logo"
-                      :alt="title"
-                    />
-                    <h1 v-else>
-                      {{ title }}
-                    </h1>
-                  </router-link>
-                  <template v-else>
-                    <q-img
-                      v-if="info.clear_logo && $q.screen.gt.xs"
-                      role="heading"
-                      aria-level="1"
-                      class="clear-logo"
-                      :src="info.clear_logo"
-                      :alt="title"
-                    />
-                    <h1 v-else>
-                      {{ title }}
-                    </h1>
-                  </template>
-                </div>
-                <div v-if="subTitle" class="sub-title q-mt-sm">
-                  <div class="q-mb-md q-mr-sm">
-                    {{ subTitle }}
-                  </div>
-                  <div v-if="info.certification" class="certification q-mr-sm q-mb-md">
+              </router-link>
+              <q-img
+                v-else
+                class="poster-small"
+                width="16vw"
+                :ratio="1 / 1.5"
+                :src="props.poster"
+                alt=""
+              />
+            </div>
+
+            <!-- TITLES -->
+            <div class="w-full break-words">
+              <h1 class="flex">
+                <span class="mr-4">{{ title }}</span>
+                <span v-if="year" class="text-lg font-thin">{{ year }}</span>
+                <div class="text-lg">
+                  <span v-if="info.certification" class="text-primary">
                     {{ info.certification }}
-                  </div>
-                  <div v-if="info.tmdb_data?.tagline" class="tagline q-mb-md">
-                    - "{{ info.tmdb_data.tagline }}"
-                  </div>
-                </div>
-                <div v-if="info.tmdb_data?.genres" class="q-mb-md">
-                  <span v-for="genre in info.tmdb_data.genres" :key="genre.id" class="tags">
-                    <q-badge color="secondary" class="text-dark">
-                      {{ genre.name }}
-                    </q-badge>
                   </span>
                 </div>
-                <div class="flex q-mb-md items-center">
-                  <!-- LINKS -->
-                  <div class="info q-mr-sm">
-                    <span>Links: </span>
-                    <template v-for="(value, key) in linkIds" :key="key">
-                      <template v-if="links[key]">
-                        <a :href="links[key].value" target="blank" style="text-decoration: none">
-                          <q-badge color="secondary" text-color="black" class="q-mx-xs" outline>{{
-                            links[key].label
-                          }}</q-badge>
-                        </a>
-                      </template>
-                    </template>
+              </h1>
+
+              <!-- TAGLINE -->
+              <p v-if="info.tmdb_data?.tagline" class="tagline">
+                "{{ info.tmdb_data.tagline }}"
+              </p>
+
+              <div v-if="info.tmdb_data?.genres" class="q-mb-md">
+                <span
+                  v-for="genre in info.tmdb_data.genres"
+                  :key="genre.id"
+                  class="tags"
+                >
+                  <Badge :value="genre.name" />
+                </span>
+              </div>
+
+              <!-- RATINGS -->
+              <div class="flex">
+                <div v-if="isReleased" class="ratings">
+                  <div v-if="info.imdb_rating">
+                    <img :src="imdb" alt="IMDb" />
+                    <div>{{ info.imdb_rating }}</div>
                   </div>
-                  <div class="info">
-                    <template v-if="info.watched_progress?.aired > 0 && info.watched_progress?.type === 'show'">
-                      <span>watched:</span>
-                      <q-knob
-                        v-model="watchedProgress"
-                        readonly
-                        :max="1"
-                        show-value
-                        size="24px"
-                        :thickness="0.2"
-                        color="secondary"
-                        track-color="grey-8"
-                        class="text-white q-ml-sm"
-                      >
-                        <q-icon name="o_check" size="16px" color="positive" />
-                      </q-knob>
-                      <q-tooltip :delay="500">
-                        {{ watchedPercent }}
-                      </q-tooltip>
-                    </template>
-                    <template v-else-if="info.watched_progress?.last_watched_at">
-                      <span>watched:</span>
-                      <q-icon name="o_check_circle_outline" size="sm" color="positive" class="q-ml-sm" />
-                    </template>
+                  <div v-if="info.trakt_rating && info.trakt_rating !== '0.0'">
+                    <img :src="trakt" alt="Trakt" />
+                    <div>{{ info.trakt_rating }}</div>
+                  </div>
+                  <div v-if="info.tmdb_rating && info.tmdb_rating !== '0.0'">
+                    <img :src="tmdb" alt="The Movie DB" />
+                    <div>{{ info.tmdb_rating }}</div>
                   </div>
                 </div>
-                <div class="flex no-wrap q-mb-lg">
-                  <div class="flex info">
-                    <!-- WATCHED INFO -->
-                    <div v-if="info.watched_progress?.last_watched_at" class="flex info">
-                      <div>
-                        <span>last play:&nbsp;</span>
-                        {{ formattedDateTime(info.watched_progress.last_watched_at) }}
-                      </div>
-                      <div v-if="info.watched_progress?.type === 'movie'">
-                        <span>plays:&nbsp;</span>
-                        {{ info.watched_progress.plays }}
-                      </div>
-                    </div>
-                    <!-- TECHNICAL DETAILS -->
-                    <div
-                      v-for="item in technicalDetailsFiltered"
-                      :key="item.value"
-                      class="technical-details"
-                    >
-                      <template v-if="item.label !== 'production companies' && item.value">
-                        <span>{{ item.label }}: </span>{{ item.value }}
-                      </template>
-                      <template v-else-if="item.value">
-                        <span>{{ item.label }}: </span>{{ truncateDetails(item.value) }}
-                        <a
-                          v-if="item.value.split(',').length > 2"
-                          href="javascript:"
-                          @click="seeMoreDetails = !seeMoreDetails"
-                        >{{ seeMoreDetails ? 'See less' : 'See more' }}</a>
-                      </template>
-                    </div>
+                <div class="flex q-mb-lg">
+                  <div v-if="isReleased && user" class="q-mr-sm">
+                    <Rating
+                      :item="info"
+                      :type="props.type"
+                      :rating="info.my_rating"
+                    />
                   </div>
-                </div>
-                <div class="flex">
-                  <!-- RATINGS -->
-                  <div v-if="isReleased" class="ratings">
-                    <div v-if="info.imdb_rating">
-                      <img :src="imdb" alt="IMDb">
-                      <div>{{ info.imdb_rating }}</div>
-                    </div>
-                    <div v-if="info.trakt_rating && info.trakt_rating !== '0.0'">
-                      <img :src="trakt" alt="Trakt">
-                      <div>{{ info.trakt_rating }}</div>
-                    </div>
-                    <div v-if="info.tmdb_rating && info.tmdb_rating !== '0.0'">
-                      <img :src="tmdb" alt="The Movie DB">
-                      <div>{{ info.tmdb_rating }}</div>
-                    </div>
-                  </div>
-                  <div class="flex q-mb-lg">
-                    <div v-if="isReleased && user" class="q-mr-sm">
-                      <Rating :item="info" :type="props.type" :rating="info.my_rating" />
-                    </div>
-                    <div v-if="trailerUrl">
-                      <q-btn
-                        icon="o_slideshow"
-                        label="Trailer"
-                        color="secondary"
-                        outline
-                        @click="showTrailer = true"
-                      />
-                    </div>
+                  <div v-if="trailerUrl">
+                    <q-btn
+                      icon="o_slideshow"
+                      label="Trailer"
+                      color="secondary"
+                      outline
+                      @click="showTrailer = true"
+                    />
                   </div>
                 </div>
               </div>
+
+              <!-- LINKS -->
+              <div class="info q-mb-lg">
+                <span class="mr-2">Links: </span>
+                <template v-for="(value, key) in linkIds" :key="key">
+                  <template v-if="links[key]">
+                    <a
+                      :href="links[key].value"
+                      target="blank"
+                      style="text-decoration: none"
+                      class="mr-3"
+                    >
+                      <Badge :value="links[key].label" outline />
+                    </a>
+                  </template>
+                </template>
+              </div>
+
+              <!-- WATCHED INFO -->
+              <DarkList :items="watchedInfo()" stacked />
+
+              <!-- TECHNICAL DETAILS -->
+              <DarkList :items="technicalDetails()" />
             </div>
-            <!-- OVERVIEW -->
-            <p v-if="info.tmdb_data.overview" class="q-mb-none">
-              {{ info.tmdb_data.overview }}
-            </p>
-            <div>
-              <!-- MOVIE COLLECTION -->
-              <slot name="movie-collection" />
-              <!-- SHOW SEASONS -->
-              <slot name="show-seasons" />
-              <!-- SEASONS EPISODES -->
-              <slot name="season-episode-list" />
-              <!-- MORE LIKE THIS -->
-              <slot name="more-like-this" />
-              <Actors
-                v-if="$q.screen.gt.sm === false && info.actors?.length > 0"
-                :actors="info.actors"
-                horizontal
-              />
-              <Reviews class="q-mt-lg" :reviews="info.reviews.comments" :review-count="info.reviews.total" :m-type="type" />
-            </div>
-          </q-scroll-area>
-        </div>
+          </div>
+
+          <!-- OVERVIEW -->
+          <p v-if="info.tmdb_data.overview" class="text-lg leading-6 mb-0">
+            {{ info.tmdb_data.overview }}
+          </p>
+
+          <div>
+            <!-- MOVIE COLLECTION -->
+            <slot name="movie-collection" />
+            <!-- SHOW SEASONS -->
+            <slot name="show-seasons" />
+            <!-- SEASONS EPISODES -->
+            <slot name="season-episode-list" />
+            <!-- MORE LIKE THIS -->
+            <slot name="more-like-this" />
+
+            <Actors
+              v-if="$q.screen.gt.sm === false && info.actors?.length > 0"
+              :actors="info.actors"
+              horizontal
+            />
+
+            <Reviews
+              class="q-mt-lg"
+              :reviews="info.reviews.comments"
+              :review-count="info.reviews.total"
+              :m-type="type"
+            />
+          </div>
+        </q-scroll-area>
       </div>
-      <Actors v-if="$q.screen.gt.sm && info.actors?.length > 0" :actors="info.actors" />
     </div>
+
+    <Actors
+      v-if="$q.screen.gt.sm && info.actors?.length > 0"
+      :actors="info.actors"
+    />
   </div>
-  <q-dialog v-model="showTrailer" :transition-duration="500" class="trailer" @hide="closeTrailer">
+
+  <!-- TRAILER -->
+  <q-dialog
+    v-model="showTrailer"
+    :transition-duration="500"
+    class="trailer"
+    @hide="closeTrailer"
+  >
     <div class="trailer">
-      <div v-if="trailerHasError" :style="{ backgroundImage: `url(${trailerErrorBack})` }">
+      <div
+        v-if="trailerHasError"
+        :style="{ backgroundImage: `url(${trailerErrorBack})` }"
+      >
         <div class="trailer-error-text">
           Oops, trailer crashed. Search YouTube for a trailer
           <a
             :href="`https://www.youtube.com/results?search_query=${info.title} trailer`"
             target="blank"
           >
-            here</a>.
+            here</a
+          >.
         </div>
       </div>
       <div v-else :style="{ opacity: isTrailerVisible ? 1 : 0 }">
@@ -418,11 +420,10 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @use "sass:map";
-@import '~/quasar-variables.scss';
+@import "~/quasar-variables.scss";
 
 h1 {
-  font-size: 18px;
-  margin-top: 20px;
+  font-size: 32px;
 }
 button {
   font-weight: 600;
@@ -441,26 +442,10 @@ button {
     width: 100%;
     width: 250px;
     height: 97px;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))
-  }
-}
-.break {
-  word-break: break-word;
-}
-.sub-title {
-  font-size: 1.5em;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  & i {
-    font-size: 0.6em;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
   }
 }
 .details-container {
-  padding-top: 0;
-  padding-left: 0;
-  display: flex;
-  height: 100%;
   & > div:first-child {
     flex: 1;
   }
@@ -483,41 +468,28 @@ button {
 .ratings {
   display: flex;
   flex-wrap: wrap;
-  & > div {
+  & div {
     display: flex;
     align-items: center;
     margin-bottom: map.get($space-lg, x);
   }
-  & div > img {
+  & div img {
     width: 35px;
   }
-  & > div > div:nth-child(2) {
+  & div div:nth-child(2) {
     font-size: 24px;
     margin: 0 10px 0 10px;
-  }
-}
-.info {
-  flex-wrap: wrap;
-  & > div:not(:last-child) {
-    margin-right: map.get($space-md, x)
-  }
-  & span {
-    @include darkText;
-  }
-  & a {
-    color: white;
   }
 }
 .certification {
   border: 1px solid $secondary;
   color: $secondary;
-  border-radius: 3px;
-  padding: 2px 5px;
+  border-radius: 5px;
+  padding: 6px;
   font-size: 0.75em;
 }
 .tagline {
   font-style: italic;
-  font-size: 0.65em;
   font-weight: 300;
 }
 :deep(.q-dialog) > * {

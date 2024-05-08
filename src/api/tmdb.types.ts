@@ -1,22 +1,40 @@
 import type Trakt from './trakt.types'
 
 namespace Tmdb {
+  export interface TmdbConfig {
+    images: {
+       base_url: string;
+       secure_base_url: string;
+       backdrop_sizes: string[];
+       logo_sizes: string[];
+       poster_sizes: string[];
+       profile_sizes: string[];
+       still_sizes: string[];
+    };
+    change_keys: string[];
+   }
   export interface Actor {
     id: number
     ids: Trakt.Ids
     name: string
     character: string
     order: number
-    profile_path: string
+    profile_path: string | null
+  }
+  export interface Video {
+    key: string
   }
   export interface EpisodeDetails {
     id: number
     air_date: string
     episode_number: number
+    first_air_date: string
     name: string
     overview: string
     season_number: number
+    status: string
     still_path: string
+    videos: Video[]
     vote_average: number
     vote_count: number
   }
@@ -34,6 +52,8 @@ namespace Tmdb {
     status: string
     tagline: string
     episode_run_time: number[]
+    videos: Video[]
+    season: number
   }
 
   export interface MovieDetails {
@@ -54,17 +74,21 @@ namespace Tmdb {
     tagline: string
     runtime: number
     revenue: number
-    videos:
+    videos: Video[]
   }
 
   export interface SeasonDetails {
     id: number
     air_date: string
     episodes: EpisodeDetails[]
+    first_air_date: string
     name: string
     overview: string
     poster_path: string
     season_number: number
+    season: number
+    status: string
+    videos: Video[]
   }
 
   export interface Season {
@@ -77,6 +101,11 @@ namespace Tmdb {
     season_number: number
     watched_percent: string
     watched_progress: number
+  }
+
+  export interface Genres {
+    movie: Tmdb.Genre[]
+    tv: Tmdb.Genre[]
   }
 
   export interface Genre {

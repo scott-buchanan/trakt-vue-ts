@@ -54,6 +54,7 @@ export interface ShowDetails {
   type: MediaType
   watched_progress: Trakt.WatchedProgress
   year: string
+  season: number
 }
 
 export interface MovieDetails {
@@ -83,6 +84,7 @@ export interface MovieDetails {
   watched_progress: Trakt.WatchedProgress
   year: string
   poster: string
+  season: number
 }
 
 export interface EpisodeDetails {
@@ -108,12 +110,12 @@ export interface EpisodeDetails {
 
 export interface SeasonDetails {
   title: string
-  season: number
   number: number
   runtime: number
   first_aired: string
   backdrop: backdrop
   season_poster: string
+  season: number
   clear_logo: string
   imdb_rating: number
   trakt_rating: number

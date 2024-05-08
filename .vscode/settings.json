@@ -1,11 +1,30 @@
 {
-  "cSpell.words": ["Vitesse"],
-  "prettier.enable": false,
+  "cSpell.words": [
+    "Neue",
+    "pinia",
+    "Pinia",
+    "Roboto",
+    "Segoe",
+    "tailwindcss",
+    "Vitesse",
+    "vuejs"
+  ],
+  "prettier.enable": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
   "files.associations": {
-    "*.css": "postcss"
+    "*.css": "tailwindcss"
   },
-  "editor.formatOnSave": false
+  "editor.formatOnSave": false,
+  "cSpell.ignoreWords": [
+    "axios",
+    "dayjs",
+    "iconify",
+    "imdb",
+    "tmdb",
+    "trakt",
+    "tvdb",
+    "unplugin"
+  ]
 }

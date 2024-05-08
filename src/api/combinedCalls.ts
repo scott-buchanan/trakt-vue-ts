@@ -111,10 +111,12 @@ export async function getMovieInfoCard(movie: Trakt.Movie) {
  * @param {number} number - episode number
  * @returns {Object} Object containing images, ratings needed.
  */
-export async function getEpisodeDetails(traktId: number | string, season: string, episode: string) {
+export async function getEpisodeDetails(slug: string, season: number, episode: number) {
   const res: EpisodeDetails = {} as EpisodeDetails
-  const summary = await getEpisodeSummary(traktId, season, episode)
+  const summary: Trakt.Episode = await getEpisodeSummary(slug, season, episode)
   const store = useStore()
+
+  console.log('traktid', slug, summary.ids.trakt)
 
   if (store.pageData.episodes[summary.ids.trakt])
     return store.pageData.episodes[summary.ids.trakt]
@@ -129,7 +131,7 @@ export async function getEpisodeDetails(traktId: number | string, season: string
     getShowClearLogo(show.ids.tvdb),
     getImdbRating(summary.ids.imdb),
     getEpisodeRating(show.ids.trakt, summary.season, summary.number),
-    getComments(summary, 'episode'),
+    getComments(summary),
     tmdbEpisodeActors(show, summary),
     tmdbEpisodeDetails(show, summary),
     getShowWatchedProgress(show.ids.trakt),
@@ -180,8 +182,6 @@ export async function getEpisodeDetails(traktId: number | string, season: string
     if (myRating)
       res.my_rating = myRating
   }
-
-  console.log({ [summary.ids.trakt]: { ...{ show }, ...summary, ...res } })
   store.updatePageData({ [summary.ids.trakt]: { ...{ show }, ...summary, ...res } }, 'episode')
   return { ...{ show }, ...summary, ...res }
 }
@@ -239,7 +239,7 @@ export async function getShowDetails(traktId: number | string): Promise<ShowDeta
     getImdbRating(summary.ids.imdb),
     getShowRating(summary.ids.trakt),
     tmdbShowDetails(summary),
-    getComments(summary, 'show'),
+    getComments(summary),
     tmdbActors(summary),
     getShowWatchedProgress(summary.ids.trakt),
   ]).then((results) => {

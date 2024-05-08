@@ -1,183 +1,198 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
-import { useQuasar } from 'quasar'
+import type { Ref } from "vue";
+import { useQuasar } from "quasar";
 
 // api
-import { getAnticipated, getCommunityRecommended, getRecommendationsFromMe, getTrending, getWatchedHistory } from '~/api/trakt'
-import { getEpisodeInfoCard, getShowInfoCard } from '~/api/combinedCalls'
+import {
+  getAnticipated,
+  getCommunityRecommended,
+  getRecommendationsFromMe,
+  getTrending,
+  getWatchedHistory,
+} from "~/api/trakt";
+import { getEpisodeInfoCard, getShowInfoCard } from "~/api/combinedCalls";
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from "~/store/index";
 
 // components
-import CardContainer from '~/components/CardContainer.vue'
+import CardContainer from "~/components/CardContainer.vue";
 
-import type Trakt from '~/api/trakt.types'
+import type Trakt from "~/api/trakt.types";
+import type { Filter } from "~/store/models";
 
-const route = useRoute()
-const router = useRouter()
-const $q = useQuasar()
-const store = useStore()
+const route = useRoute();
+const router = useRouter();
+const $q = useQuasar();
+const store = useStore();
+
+interface Data {
+  items: Trakt.Show[] | Trakt.Episode[];
+  page: number;
+  pagesTotal: number;
+}
 
 // data
-const data = ref({})
-const filter = ref(store.filter)
-const maxPages = ref(10)
-const myEpRatings: Ref<Trakt.Ratings | null> = ref(null)
-const myShowRatings = ref(null)
-const page = ref(store.page)
-const tokens = ref(store.tokens)
+const data: Ref<Data | null> = ref(null);
+const filter: Ref<Filter> = ref(store.filter);
+const maxPages: Ref<number> = ref(10);
+const myEpRatings: Ref<Trakt.Ratings | null> = ref(null);
+const page: Ref<number> = ref(store.page);
+
+const myShowRatings: Ref<any> = ref(null);
+const tokens: Ref<any> = ref(store.tokens);
 
 store.$subscribe((mutated, state) => {
-  let triggerLoad = false
-  if (state.filterType === 'show' && state.filter && state.filter.val !== filter.value.val)
-    triggerLoad = true
+  let triggerLoad = false;
+  if (
+    state.filterType === "show" &&
+    state.filter &&
+    state.filter.val !== filter.value.val
+  )
+    triggerLoad = true;
 
-  filter.value = state.filter
-  tokens.value = state.tokens
-  page.value = state.page
+  filter.value = state.filter;
+  tokens.value = state.tokens;
+  page.value = state.page;
 
-  if (triggerLoad)
-    loadData()
-})
-
-onMounted(() => {
-  store.updateFilterType('show')
-
-  if (route.params?.filter) {
-    store.updateFilter(
-      store.filterOptions.show.find(filter => filter.val === route.params.filter)!,
-    )
-  }
-
-  loadData()
-
-  if (route.query.page && typeof route.query.page === 'string')
-    page.value = Number.parseInt(route.query.page, 10)
-})
+  if (triggerLoad) loadData();
+});
 
 async function loadData() {
-  store.updateLoading(false)
+  store.updateLoading(false);
 
   // this makes it so the card container always has a full last line
-  localStorage.setItem('item-limit', '18')
+  localStorage.setItem("item-limit", "18");
 
   // if watched history
-  if (store.filterType === 'show' && filter.value?.val === 'history') {
+  if (store.filterType === "show" && filter.value?.val === "history") {
     // get Trakt data
-    data.value = await getWatchedHistory('episodes', page.value)
+    data.value = await getWatchedHistory("episodes", page.value);
 
     // get episode ratings object from local storage
-    myEpRatings.value = JSON.parse(localStorage.getItem('trakt-vue-episode-ratings')!)
+    myEpRatings.value = JSON.parse(
+      localStorage.getItem("trakt-vue-episode-ratings")!,
+    );
 
     // get images and ratings
-    const items = await fetchCardInfo('episode', myEpRatings.value!)
+    const items = await fetchCardInfo("episode", myEpRatings.value!);
 
     // sort by watched date (no logic here because only one filter)
-    items.sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at))
+    items.sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at));
 
-    data.value.items = [...items]
-  }
-  else {
+    data.value.items = [...items];
+  } else {
     switch (filter.value?.val) {
-      case 'anticipated':
-
-        data.value = await getAnticipated('shows', page.value)
-        break
-      case 'trakt_recommended':
-        data.value = await getCommunityRecommended('shows', page.value)
-        break
-      case 'recommended':
-        data.value = await getRecommendationsFromMe('shows', page.value)
-        break
-      case 'trending':
-        data.value = await getTrending('shows', page.value)
-        break
+      case "anticipated":
+        data.value = await getAnticipated("shows", page.value);
+        break;
+      case "trakt_recommended":
+        data.value = await getCommunityRecommended("shows", page.value);
+        break;
+      case "recommended":
+        data.value = await getRecommendationsFromMe("shows", page.value);
+        break;
+      case "trending":
+        data.value = await getTrending("shows", page.value);
+        console.log(data.value);
+        break;
       default:
-        store.updateLoading(true)
-        return
+        store.updateLoading(true);
+        return;
     }
 
     // get show ratings object from local storage
-    myShowRatings.value = JSON.parse(localStorage.getItem('trakt-vue-show-ratings')!)
+    myShowRatings.value = JSON.parse(
+      localStorage.getItem("trakt-vue-show-ratings")!,
+    );
+    console.log(myShowRatings.value);
     // get images and ratings
-    const items = await fetchCardInfo('show', myShowRatings.value)
-    if (filter.value.val === 'recommended')
-      items.sort((a, b) => a.rank - b.rank)
-    else if (filter.value.val === 'trending')
-      items.sort((a, b) => b.watchers - a.watchers)
+    const items = await fetchCardInfo("show", myShowRatings.value);
+    if (filter.value.val === "recommended")
+      items.sort((a, b) => a.rank - b.rank);
+    else if (filter.value.val === "trending")
+      items.sort((a, b) => b.watchers - a.watchers);
 
-    data.value.items = [...items]
+    data.value.items = [...items];
   }
-  store.updateLoading(true)
+  store.updateLoading(true);
 }
 
 async function fetchCardInfo(mType: string, ratingsObj: Trakt.Ratings) {
-  const items = []
+  const items = [];
   await Promise.all(
     data.value.items.map(async (item) => {
-      const cardInfo
-            = mType === 'show'
-              ? await getShowInfoCard(item.show)
-              : await getEpisodeInfoCard(item.show, item.episode)
-      const myRating = { my_rating: null }
+      const cardInfo =
+        mType === "show"
+          ? await getShowInfoCard(item.show)
+          : await getEpisodeInfoCard(item.show, item.episode);
+      const myRating = { my_rating: null };
       myRating.my_rating = ratingsObj?.ratings.find((rating) => {
-        if (mType === 'show')
-          return !('episode' in rating) && rating.show.ids.trakt === item.show.ids.trakt
+        if (mType === "show")
+          return (
+            !("episode" in rating) &&
+            rating.show.ids.trakt === item.show.ids.trakt
+          );
 
-        return rating.episode.ids.trakt === item.episode.ids.trakt
-      })
-      items.push({ ...item, ...cardInfo, ...myRating })
+        return rating.episode.ids.trakt === item.episode.ids.trakt;
+      });
+      items.push({ ...item, ...cardInfo, ...myRating });
     }),
-  )
-  return items
+  );
+  return items;
 }
+
 function changePage() {
-  loadData()
-  store.updatePage(page.value)
-  router.replace({ query: { page: page.value } })
-  localStorage.setItem('trakt-vue-page', page.value)
-  window.scrollTo(0, 0)
+  loadData();
+  store.updatePage(page.value);
+  router.replace({ query: { page: page.value } });
+  localStorage.setItem("trakt-vue-page", page.value);
+  window.scrollTo(0, 0);
 }
+
+onMounted(() => {
+  store.updateFilterType("show");
+
+  if (route.params?.filter) {
+    store.updateFilter(
+      store.filterOptions.show.find(
+        (filter) => filter.val === route.params.filter,
+      )!,
+    );
+  }
+
+  loadData();
+
+  if (route.query.page && typeof route.query.page === "string")
+    page.value = Number.parseInt(route.query.page, 10);
+});
 </script>
 
 <template>
-  <div v-if="store.loaded" class="full-height q-pa-sm tv-container">
-    <CardContainer :data="data.items" :m-type="store.filterType" />
-  </div>
-  <q-footer v-if="store.loaded && data?.pagesTotal > 1" class="text-white q-pa-sm footer">
-    <q-toolbar class="flex flex-center">
-      <q-pagination
-        v-model="page"
-        color="secondary"
-        active-color="secondary"
-        outline
-        :max="data?.pagesTotal"
-        :max-pages="$q.screen.gt.sm ? maxPages : 3"
-        boundary-numbers
-        ripple
-        unelevated
-        @click="changePage"
+  <div class="flex flex-col h-full">
+    <div class="p-2 grow">
+      <CardContainer
+        v-if="store.loaded"
+        :data="data?.items"
+        :m-type="store.filterType"
+        class="rounded-md"
       />
-    </q-toolbar>
-  </q-footer>
+    </div>
+    <footer class="pt-0 p-2">
+      <div class="flex justify-center bg-black/50 p-2 rounded-md">
+        <q-pagination
+          v-model="page"
+          color="secondary"
+          active-color="secondary"
+          outline
+          :max="data?.pagesTotal"
+          :max-pages="$q.screen.gt.sm ? maxPages : 3"
+          boundary-numbers
+          ripple
+          unelevated
+          @click="changePage"
+        />
+      </div>
+    </footer>
+  </div>
 </template>
-
-<style lang="scss" scoped>
-@import '~/quasar-variables.scss';
-
-.tv-container {
-  padding-top: 0;
-  & > div {
-    @include background-style;
-    overflow: hidden;
-  }
-}
-.footer {
-  padding-top: 0;
-  background-color: transparent !important;
-  & > div {
-    @include background-style;
-  }
-}
-</style>

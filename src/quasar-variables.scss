@@ -20,25 +20,25 @@ $yellow: #f3ce13;
 // $breakpoint-xl: 1920px !default;
 
 @mixin background-style {
-    border-radius: 5px;
-    background: rgba(0, 0, 0, $opacity-back);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, $opacity-back);
 }
 
 @mixin darkText {
-    text-transform: uppercase;
-    color: $accent;
-    font-weight: 500;
+  text-transform: uppercase;
+  color: $accent;
+  font-weight: 500;
 }
 
 @mixin text-ellipsis {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @mixin heading-reset {
-    all: revert !important;
-    margin: 0 0 8px 0 !important;
+  all: revert !important;
+  margin: 0 0 8px 0 !important;
 }
 
 // h1,

@@ -51,10 +51,6 @@ router.beforeEach(async (to, from, next) => {
   if (!store.genres)
     store.updateGenres(await getGenres())
 
-  // get tmdb image urls and store in state
-  if (!store.imageUrls)
-    store.updateImageUrls(await getImageUrls())
-
   const checkToken = async () => {
     if (localStorage.getItem('trakt-vue-token')) {
       // if local storage has tokens, get the accessToken from the refreshToken

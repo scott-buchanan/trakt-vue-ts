@@ -1,22 +1,23 @@
 import { defineStore } from 'pinia'
-import type { Filter, MyInfo, PageData, StateObj } from './models'
+import type { Filter, StateObj, PageData } from './models'
 import type Trakt from '~/api/trakt.types'
+import Tmdb from '~/api/tmdb.types'
 
 const defaultState: StateObj = {
   page: 1,
-  filter: { label: null, val: null, auth: null } as Filter,
+  filter: { label: null, val: null, auth: null },
   filterOptions: {
     show: [
-      { label: 'Trending', val: 'trending', auth: false } as Filter,
-      { label: 'Watch History', val: 'history', auth: true } as Filter,
-      { label: 'Anticipated', val: 'anticipated', auth: false } as Filter,
-      { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
-      { label: 'Community Recommended', val: 'trakt_recommended', auth: false } as Filter,
+      { label: 'Trending', val: 'trending', auth: false },
+      { label: 'Watch History', val: 'history', auth: true },
+      { label: 'Anticipated', val: 'anticipated', auth: false },
+      { label: 'My Recommended', val: 'recommended', auth: true },
+      { label: 'Community Recommended', val: 'trakt_recommended', auth: false },
     ],
     movie: [
-      { label: 'Trending', val: 'trending', auth: false } as Filter,
-      { label: 'Watch History', val: 'history', auth: true } as Filter,
-      { label: 'My Recommended', val: 'recommended', auth: true } as Filter,
+      { label: 'Trending', val: 'trending', auth: false },
+      { label: 'Watch History', val: 'history', auth: true } ,
+      { label: 'My Recommended', val: 'recommended', auth: true },
     ],
   },
   filterType: null,
@@ -31,8 +32,11 @@ const defaultState: StateObj = {
     seasons: {},
     movies: {},
   },
-  genres: null,
-  imageUrls: null,
+  genres: {
+    movie: [],
+    tv: []
+  },
+  tmdbConfig: null,
   searchPage: null,
 }
 
@@ -54,7 +58,7 @@ export const useStore = defineStore('main', {
     updateTokens(tokens: object) {
       this.tokens = { ...tokens }
     },
-    updateMyInfo(myInfo: MyInfo) {
+    updateMyInfo(myInfo: Trakt.MyInfo) {
       this.myInfo = { ...myInfo }
     },
     updateMenuVisible(value: boolean) {
@@ -70,11 +74,11 @@ export const useStore = defineStore('main', {
           break
       }
     },
-    updateGenres(value: { tv: { id: number; name: string }[]; movie: { id: number; name: string }[] }) {
+    updateGenres(value: Tmdb.Genres) {
       this.genres = value
     },
-    updateImageUrls(value: any[]) {
-      this.imageUrls = value
+    updateTmdbConfig(value: Tmdb.TmdbConfig) {
+      this.tmdbConfig = value
     },
     updateSearchPage(value: any) {
       this.searchPage = value
