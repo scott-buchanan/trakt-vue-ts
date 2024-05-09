@@ -1,90 +1,79 @@
-import { defineStore } from 'pinia'
-import type { Filter, StateObj, PageData } from './models'
-import type Trakt from '~/api/trakt.types'
-import Tmdb from '~/api/tmdb.types'
+import { defineStore } from "pinia";
+import type { Filter, FilterType, StateObj } from "./models";
+import type Trakt from "~/api/trakt.types";
+import Tmdb from "~/api/tmdb.types";
+
+const defaultFilter = { label: "Trending", val: "trending", auth: false };
 
 const defaultState: StateObj = {
   page: 1,
-  filter: { label: null, val: null, auth: null },
+  filter: defaultFilter,
   filterOptions: {
     show: [
-      { label: 'Trending', val: 'trending', auth: false },
-      { label: 'Watch History', val: 'history', auth: true },
-      { label: 'Anticipated', val: 'anticipated', auth: false },
-      { label: 'My Recommended', val: 'recommended', auth: true },
-      { label: 'Community Recommended', val: 'trakt_recommended', auth: false },
+      defaultFilter,
+      { label: "Watch History", val: "history", auth: true },
+      { label: "Anticipated", val: "anticipated", auth: false },
+      { label: "My Recommended", val: "recommended", auth: true },
+      { label: "Community Recommended", val: "trakt_recommended", auth: false },
     ],
     movie: [
-      { label: 'Trending', val: 'trending', auth: false },
-      { label: 'Watch History', val: 'history', auth: true } ,
-      { label: 'My Recommended', val: 'recommended', auth: true },
+      { label: "Trending", val: "trending", auth: false },
+      { label: "Watch History", val: "history", auth: true },
+      { label: "My Recommended", val: "recommended", auth: true },
     ],
   },
-  filterType: null,
+  filterType: "show",
   loaded: false,
   tokens: null,
   myInfo: null,
   menuVisible: false,
   currentIds: null,
-  pageData: {
-    episodes: {},
-    shows: {},
-    seasons: {},
-    movies: {},
-  },
   genres: {
     movie: [],
-    tv: []
+    tv: [],
   },
   tmdbConfig: null,
   searchPage: null,
-}
+};
 
-export const useStore = defineStore('main', {
+export const useStore = defineStore("main", {
   state: () => ({ ...defaultState }),
   actions: {
     updatePage(page: number) {
-      this.page = page
+      this.page = page;
     },
     updateFilter(filter: Filter) {
-      this.filter = filter
+      this.filter = filter;
     },
-    updateFilterType(type: string) {
-      this.filterType = type
+    updateFilterType(type: FilterType) {
+      this.filterType = type;
     },
     updateLoading(loaded: boolean) {
-      this.loaded = loaded
+      this.loaded = loaded;
     },
     updateTokens(tokens: object) {
-      this.tokens = { ...tokens }
+      this.tokens = { ...tokens };
     },
     updateMyInfo(myInfo: Trakt.MyInfo) {
-      this.myInfo = { ...myInfo }
+      this.myInfo = { ...myInfo };
     },
     updateMenuVisible(value: boolean) {
-      this.menuVisible = value
+      this.menuVisible = value;
     },
     updateCurrentIds(value: Trakt.Ids) {
-      this.currentIds = value
-    },
-    updatePageData(value: PageData, mType: string) {
-      switch (mType) {
-        case 'episode':
-          this.pageData.episodes = { ...this.pageData.episodes, ...value }
-          break
-      }
+      this.currentIds = value;
     },
     updateGenres(value: Tmdb.Genres) {
-      this.genres = value
+      this.genres = value;
     },
     updateTmdbConfig(value: Tmdb.TmdbConfig) {
-      this.tmdbConfig = value
+      this.tmdbConfig = value;
     },
     updateSearchPage(value: any) {
-      this.searchPage = value
+      this.searchPage = value;
     },
     reset() {
-      Object.assign(this, defaultState)
+      Object.assign(this, defaultState);
     },
   },
-})
+});

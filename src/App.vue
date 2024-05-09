@@ -1,28 +1,26 @@
 <script setup lang="ts">
 import { useStore } from "~/store/index";
 import { getAppBackgroundImg, getImageUrls } from "~/api/tmdb";
-import { getIdLookupTmdb } from "~/api/trakt";
 import defaultImage from "~/assets/drawer-image-1.jpg";
 import vuejsLogo from "~/assets/vuejs.png";
 import traktLogo from "~/assets/trakt-icon-red.svg";
 
-import type { Ref } from "vue";
-import type Trakt from "~/api/trakt.types";
 import "iconify-icon";
 
 const store = useStore();
 
 const defaultBack = defaultImage;
-interface backgroundInfoType {
+
+interface BackgroundInfoType {
   backgroundUrl: string;
   posterUrl: string;
-  ids: Trakt.Ids | null;
   id: number;
   title: string;
   type: string;
   year: string;
 }
-const backgroundInfo: Ref<backgroundInfoType> = ref({} as backgroundInfoType);
+
+const backgroundInfo: Ref<BackgroundInfoType> = ref({} as BackgroundInfoType);
 
 // computed
 const filterOptions = computed(() => {
@@ -41,9 +39,7 @@ onMounted(async () => {
   if (!store.tmdbConfig) store.updateTmdbConfig(await getImageUrls());
 
   if (store.$state.tmdbConfig) {
-    const appBack = await getAppBackgroundImg(store.$state.tmdbConfig);
-    const idLookup = await getIdLookupTmdb(appBack.id, appBack.type);
-    backgroundInfo.value = { ...appBack, ...idLookup! };
+    backgroundInfo.value = await getAppBackgroundImg(store.$state.tmdbConfig);
   }
 });
 </script>

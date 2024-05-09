@@ -140,7 +140,8 @@ function watchedInfo() {
       });
     }
     // if movie, add number of plays
-    if (progress.type === "movie") {
+    console.log(progress);
+    if ("movie" in progress) {
       arr.push({
         label: "plays",
         value: progress.plays,

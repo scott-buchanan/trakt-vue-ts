@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { useStore } from "~/store/index";
-import type { FilterOptions, Filter } from "~/store/models";
+import type { Filter, FilterOptions } from "~/store/models";
 
 const router = useRouter();
 const store = useStore();
-
-const labels = {
-  show: "tv shows",
-  movie: "movies",
-};
 
 defineProps<{
   filters: FilterOptions;
 }>();
 
+function getLabel(key: string | number) {
+  if (key === "show") {
+    return "tv shows";
+  } else {
+    return "movies";
+  }
+}
+
 function handleClick(item: Filter, filterType: string) {
-  if (store.filter?.val === item.val && store.filterType === filterType) {
+  if (store.filter.val === item.val && store.filterType === filterType) {
     return;
   } else {
     store.updateLoading(false);
@@ -33,7 +36,7 @@ function handleClick(item: Filter, filterType: string) {
 <template>
   <template v-for="(filter, key) in filters">
     <h1 class="text-sm uppercase text-dark-list font-semibold p-3 mb-0 mt-6">
-      {{ labels[key] }}
+      {{ getLabel(key) }}
     </h1>
     <ul>
       <li
@@ -43,7 +46,7 @@ function handleClick(item: Filter, filterType: string) {
         class="px-3 py-2 hover:bg-slate-300/20 transition-all"
         :class="{
           'font-bold text-pprimary':
-            store.filter?.val === item.val && store.filterType === key,
+            store.filter.val === item.val && store.filterType === key,
         }"
         @click="handleClick(item, key)"
       >

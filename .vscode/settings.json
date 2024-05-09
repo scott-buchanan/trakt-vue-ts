@@ -9,19 +9,36 @@
     "Vitesse",
     "vuejs"
   ],
-  "prettier.enable": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+
+  "[typescript]": {
+    "editor.codeActionsOnSave": ["source.fixAll.eslint"],
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.codeActionsOnSave": ["source.fixAll.eslint"],
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "editor.formatOnSave": false,
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.experimental.useFlatConfig": true,
+  "editor.formatOnSave": true,
   "cSpell.ignoreWords": [
     "axios",
     "dayjs",
     "iconify",
     "imdb",
+    "omdb",
     "tmdb",
     "trakt",
     "tvdb",

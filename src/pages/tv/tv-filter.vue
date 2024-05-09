@@ -153,7 +153,7 @@ function changePage() {
 onMounted(() => {
   store.updateFilterType("show");
 
-  if (route.params?.filter) {
+  if (route.params.filter) {
     store.updateFilter(
       store.filterOptions.show.find(
         (filter) => filter.val === route.params.filter,
