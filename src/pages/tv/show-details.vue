@@ -1,15 +1,14 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
 import type { Ref } from "vue";
 import dayjs from "dayjs";
 import type { ShowDetails } from "~/api/combinedCall.types";
 import type Tmdb from "~/api/tmdb.types";
-
+import { useRoute } from "vue-router";
 // store
 import { useStore } from "~/store/index";
-
 // api
 import { getShowDetails } from "~/api/combinedCalls";
-
 // components
 import DetailsTemplate from "~/components/DetailsTemplate.vue";
 
@@ -39,8 +38,8 @@ store.$subscribe((mutated, state) => {
 const seasonLength = computed(
   () =>
     info.value.tmdb_data.seasons.filter(
-      (season) => season.name.toLowerCase() !== "specials"
-    ).length
+      (season) => season.name.toLowerCase() !== "specials",
+    ).length,
 );
 const languageListString = computed(() => {
   const langs = info.value.tmdb_data.spoken_languages;
@@ -66,7 +65,7 @@ async function getData() {
   info.value = await getShowDetails(
     store.currentIds?.trakt
       ? store.currentIds.trakt
-      : (route.params.show as string)
+      : (route.params.show as string),
   );
   arrDetails.value = [
     { label: "status", value: info.value.tmdb_data.status },
@@ -97,9 +96,8 @@ async function getData() {
         useTimeoutFn(() => {
           seasons.value[index].watched_progress =
             season.completed / season.aired;
-          seasons.value[
-            index
-          ].watched_percent = `${season.completed} out of ${season.aired} watched`;
+          seasons.value[index].watched_percent =
+            `${season.completed} out of ${season.aired} watched`;
         }, delay);
       }
     });
@@ -238,7 +236,9 @@ onMounted(async () => {
         padding: 0.6em;
         left: -150px;
         opacity: 0;
-        transition: opacity 200ms ease-in-out 0ms, left 200ms ease-in-out 50ms;
+        transition:
+          opacity 200ms ease-in-out 0ms,
+          left 200ms ease-in-out 50ms;
       }
     }
     &:hover {
@@ -248,7 +248,8 @@ onMounted(async () => {
         & .caption-text {
           left: 0;
           opacity: 1;
-          transition: opacity 200ms ease-in-out 200ms,
+          transition:
+            opacity 200ms ease-in-out 200ms,
             left 200ms ease-in-out 100ms;
         }
       }

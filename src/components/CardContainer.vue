@@ -71,7 +71,7 @@ function ratings(data: RatingData) {
   if (data.watchers) {
     ratingsArr.push(
       createRating(
-        "mdi:visibility",
+        "noto:eyes",
         data.watchers,
         `${data.watchers} people watching now`,
       ),
@@ -138,6 +138,12 @@ function clickDetails(item: CardInfo) {
     }
   }
 }
+function cardImgLoaded(item: CardInfo) {
+  item.imgLoaded = true;
+}
+function clearImgLoaded(item: CardInfo) {
+  item.clearImgLoaded = true;
+}
 
 // lifecycle methods
 onMounted(() => {
@@ -155,56 +161,82 @@ onMounted(() => {
     default:
       sortedData.value = props.data;
   }
+  sortedData.value.forEach((item) => {
+    item.imgLoaded = false;
+    item.clearImgLoaded = false;
+  });
 });
 </script>
 
 <template>
   <q-scroll-area class="h-full w-full" :thumb-style="{ opacity: '0.5' }">
     <div
-      v-if="data?.length > 0"
-      class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3"
+      v-if="sortedData?.length > 0"
+      class="relative grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-5 bg-black/50"
     >
       <div
         v-for="(item, index) in sortedData"
-        :key="item[mType]?.ids.slug"
-        class="cursor-pointer relative"
+        :key="item[store.filterType].ids.slug"
+        class="cursor-pointer relative pb-[56.25%]"
         @click="clickDetails(item)"
         @keyDown="clickDetails(item)"
       >
-        <q-img
-          no-spinner
-          :src="item.backdrop.backdrop_sm"
-          :alt="item[mType]?.title"
-          fit="cover"
-          :ratio="16 / 9"
+        <div
+          class="absolute w-full h-full flex justify-center items-center bg-slate-400 animate-bg-pulse"
+          :class="item.imgLoaded ? 'invisible' : 'visible'"
         >
-          <div v-if="item.clear_logo" class="bg-transparent">
-            <img :src="item.clear_logo" aria-hidden="true" class="w-1/3" />
+          <iconify-icon
+            icon="mdi:image"
+            width="4em"
+            height="4em"
+            class="text-white"
+          />
+        </div>
+        <img
+          :src="item.backdrop.backdrop_sm"
+          aria-hidden="true"
+          class="absolute transition-opacity duration-700"
+          :class="item.imgLoaded ? 'opacity-100' : 'opacity-0'"
+          @load="cardImgLoaded(item)"
+        />
+        <div v-if="item.clear_logo" class="absolute top-0 m-3">
+          <img
+            :src="item.clear_logo"
+            aria-hidden="true"
+            class="w-1/3 transition-opacity duration-700"
+            :class="
+              item.clearImgLoaded && item.imgLoaded
+                ? 'opacity-100'
+                : 'opacity-0'
+            "
+            @load="clearImgLoaded(item)"
+          />
+        </div>
+        <div
+          v-if="store.filter.val === 'anticipated'"
+          class="absolute right-0 flex m-2 text-center rounded-md"
+        >
+          <q-icon name="o_circle" size="xl" />
+          <q-tooltip>
+            <span
+              >Appears on
+              {{ item.list_count?.toLocaleString("en-US") }} lists</span
+            >
+          </q-tooltip>
+          <div class="anticipated-num">
+            {{ index + 1 }}
           </div>
-          <div
-            v-if="store.filter.val === 'anticipated'"
-            class="absolute right-0 flex m-2 text-center rounded-md"
-          >
-            <q-icon name="o_circle" size="xl" />
-            <q-tooltip>
-              <span
-                >Appears on
-                {{ item.list_count?.toLocaleString("en-US") }} lists</span
-              >
-            </q-tooltip>
-            <div class="anticipated-num">
-              {{ index + 1 }}
-            </div>
-          </div>
-          <div
-            v-else
-            ref="ratingsBox"
-            class="absolute right-0 flex m-2 text-center rounded-md"
-            :class="[{ invisible: !hasRatings(index) }]"
-          >
-            <table>
-              <tr>
-                <td v-for="i in ratings(item)" class="p-1">
+        </div>
+        <div
+          v-else
+          ref="ratingsBox"
+          class="absolute top-0 right-0 m-2 flex text-center bg-black/50 rounded-md p-3"
+          :class="{ invisible: !hasRatings(index) || !item.imgLoaded }"
+        >
+          <table>
+            <tr>
+              <td v-for="i in ratings(item)" class="p-1">
+                <div>
                   <img
                     v-if="i.img"
                     :src="i.img"
@@ -218,60 +250,59 @@ onMounted(() => {
                     height="2em"
                     :class="[i.color, 'block']"
                   />
-                  <q-tooltip v-if="i.tooltip" :delay="500" :offset="[0, 5]">
-                    {{ i.tooltip }}
-                  </q-tooltip>
-                </td>
-              </tr>
-              <tr>
-                <td v-for="i in ratings(item)">
-                  {{ i.value }}
-                </td>
-              </tr>
-            </table>
+                </div>
+                <Tooltip v-if="i.tooltip" :value="i.tooltip" />
+              </td>
+            </tr>
+            <tr>
+              <td v-for="i in ratings(item)">
+                {{ i.value }}
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div
+          class="absolute bottom-0 left-0 right-0 p-3 bg-black/50 flex flex-nowrap justify-between items-center"
+          v-if="item.imgLoaded"
+        >
+          <div class="flex flex-col justify-between">
+            <h1 class="text-xl mb-1">
+              {{ item[mType]?.title }}
+            </h1>
+            <div>{{ item[mType]?.year }}</div>
           </div>
-          <div
-            class="absolute bottom-0 left-0 right-0 flex flex-nowrap justify-between items-center"
-          >
-            <div class="flex flex-col justify-between">
-              <h1 class="text-xl mb-1">
-                {{ item[mType]?.title }}
-              </h1>
-              <div>{{ item[mType]?.year }}</div>
-            </div>
-            <div v-if="isEpisode" class="pl-2">
-              <b>
-                {{ item.episode?.season }}x{{
-                  item.episode?.number.toString().padStart(2, "0")
-                }}
-              </b>
-              {{ item.episode?.title }}
-              <div class="flex items-center justify-end">
-                <iconify-icon
-                  icon="carbon:recently-viewed"
-                  height="1.3em"
-                  class="mr-1"
-                />
-                <span>{{ formattedDate(item.watched_at!) }}</span>
-                <q-tooltip :delay="500" :offset="[0, 5]">
-                  Watched on {{ formattedDateTime(item.watched_at!) }}
-                </q-tooltip>
-              </div>
-            </div>
-            <div v-else class="text-right">
-              <span
-                v-for="genre in item.genres?.slice(
-                  0,
-                  $q.screen.gt.md === false ? 2 : 4,
-                )"
-                :key="genre.id"
-                class="mr-1 last:mr-0"
-              >
-                <Badge :value="genre.name" />
-              </span>
+          <div v-if="isEpisode" class="pl-2">
+            <b>
+              {{ item.episode?.season }}x{{
+                item.episode?.number.toString().padStart(2, "0")
+              }}
+            </b>
+            {{ item.episode?.title }}
+            <div class="flex items-center justify-end">
+              <iconify-icon
+                icon="carbon:recently-viewed"
+                height="1.3em"
+                class="mr-1"
+              />
+              <span>{{ formattedDate(item.watched_at!) }}</span>
+              <q-tooltip :delay="500" :offset="[0, 5]">
+                Watched on {{ formattedDateTime(item.watched_at!) }}
+              </q-tooltip>
             </div>
           </div>
-        </q-img>
+          <div v-else class="text-right">
+            <span
+              v-for="genre in item.genres?.slice(
+                0,
+                $q.screen.gt.md === false ? 2 : 4,
+              )"
+              :key="genre.id"
+              class="mr-1 last:mr-0"
+            >
+              <Badge :value="genre.name" />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   </q-scroll-area>

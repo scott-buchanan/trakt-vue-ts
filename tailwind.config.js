@@ -20,6 +20,19 @@ module.exports = {
         imdb: "#F5C518",
         trakt: "#ed1c24",
       },
+      screens: {
+        "3xl": "2561px",
+      },
+      keyframes: {
+        animateBgPulse: {
+          "0%": { opacity: 0 },
+          "50%": { opacity: 0.15 },
+          "100%": { opacity: 0 },
+        },
+      },
+      animation: {
+        "bg-pulse": "animateBgPulse 2s ease-in-out infinite",
+      },
     },
   },
   variants: {

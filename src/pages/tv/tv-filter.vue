@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
 import type { Ref } from "vue";
 import { useQuasar } from "quasar";
-
+import { useRoute, useRouter } from "vue-router";
 // api
 import {
   getAnticipated,
@@ -20,6 +21,7 @@ import CardContainer from "~/components/CardContainer.vue";
 
 import type Trakt from "~/api/trakt.types";
 import type { Filter } from "~/store/models";
+import { CardInfo } from "~/api/combinedCall.types";
 
 const route = useRoute();
 const router = useRouter();
@@ -39,8 +41,8 @@ const maxPages: Ref<number> = ref(10);
 const myEpRatings: Ref<Trakt.Ratings | null> = ref(null);
 const page: Ref<number> = ref(store.page);
 
-const myShowRatings: Ref<any> = ref(null);
-const tokens: Ref<any> = ref(store.tokens);
+const myShowRatings: Ref<Trakt.Ratings> = ref({} as Trakt.Ratings);
+const tokens: Ref<Trakt.AuthTokens> = ref(store.tokens);
 
 store.$subscribe((mutated, state) => {
   let triggerLoad = false;
@@ -62,7 +64,7 @@ async function loadData() {
   store.updateLoading(false);
 
   // this makes it so the card container always has a full last line
-  localStorage.setItem("item-limit", "18");
+  localStorage.setItem("item-limit", "30");
 
   // if watched history
   if (store.filterType === "show" && filter.value?.val === "history") {
@@ -78,7 +80,10 @@ async function loadData() {
     const items = await fetchCardInfo("episode", myEpRatings.value!);
 
     // sort by watched date (no logic here because only one filter)
-    items.sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at));
+    items.sort(
+      (a: CardInfo, b: CardInfo) =>
+        new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
+    );
 
     data.value.items = [...items];
   } else {

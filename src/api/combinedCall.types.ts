@@ -17,7 +17,7 @@ export interface CardInfo {
   tmdb_rating: string;
   my_rating: Trakt.Rating;
   clear_logo: string;
-  watched_at?: string;
+  watched_at: string;
   watchers?: string;
   genres: Tmdb.Genre[];
   show?: Trakt.Show;
@@ -25,6 +25,8 @@ export interface CardInfo {
   episode?: Trakt.Episode;
   list_count?: number;
   user_count?: number;
+  imgLoaded: boolean;
+  clearImgLoaded: boolean;
 }
 
 export interface ShowDetails {

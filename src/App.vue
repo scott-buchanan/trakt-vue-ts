@@ -113,6 +113,7 @@ onMounted(async () => {
             referrerpolicy="no-referrer"
           />
           <span v-else>{{ backgroundInfo.title }}</span>
+          <Tooltip :value="backgroundInfo.title" />
         </div>
       </div>
     </aside>

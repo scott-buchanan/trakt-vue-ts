@@ -119,8 +119,9 @@ function searchSubmit(e: Event) {
   e.preventDefault();
 }
 function goToLogin() {
-  window.location.href =
-    "https://trakt.tv/oauth/authorize?response_type=code&client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&redirect_uri=http://localhost:8080";
+  window.location.href = `https://trakt.tv/oauth/authorize?response_type=code&
+    client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&
+    redirect_uri=${process.env.REDIRECT_URI}`;
 }
 function logout() {
   localStorage.clear();
@@ -150,21 +151,25 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
 
 <template>
   <header class="pb-0 p-2 bg-transparent">
-    <div class="relative flex p-2 bg-black/50 rounded-md h-16">
+    <div class="relative flex p-2 bg-black/50 rounded-md sm:h-16">
+      <!-- background image for mobile-->
       <div
         class="absolute inset-x-0 inset-y-0 z-0 sm:hidden bg-cover bg-center rounded-md"
         :style="backgroundStyle"
       />
+      <!-------------------------------->
       <form
-        class="flex flex-col sm:flex-row grow items-center justify-between z-10"
+        class="z-10 mb-2 sm:mb-0 h-12 sm:h-full w-full sm:w-auto sm:flex-grow items-center justify-between"
         @submit="searchSubmit"
       >
-        <div class="flex flex-col w-full h-full sm:w-auto mb-2 sm:mb-0">
-          <div class="flex border h-full border-white rounded-md">
+        <div class="w-full h-full mb-2 sm:mb-0 mr-2">
+          <div
+            class="flex flex-nowrap border h-full border-white rounded-md w-full sm:max-w-3xl"
+          >
             <input
               name="txtSearch"
               v-model="searchTypedValue"
-              :class="['p-3 bg-transparent border-0 focus:ring-0 grow h-full']"
+              class="grow p-3 bg-transparent border-0 focus:ring-0 h-full"
               @focus="searchFocus"
               @blur="searchBlur"
               @keydown="dropSearch"
@@ -177,7 +182,7 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
             <Transition name="slide-up">
               <div
                 v-if="showMenu"
-                class="block fixed mt-1 max-h-fit z-50 rounded-md overflow-hidden"
+                class="block fixed mt-1 max-h-fit z-50 rounded-md overflow-hidden w-auto"
               >
                 <ul>
                   <li
@@ -241,67 +246,62 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
             </Transition>
           </div>
         </div>
-
-        <!-- if mobile show dropdown for filter -->
-        <div class="sm:hidden w-full">
-          <button
-            aria-label="Filter"
-            class="rounded-md border-solid border border-white p-3 w-full"
-            @click="handleClickFilterDropdown"
-            @blur="showMobileFilterMenu = false"
-          >
-            <div class="flex no-wrap justify-between items-center">
-              <div>{{ selectFilterModel.label }}</div>
-              <div>
-                <iconify-icon
-                  icon="bi:caret-down-fill"
-                  width="1.2em"
-                  height="1.2em"
-                  class="inline-block vertical-middle transition-all"
-                  :class="{
-                    'rotate-180 duration-300 ease-in-out': showMobileFilterMenu,
-                  }"
-                />
-              </div>
-            </div>
-          </button>
-          <div class="relative w-full">
-            <Transition name="slide-up">
-              <ul
-                v-if="showMobileFilterMenu"
-                class="absolute w-full mt-1 top-0 left-0 bg-black/80 rounded-md z-50 border border-dark-list"
-              >
-                <template v-for="(filter, key) in store.filterOptions">
-                  <li class="text-dark-list py-2 px-3 uppercase">
-                    {{ key === "movie" ? "movies" : "tv shows" }}
-                  </li>
-                  <li
-                    v-for="option in filter"
-                    :key="JSON.stringify(option)"
-                    class="p-1 hover:bg-slate-200/10"
-                    role="button"
-                    @click="(e) => handleClickFilterItem(e, key, option)"
-                  >
-                    <div class="p-2">{{ option.label }}</div>
-                  </li>
-                </template>
-              </ul>
-            </Transition>
-          </div>
-        </div>
       </form>
 
-      <div class="self-center flex h-full">
-        <Button v-if="store.myInfo" @click="logout">
-          <iconify-icon
-            icon="ic:round-logout"
-            width="1.5em"
-            height="1.5em"
-            class="mr-2"
-          />
+      <!-- if mobile show dropdown for filter -->
+      <div class="sm:hidden z-10 grow h-12 sm:h-full">
+        <button
+          aria-label="Filter"
+          class="rounded-md border-solid border border-white p-3 w-full"
+          @click="handleClickFilterDropdown"
+          @blur="showMobileFilterMenu = false"
+        >
+          <div class="flex no-wrap justify-between items-center">
+            <div>{{ selectFilterModel.label }}</div>
+            <div>
+              <iconify-icon
+                icon="bi:caret-down-fill"
+                width="1.2em"
+                height="1.2em"
+                class="inline-block vertical-middle transition-all"
+                :class="{
+                  'rotate-180 duration-300 ease-in-out': showMobileFilterMenu,
+                }"
+              />
+            </div>
+          </div>
+        </button>
+        <div class="relative w-full">
+          <Transition name="slide-up">
+            <ul
+              v-if="showMobileFilterMenu"
+              class="absolute w-full mt-1 top-0 left-0 bg-black/80 rounded-md z-50 border border-dark-list"
+            >
+              <template v-for="(filter, key) in store.filterOptions">
+                <li class="text-dark-list py-2 px-3 uppercase">
+                  {{ key === "movie" ? "movies" : "tv shows" }}
+                </li>
+                <li
+                  v-for="option in filter"
+                  :key="JSON.stringify(option)"
+                  class="p-1 hover:bg-slate-200/10"
+                  role="button"
+                  @click="(e) => handleClickFilterItem(e, key, option)"
+                >
+                  <div class="p-2">{{ option.label }}</div>
+                </li>
+              </template>
+            </ul>
+          </Transition>
+        </div>
+      </div>
+
+      <div class="z-10 self-center ml-2 h-full">
+        <Button v-if="store.myInfo" @click="logout" class="h-12 sm:h-full">
+          <iconify-icon icon="ic:round-logout" width="1.5em" height="1.5em" />
           <div>logout</div>
         </Button>
-        <Button v-else @click="goToLogin">
+        <Button v-else @click="goToLogin" class="h-12 sm:h-full">
           <iconify-icon
             icon="simple-icons:trakt"
             width="1.5em"

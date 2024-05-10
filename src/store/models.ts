@@ -20,7 +20,7 @@ export interface StateObj {
   filterOptions: FilterOptions;
   filterType: FilterType;
   loaded: boolean;
-  tokens: object | null;
+  tokens: Trakt.AuthTokens;
   myInfo: Trakt.MyInfo | null;
   menuVisible: boolean;
   currentIds: Trakt.Ids | null;
