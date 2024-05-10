@@ -166,9 +166,8 @@ function trailerReady(event: any) {
 }
 async function trailerError() {
   if (trailerUrl.value === props.info.tmdb_data.videos[0]?.key) {
-    console.log(process.env);
     const newTrailer = await axios.get(
-      `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${process.env.YOUTUBE_API_KEY}`,
+      `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`,
     );
     console.log(newTrailer);
     if (newTrailer.status === 200) {

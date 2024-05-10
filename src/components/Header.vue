@@ -119,9 +119,9 @@ function searchSubmit(e: Event) {
   e.preventDefault();
 }
 function goToLogin() {
-  window.location.href = `https://trakt.tv/oauth/authorize?response_type=code&
-    client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3&
-    redirect_uri=${process.env.REDIRECT_URI}`;
+  window.location.href =
+    `https://trakt.tv/oauth/authorize?redirect_uri=${import.meta.env.VITE_REDIRECT_URI}&response_type=code&` +
+    "client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3";
 }
 function logout() {
   localStorage.clear();
