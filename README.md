@@ -1,5 +1,5 @@
 # TV and Movie management app
-## Trakt client built with Vue 3 + TypeScript and fed by Trakt, TMDB, OMDb and fanart.tv API's
+## Trakt client built with Vue 3, TypeScript, Tailwind CSS and fed by Trakt, TMDB, OMDb and fanart.tv API's
 
 Personal project using Vue 3 to get more familiar with TypeScript and Tailwind CSS. Using Trakt, TMDB, fanart, OMDb REST API's.
 

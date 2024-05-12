@@ -1,42 +1,57 @@
-import axios from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 import type Trakt from "~/api/trakt.types";
 
-// -------- <AUTHENTICATION> -----------
-export async function getToken(code: string) {
-  try {
-    const response = await axios({
-      method: "POST",
-      url: "https://api.trakt.tv/oauth/token",
-      headers: { "Content-Type": "application/json" },
-      data: {
-        code,
-        client_id:
-          "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-        client_secret:
-          "93e1f2eb9e3c9e43cb06db7fd98feb630e8c90157579fa9af723d7181884ecb1",
-        redirect_uri: "http://localhost:8080",
-        grant_type: "authorization_code",
-      },
-    });
-    return response.data;
-  } catch {
-    return null;
-  }
-}
+let tokens: Trakt.AuthTokens = JSON.parse(
+  localStorage.getItem("trakt-vue-token")!,
+);
 
-export async function getTokenFromRefresh(refreshToken: string, path: string) {
+// Base config for Axios instances
+const baseConfig: AxiosRequestConfig = {
+  baseURL: "https://api.trakt.tv",
+  headers: {
+    "trakt-api-version": "2",
+    "trakt-api-key": import.meta.env.VITE_TRAKT_API_KEY,
+  },
+};
+
+const axiosNoAuth: AxiosInstance = axios.create(baseConfig);
+const axiosWithAuth: AxiosInstance = axios.create(baseConfig);
+
+axiosWithAuth.interceptors.request.use(
+  async (config) => {
+    if (tokens?.access_token) {
+      if (tokens.expires_in < 86400) {
+        tokens = await getToken(tokens.refresh_token, true);
+        localStorage.setItem("trakt-vue-token", JSON.stringify(tokens));
+      }
+
+      // add the Authorization header
+      config.headers.Authorization = `Bearer ${tokens.access_token}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
+// -------- <AUTHENTICATION> -----------
+export async function getToken(
+  code: string,
+  refresh: boolean = false,
+): Promise<Trakt.AuthTokens> {
+  const redirect_uri: string = import.meta.env.VITE_REDIRECT_URI;
   const response = await axios({
     method: "POST",
     url: "https://api.trakt.tv/oauth/token",
     headers: { "Content-Type": "application/json" },
     data: {
-      refresh_token: refreshToken,
-      client_id:
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-      client_secret:
-        "93e1f2eb9e3c9e43cb06db7fd98feb630e8c90157579fa9af723d7181884ecb1",
-      redirect_uri: `http://localhost:8080${path}`,
-      grant_type: "refresh_token",
+      code,
+      client_id: import.meta.env.VITE_TRAKT_API_KEY,
+      client_secret: import.meta.env.VITE_TRAKT_CLIENT_SECRET,
+      redirect_uri,
+      grant_type: refresh ? "refresh_token" : "authorization_code",
     },
   });
   return response.data;
@@ -44,18 +59,8 @@ export async function getTokenFromRefresh(refreshToken: string, path: string) {
 // -------- </AUTHENTICATION> -----------
 
 // -------- <SETTINGS> -----------
-export async function getTraktSettings(token: string) {
-  const response = await axios({
-    method: "GET",
-    url: "https://api.trakt.tv/users/settings",
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      Authorization: `Bearer ${token}`,
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+export async function getTraktSettings() {
+  const response = await axiosWithAuth.get("/users/settings");
   localStorage.setItem("trakt-vue-user", JSON.stringify(response.data));
   return response.data;
 }
@@ -65,21 +70,16 @@ export async function getTraktSettings(token: string) {
 /**
  * @property {string} rType can be shows or movies
  */
-export async function getRecommendationsFromMe(rType: string, page: number) {
+export async function getRecommendationsFromMe(
+  recommendationType: string,
+  page: number,
+) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
     ?.user.username;
   const limit: string = JSON.parse(localStorage.getItem("item-limit")!);
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/users/${uName}/recommendations/${rType}/rank?limit=${limit}&page=${page}`,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${JSON.parse(localStorage.getItem("trakt-vue-token")!).access_token}`,
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosWithAuth.get(
+    `/users/${uName}/recommendations/${recommendationType}/rank?limit=${limit}&page=${page}`,
+  );
   return {
     items: response.data,
     page: Number.parseInt(response.headers["x-pagination-page"], 10),
@@ -95,16 +95,9 @@ export async function getTrending(
   page: number,
 ): Promise<{ items: Trakt.Show; page: number; pagesTotal: number }> {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/${mType}/trending?limit=${limit}&page=${page}`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/${mType}/trending?limit=${limit}&page=${page}`,
+  );
   return {
     items: response.data,
     page: Number.parseInt(response.headers["x-pagination-page"], 10),
@@ -117,16 +110,9 @@ export async function getTrending(
 
 export async function getAnticipated(mType: string, page: number) {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/${mType}/anticipated?limit=${limit}&page=${page}`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/${mType}/anticipated?limit=${limit}&page=${page}`,
+  );
   return {
     items: response.data,
     page: Number.parseInt(response.headers["x-pagination-page"], 10),
@@ -142,16 +128,9 @@ export async function getCommunityRecommended(
   page: number,
 ): Promise<{ items: Trakt.Show; page: number; pagesTotal: number }> {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/${mType}/recommended?limit=${limit}&page=${page}`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/${mType}/recommended?limit=${limit}&page=${page}`,
+  );
   return {
     items: response.data,
     page: Number.parseInt(response.headers["x-pagination-page"], 10),
@@ -166,16 +145,9 @@ export async function getWatchedHistory(mType: string, page = 1) {
   const uName = JSON.parse(localStorage.getItem("trakt-vue-user")!)?.user
     .username;
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/users/${uName}/history/${mType}?limit=${limit}&page=${page}`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/users/${uName}/history/${mType}?limit=${limit}&page=${page}`,
+  );
   return {
     items: response.data,
     page: Number.parseInt(response.headers["x-pagination-page"], 10),
@@ -190,53 +162,22 @@ export async function getTvCollection() {
   const uName = JSON.parse(localStorage.getItem("trakt-vue-user")!)?.user
     .username;
   // no pagination available for this
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/users/${uName}/collection/shows`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(`/users/${uName}/collection/shows`);
   return response.data;
 }
 
 export async function getShowSummary(
   showId: number | string,
 ): Promise<Trakt.Show> {
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/shows/${showId}?extended=full`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(`/shows/${showId}?extended=full`);
   response.data.type = "show";
   return response.data;
 }
 
 export async function getMovieSummary(movieId: string) {
-  try {
-    const response = await axios({
-      method: "GET",
-      url: `https://api.trakt.tv/movies/${movieId}?extended=full`,
-      headers: {
-        "Content-Type": "application/json",
-        "trakt-api-version": "2",
-        "trakt-api-key":
-          "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-      },
-    });
-    response.data.type = "movie";
-    return response.data;
-  } catch {
-    return null;
-  }
+  const response = await axiosNoAuth.get(`/movies/${movieId}?extended=full`);
+  response.data.type = "movie";
+  return response.data;
 }
 
 export async function getEpisodeSummary(
@@ -244,31 +185,17 @@ export async function getEpisodeSummary(
   season: number,
   episode: number,
 ): Promise<Trakt.Episode> {
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/shows/${showId}/seasons/${season}/episodes/${episode}?extended=full`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/shows/${showId}/seasons/${season}/episodes/${episode}?extended=full`,
+  );
   response.data.type = "episode";
   return response.data;
 }
 
 export async function getSeasonSummary(slug: string, season: number) {
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/shows/${slug}/seasons?extended=full`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(
+    `/shows/${slug}/seasons?extended=full`,
+  );
   return response.data.find((item: Trakt.Episode) => item.number === season);
 }
 
@@ -277,48 +204,19 @@ export async function getEpisodeRating(
   season: number,
   episode: number,
 ) {
-  try {
-    const response = await axios({
-      method: "GET",
-      url: `https://api.trakt.tv/shows/${showId}/seasons/${season}/episodes/${episode}/ratings`,
-      headers: {
-        "Content-Type": "application/json",
-        "trakt-api-version": "2",
-        "trakt-api-key":
-          "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-      },
-    });
-    return response.data.rating.toFixed(1);
-  } catch {
-    return null;
-  }
+  const response = await axiosNoAuth.get(
+    `/shows/${showId}/seasons/${season}/episodes/${episode}/ratings`,
+  );
+  return response.data.rating.toFixed(1);
 }
 
 export async function getShowRating(showId: string) {
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/shows/${showId}/ratings`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(`/shows/${showId}/ratings`);
   return response.data.rating.toFixed(1);
 }
 
 export async function getMovieRating(movieId: string) {
-  const response = await axios({
-    method: "GET",
-    url: `https://api.trakt.tv/movies/${movieId}/ratings`,
-    headers: {
-      "Content-Type": "application/json",
-      "trakt-api-version": "2",
-      "trakt-api-key":
-        "8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3",
-    },
-  });
+  const response = await axiosNoAuth.get(`/movies/${movieId}/ratings`);
   return response.data.rating.toFixed(1);
 }
 

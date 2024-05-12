@@ -1,13 +1,21 @@
 <script setup lang="ts">
+import { useRoute, useRouter } from "vue-router";
 import { useStore } from "~/store/index";
+// api
+import { getToken, getTraktSettings, getTokenFromRefresh } from "./api/trakt";
 import { getAppBackgroundImg, getImageUrls } from "~/api/tmdb";
+// assets
 import defaultImage from "~/assets/drawer-image-1.jpg";
 import vuejsLogo from "~/assets/vuejs.png";
 import traktLogo from "~/assets/trakt-icon-red.svg";
+// types
+import Trakt from "./api/trakt.types";
 
 import "iconify-icon";
 
 const store = useStore();
+const route = useRoute();
+const router = useRouter();
 
 const defaultBack = defaultImage;
 
@@ -33,8 +41,43 @@ const filterOptions = computed(() => {
   return options;
 });
 
+// Watch for code in route query and login
+watch(
+  () => route.query.code,
+  async (code) => {
+    // check for code if redirecting from Trakt oauth
+    if (code) {
+      const authTokens: Trakt.AuthTokens = await getToken(code as string);
+      localStorage.setItem("trakt-vue-token", JSON.stringify(authTokens));
+
+      // logged in
+      if (authTokens) {
+        let myInfo: Trakt.MyInfo = await getTraktSettings();
+
+        store.updateTokens(authTokens);
+        store.updateMyInfo(myInfo);
+
+        // remove code from url
+        if (route.name) router.push({ name: route.name });
+      }
+    }
+  },
+);
+
 // lifecycle hooks
 onMounted(async () => {
+  // log in
+  if (localStorage.getItem("trakt-vue-token")) {
+    const authTokensString = localStorage.getItem("trakt-vue-token");
+    if (authTokensString) {
+      const authTokens: Trakt.AuthTokens = JSON.parse(authTokensString);
+      const myInfo: Trakt.MyInfo = await getTraktSettings();
+
+      store.updateTokens(authTokens);
+      store.updateMyInfo(myInfo);
+    }
+  }
+
   // get tmdbConfig and store in state
   if (!store.tmdbConfig) store.updateTmdbConfig(await getImageUrls());
 

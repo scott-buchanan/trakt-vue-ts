@@ -8,9 +8,6 @@ import {
   getMySeasonRatings,
   getMyShowRatings,
   getMyWatchedMovies,
-  getToken,
-  getTokenFromRefresh,
-  getTraktSettings,
 } from "~/api/trakt";
 
 import type Trakt from "~/api/trakt.types";
@@ -22,30 +19,7 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  // if (to.name === 'movie-filter') {
-  //   switch (to.params.filter) {
-  //     case 'trending':
-  //     case 'history':
-  //     case 'recommended':
-  //       next()
-  //       break
-  //     default:
-  //       next({ name: 'movie-details', params: { movie: to.params.filter } })
-  //   }
-  // }
   const store = useStore();
-
-  // redirect if needed
-  // const filterType = to.path.includes('/tv/') ? 'show' : 'movie'
-  // const urlLastPart = to.path.split('/')[to.path.split('/').length - 1]
-  // const isFilter
-  //   = store.filterOptions[filterType].find(filter => filter.val === urlLastPart) !== undefined
-  //   // TODO will need to fix
-  // if ((to.name === 'show-details' || to.name === 'movie-details') && isFilter) {
-  //   next({ name: `${filterType}-list`, params: { filter: urlLastPart } })
-  //   return
-  // }
-  // ------------------
 
   // get tmdb genres and store in state
   if (!store.genres) store.updateGenres(await getGenres());
@@ -53,12 +27,7 @@ router.beforeEach(async (to, from, next) => {
   const checkToken = async () => {
     if (localStorage.getItem("trakt-vue-token")) {
       // if local storage has tokens, get the accessToken from the refreshToken
-      const tokens: Trakt.AuthTokens = JSON.parse(
-        localStorage.getItem("trakt-vue-token")!,
-      );
-      let myInfo: Trakt.MyInfo = JSON.parse(
-        localStorage.getItem("trakt-vue-user")!,
-      );
+
       let myShowRatings: Trakt.Ratings;
       let mySeasonRatings: Trakt.Ratings;
       let myEpRatings: Trakt.Ratings;
@@ -96,18 +65,7 @@ router.beforeEach(async (to, from, next) => {
         }
       };
 
-      if (tokens.expires_in < 86400) {
-        const authTokens = await getTokenFromRefresh(
-          tokens.refresh_token,
-          to.path,
-        );
-        localStorage.setItem("trakt-vue-token", JSON.stringify(authTokens));
-        store.updateTokens(authTokens);
-      }
-
-      if (!myInfo) myInfo = await getTraktSettings(tokens.access_token);
-
-      store.updateMyInfo(myInfo);
+      // MOVE RATINGS STUFF TO MOVIE AND TV PAGES
 
       if (to.path.split("/")[1] === "movie") {
         [myMovieRatings, myLikes, myWatchedMovies] = await Promise.all([
@@ -154,21 +112,21 @@ router.beforeEach(async (to, from, next) => {
     }
   };
 
-  await checkToken();
+  // await checkToken();
 
-  if (to.query?.code) {
-    // if no tokens were present and we fell into the else, we get redirected
-    // with query: code and put tokens into local storage
-    if (!localStorage.getItem("trakt-vue-token")) {
-      const authTokens = await getToken(to.query.code! as string);
-      if (authTokens) {
-        localStorage.setItem("trakt-vue-token", JSON.stringify(authTokens));
-        store.updateTokens(authTokens);
-        await checkToken();
-      }
-    }
-    next({ path: "/tv/trending" });
-  }
+  // if (to.query?.code) {
+  //   // if no tokens were present and we fell into the else, we get redirected
+  //   // with query: code and put tokens into local storage
+  //   if (!localStorage.getItem("trakt-vue-token")) {
+  //     const authTokens = await getToken(to.query.code! as string);
+  //     if (authTokens) {
+  //       localStorage.setItem("trakt-vue-token", JSON.stringify(authTokens));
+  //       store.updateTokens(authTokens);
+  //       await checkToken();
+  //     }
+  //   }
+  //   next({ path: "/tv/trending" });
+  // }
 
   // remove trailing slash
   const path = to.path.replace(/\/+$/, "");
