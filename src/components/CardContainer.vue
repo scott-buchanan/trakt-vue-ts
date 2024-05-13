@@ -161,7 +161,7 @@ onMounted(() => {
     default:
       sortedData.value = props.data;
   }
-  sortedData.value.forEach((item) => {
+  sortedData.value?.forEach((item) => {
     item.imgLoaded = false;
     item.clearImgLoaded = false;
   });

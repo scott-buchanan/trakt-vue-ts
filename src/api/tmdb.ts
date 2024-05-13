@@ -34,7 +34,6 @@ export async function getAppBackgroundImg(
   });
   const rando = Math.floor(Math.random() * response.data.results.length);
   const imgObj = response.data.results[rando];
-  console.log(tmdbConfig);
   return {
     id: imgObj.id,
     title: imgObj.title ? imgObj.title : imgObj.name,

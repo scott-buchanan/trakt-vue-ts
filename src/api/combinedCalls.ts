@@ -203,7 +203,6 @@ export async function getSeasonDetails(
         res.my_rating = myRating.rating;
       }
     }
-    console.log("season details", { ...res, ...seasonInfo, ...{ show } });
     return { ...res, ...seasonInfo, ...{ show } };
   }
   return false;
@@ -271,7 +270,6 @@ export async function getMovieDetails(
   const summary = await getMovieSummary(slug);
   const res: MovieDetails = {} as MovieDetails;
 
-  console.log(summary);
   if (summary.ids) {
     summary.type = "movie";
 
@@ -325,7 +323,6 @@ export async function getMovieDetails(
         res.my_rating = myRating.rating;
       }
     }
-    console.log({ ...summary, ...res });
     return { ...summary, ...res };
   }
   return false;
@@ -341,7 +338,6 @@ export async function getMovieCollection(collectionId: number) {
 
   const parts = await Promise.all(
     collection.parts.map(async (item: Tmdb.MovieDetails) => {
-      console.log(item);
       const ids = await getIdLookupTmdb(item.id, "movie");
 
       if (ids && "slug" in ids) {

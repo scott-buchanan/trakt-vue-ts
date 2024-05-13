@@ -118,7 +118,6 @@ const isReleased = computed(() => {
 
 // methods
 function technicalDetails() {
-  console.log(props.technicalDetails.filter((item) => item.value));
   return props.technicalDetails.filter((item) => item.value);
 }
 function watchedInfo() {
@@ -140,7 +139,6 @@ function watchedInfo() {
       });
     }
     // if movie, add number of plays
-    console.log(progress);
     if ("movie" in progress) {
       arr.push({
         label: "plays",
@@ -169,7 +167,6 @@ async function trailerError() {
     const newTrailer = await axios.get(
       `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`,
     );
-    console.log(newTrailer);
     if (newTrailer.status === 200) {
       trailerUrl.value = newTrailer.data.items[0].id.videoId;
     } else {

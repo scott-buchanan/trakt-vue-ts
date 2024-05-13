@@ -99,7 +99,6 @@ async function loadData() {
         break;
       case "trending":
         data.value = await getTrending("shows", page.value);
-        console.log(data.value);
         break;
       default:
         store.updateLoading(true);
@@ -110,7 +109,6 @@ async function loadData() {
     myShowRatings.value = JSON.parse(
       localStorage.getItem("trakt-vue-show-ratings")!,
     );
-    console.log(myShowRatings.value);
     // get images and ratings
     const items = await fetchCardInfo("show", myShowRatings.value);
     if (filter.value.val === "recommended")

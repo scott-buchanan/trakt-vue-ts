@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Ref } from "vue";
-import type { Filter } from "~/store/models";
+import type { Filter, FilterType } from "~/store/models";
 import type { autocompleteResult } from "~/types/header";
 import type Tmdb from "~/api/tmdb.types";
 
@@ -49,7 +49,6 @@ async function dropSearch() {
   )
     .map((result: any) => {
       showMenu.value = true;
-
       // if result is a person
       if (result.media_type === "person") {
         return {
@@ -61,13 +60,11 @@ async function dropSearch() {
         };
       } else {
         // take genre ids from show/movie and map them to store state data
-        console.log(store.genres);
         const genres: string[] = store.genres[
           result.media_type === "movie" ? "movie" : "tv"
         ]
           .filter((genre: Tmdb.Genre) => result.genre_ids.includes(genre.id))
           .map((g: Tmdb.Genre) => g.name);
-
         return {
           ...result,
           label: result.media_type === "movie" ? result.title : result.name,
@@ -137,7 +134,7 @@ function handleClickFilterDropdown(e: Event) {
   showMobileFilterMenu.value = !showMobileFilterMenu.value;
   e.preventDefault();
 }
-function handleClickFilterItem(e: Event, key: string, option: Filter) {
+function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
   store.updateLoading(false);
   store.updateFilterType(key);
   store.updatePage(1);
@@ -178,17 +175,17 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
               <iconify-icon icon="mdi:search" height="2em" />
             </button>
           </div>
-          <div class="relative">
+          <div class="relative w-full">
             <Transition name="slide-up">
               <div
                 v-if="showMenu"
-                class="block fixed mt-1 max-h-fit z-50 rounded-md overflow-hidden w-auto"
+                class="block w-full sm:max-w-3xl mt-1 max-h-fit z-50 rounded-md overflow-hidden"
               >
                 <ul>
                   <li
                     v-for="result in autocompleteApiResults"
                     :key="JSON.stringify(result)"
-                    class="flex h-32 bg-gray-900 hover:bg-gray-800 border-b border-black last:border-0 p-3"
+                    class="flex h-24 bg-slate-900 hover:bg-slate-800 p-3 border-b border-slate-300/25"
                     role="button"
                     @click="goToDetails(result)"
                   >
@@ -197,8 +194,8 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
                       :src="result.thumbnail"
                       aria-hidden="true"
                     />
-                    <div class="flex flex-col justify-center pl-3">
-                      <div>
+                    <div class="flex flex-col pl-3">
+                      <div class="text-slate-200">
                         <iconify-icon
                           :icon="
                             result.media_type === 'movie'
@@ -209,8 +206,10 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
                         />
                         <b>{{ result.label }}</b>
                       </div>
-                      <div v-if="result.year">{{ result.year }}</div>
-                      <div>
+                      <div v-if="result.year" class="text-slate-300">
+                        {{ result.year }}
+                      </div>
+                      <div class="text-slate-300">
                         <small v-if="result.known_for">
                           <template v-for="(item, index) in result.known_for">
                             {{ item.original_title || item.original_name
@@ -275,7 +274,7 @@ function handleClickFilterItem(e: Event, key: string, option: Filter) {
           <Transition name="slide-up">
             <ul
               v-if="showMobileFilterMenu"
-              class="absolute w-full mt-1 top-0 left-0 bg-black/80 rounded-md z-50 border border-dark-list"
+              class="absolute w-full mt-1 top-0 left-0 bg-slate-900/95 rounded-md z-50 border border-dark-list"
             >
               <template v-for="(filter, key) in store.filterOptions">
                 <li class="text-dark-list py-2 px-3 uppercase">

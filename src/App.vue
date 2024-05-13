@@ -47,12 +47,11 @@ watch(
   async (code) => {
     // check for code if redirecting from Trakt oauth
     if (code) {
+      // take code and get token using authorization code
       const authTokens: Trakt.AuthTokens = await getToken(code as string);
-      localStorage.setItem("trakt-vue-token", JSON.stringify(authTokens));
 
-      // logged in
       if (authTokens) {
-        let myInfo: Trakt.MyInfo = await getTraktSettings();
+        const myInfo: Trakt.MyInfo = await getTraktSettings();
 
         store.updateTokens(authTokens);
         store.updateMyInfo(myInfo);
@@ -67,15 +66,14 @@ watch(
 // lifecycle hooks
 onMounted(async () => {
   // log in
-  if (localStorage.getItem("trakt-vue-token")) {
-    const authTokensString = localStorage.getItem("trakt-vue-token");
-    if (authTokensString) {
-      const authTokens: Trakt.AuthTokens = JSON.parse(authTokensString);
-      const myInfo: Trakt.MyInfo = await getTraktSettings();
+  const tokenString: string | null = localStorage.getItem("trakt-vue-token");
 
-      store.updateTokens(authTokens);
-      store.updateMyInfo(myInfo);
-    }
+  if (tokenString !== null) {
+    const authTokens: Trakt.AuthTokens = JSON.parse(tokenString);
+    const myInfo: Trakt.MyInfo = await getTraktSettings();
+
+    store.updateTokens(authTokens);
+    store.updateMyInfo(myInfo);
   }
 
   // get tmdbConfig and store in state
@@ -93,8 +91,11 @@ onMounted(async () => {
     :style="{ backgroundImage: `url(${backgroundInfo?.backgroundUrl})` }"
   >
     <aside v-if="$q.screen.xs === false" class="p-2 pr-0 w-[250px]">
-      <div class="relative bg-black/50 rounded-md h-full">
-        <a href="/" class="flex justify-center hover:no-underline">
+      <div class="relative bg-black/50 rounded-md h-full overflow-hidden">
+        <a
+          href="/"
+          class="flex justify-center hover:no-underline backdrop-blur-md"
+        >
           <img
             :src="traktLogo"
             class="self-start object-contain max-w-14 mt-4 -mr-2"
@@ -105,6 +106,7 @@ onMounted(async () => {
             class="self-end object-contain max-w-14 mb-4 -ml-2"
           />
         </a>
+
         <div
           class="relative w-full h-40 bg-cover bg-center"
           :style="{
@@ -149,14 +151,16 @@ onMounted(async () => {
           <h1 class="text-sm uppercase text-dark-list font-semibold">
             Background
           </h1>
-          <img
-            v-if="backgroundInfo.posterUrl"
-            :src="backgroundInfo.posterUrl"
-            :alt="backgroundInfo.title"
-            referrerpolicy="no-referrer"
-          />
-          <span v-else>{{ backgroundInfo.title }}</span>
-          <Tooltip :value="backgroundInfo.title" />
+          <Button img>
+            <img
+              v-if="backgroundInfo.posterUrl"
+              :src="backgroundInfo.posterUrl"
+              :alt="backgroundInfo.title"
+              referrerpolicy="no-referrer"
+              class="inline-block"
+            />
+            <span v-else>{{ backgroundInfo.title }}</span>
+          </Button>
         </div>
       </div>
     </aside>
