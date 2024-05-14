@@ -166,7 +166,7 @@ onMounted(async () => {
       </div>
     </aside>
 
-    <div class="grow flex flex-col w-full">
+    <div class="grow flex flex-col max-w-full">
       <Header :page="store.$state.page" />
 
       <div v-if="!store.loaded" class="grow p-2">

@@ -158,7 +158,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
       />
       <!-------------------------------->
       <form
-        class="z-10 mb-2 sm:mb-0 h-12 sm:h-full w-full sm:w-auto sm:flex-grow items-center justify-between"
+        class="z-20 mb-2 sm:mb-0 h-12 sm:h-full w-full sm:w-auto sm:flex-grow items-center justify-between"
         @submit="searchSubmit"
       >
         <div class="w-full h-full mb-2 sm:mb-0 mr-2">
@@ -256,7 +256,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
       </form>
 
       <!-- if mobile show dropdown for filter -->
-      <div class="sm:hidden z-10 grow h-12 sm:h-full">
+      <div class="sm:hidden grow h-12 sm:h-full">
         <button
           aria-label="Filter"
           class="rounded-md p-3 w-full border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
@@ -303,7 +303,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
         </div>
       </div>
 
-      <div class="z-10 self-center ml-2 h-full">
+      <div class="self-center ml-2 h-full">
         <Button v-if="store.myInfo" @click="logout" class="h-12 sm:h-full">
           <iconify-icon icon="ic:round-logout" width="1.5em" height="1.5em" />
           <div>logout</div>
