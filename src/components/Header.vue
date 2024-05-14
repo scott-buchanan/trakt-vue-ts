@@ -183,7 +183,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
           <div>
             <Transition name="slide-up">
               <div
-                v-if="!showMenu"
+                v-if="showMenu"
                 class="sm:max-w-3xl mt-1 max-h-fit rounded-md"
               >
                 <ul>
