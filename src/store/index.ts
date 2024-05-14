@@ -32,8 +32,15 @@ const defaultState: StateObj = {
     movie: [],
     tv: [],
   },
+  ratings: {
+    episode: {} as Trakt.Ratings,
+    season: {} as Trakt.Ratings,
+    show: {} as Trakt.Ratings,
+    movie: {} as Trakt.Ratings,
+  },
   tmdbConfig: null,
   searchPage: null,
+  backgroundInfo: null,
 };
 
 export const useStore = defineStore("main", {
@@ -51,7 +58,7 @@ export const useStore = defineStore("main", {
     updateLoading(loaded: boolean) {
       this.loaded = loaded;
     },
-    updateTokens(tokens: object) {
+    updateTokens(tokens: Trakt.AuthTokens) {
       this.tokens = { ...tokens };
     },
     updateMyInfo(myInfo: Trakt.MyInfo) {
@@ -71,6 +78,15 @@ export const useStore = defineStore("main", {
     },
     updateSearchPage(value: any) {
       this.searchPage = value;
+    },
+    updateRatings(
+      mType: "movie" | "show" | "episode" | "season",
+      value: Trakt.Ratings,
+    ) {
+      this.ratings[mType] = value;
+    },
+    updateBackgroundInfo(value: Tmdb.BackgroundInfo) {
+      this.backgroundInfo = value;
     },
     reset() {
       Object.assign(this, defaultState);

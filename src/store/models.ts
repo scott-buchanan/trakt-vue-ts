@@ -20,11 +20,18 @@ export interface StateObj {
   filterOptions: FilterOptions;
   filterType: FilterType;
   loaded: boolean;
-  tokens: Trakt.AuthTokens;
+  tokens: Trakt.AuthTokens | null;
   myInfo: Trakt.MyInfo | null;
   menuVisible: boolean;
   currentIds: Trakt.Ids | null;
   genres: Tmdb.Genres;
+  ratings: {
+    episode: Trakt.Ratings;
+    season: Trakt.Ratings;
+    show: Trakt.Ratings;
+    movie: Trakt.Ratings;
+  };
   tmdbConfig: Tmdb.TmdbConfig | null;
   searchPage: number | null;
+  backgroundInfo: any | null;
 }

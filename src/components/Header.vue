@@ -22,10 +22,12 @@ const searchTypedValue: Ref<string> = ref("");
 const selectFilterModel: Ref<Filter> = ref(store.filterOptions.show[0]);
 const showMobileFilterMenu: Ref<boolean> = ref(false);
 const showMenu: Ref<boolean> = ref(false);
+const backgroundInfo: Ref<Tmdb.BackgroundInfo | null> = ref(null);
 
 // subscribe to store updates
 store.$subscribe((mutated, state) => {
   selectFilterModel.value = state.filter;
+  backgroundInfo.value = state.backgroundInfo;
 });
 
 // computed
@@ -161,12 +163,15 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
       >
         <div class="w-full h-full mb-2 sm:mb-0 mr-2">
           <div
-            class="flex flex-nowrap border h-full border-white rounded-md w-full sm:max-w-3xl"
+            class="flex flex-nowrap h-full rounded-md w-full sm:max-w-3xl p-1 border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
           >
             <input
               name="txtSearch"
               v-model="searchTypedValue"
-              class="grow p-3 bg-transparent border-0 focus:ring-0 h-full"
+              class="grow p-3 bg-transparent border-0 focus:ring-0 h-full placeholder-slate-300/75"
+              :placeholder="
+                backgroundInfo ? `Search: e.g. ${backgroundInfo?.title}` : ''
+              "
               @focus="searchFocus"
               @blur="searchBlur"
               @keydown="dropSearch"
@@ -175,27 +180,29 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
               <iconify-icon icon="mdi:search" height="2em" />
             </button>
           </div>
-          <div class="relative w-full">
+          <div>
             <Transition name="slide-up">
               <div
-                v-if="showMenu"
-                class="block w-full sm:max-w-3xl mt-1 max-h-fit z-50 rounded-md overflow-hidden"
+                v-if="!showMenu"
+                class="sm:max-w-3xl mt-1 max-h-fit rounded-md"
               >
                 <ul>
                   <li
                     v-for="result in autocompleteApiResults"
                     :key="JSON.stringify(result)"
-                    class="flex h-24 bg-slate-900 hover:bg-slate-800 p-3 border-b border-slate-300/25"
+                    class="grid grid-cols-[auto,1fr] grid-rows-1 h-24 bg-slate-900 hover:bg-slate-800 p-3 border-b border-slate-300/25"
                     role="button"
                     @click="goToDetails(result)"
                   >
                     <img
-                      class="object-cover object-center max-h-full aspect-[2/3]"
+                      class="object-cover object-center h-full aspect-[2/3]"
                       :src="result.thumbnail"
                       aria-hidden="true"
                     />
-                    <div class="flex flex-col pl-3">
-                      <div class="text-slate-200">
+                    <div class="ml-3 overflow-hidden">
+                      <div
+                        class="text-slate-200 overflow-hidden whitespace-nowrap text-ellipsis"
+                      >
                         <iconify-icon
                           :icon="
                             result.media_type === 'movie'
@@ -209,14 +216,15 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
                       <div v-if="result.year" class="text-slate-300">
                         {{ result.year }}
                       </div>
-                      <div class="text-slate-300">
+                      <div
+                        class="text-slate-300 overflow-hidden whitespace-nowrap text-ellipsis"
+                      >
                         <small v-if="result.known_for">
                           <template v-for="(item, index) in result.known_for">
                             {{ item.original_title || item.original_name
-                            }}<template
-                              v-if="index !== result.known_for.length - 1"
-                              >,
-                            </template>
+                            }}{{
+                              index !== result.known_for.length - 1 ? "," : ""
+                            }}
                           </template>
                         </small>
                         <small
@@ -251,7 +259,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
       <div class="sm:hidden z-10 grow h-12 sm:h-full">
         <button
           aria-label="Filter"
-          class="rounded-md border-solid border border-white p-3 w-full"
+          class="rounded-md p-3 w-full border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
           @click="handleClickFilterDropdown"
           @blur="showMobileFilterMenu = false"
         >
@@ -274,7 +282,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
           <Transition name="slide-up">
             <ul
               v-if="showMobileFilterMenu"
-              class="absolute w-full mt-1 top-0 left-0 bg-slate-900/95 rounded-md z-50 border border-dark-list"
+              class="absolute w-full mt-1 top-0 left-0 bg-slate-900/95 rounded-md z-40 border border-dark-list"
             >
               <template v-for="(filter, key) in store.filterOptions">
                 <li class="text-dark-list py-2 px-3 uppercase">

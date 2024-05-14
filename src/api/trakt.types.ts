@@ -42,14 +42,33 @@ export namespace Trakt {
     type: string;
   }
 
-  export interface Rating {
+  interface Rating {
     rated_at: string;
     rating: number;
     type: MediaType;
+  }
+
+  export interface ShowRating extends Rating {
     show: Show;
-    episode?: Episode;
-    season?: Season;
+  }
+
+  export interface EpisodeRating extends Rating {
+    episode: Episode;
+  }
+
+  export interface SeasonRating extends Rating {
+    season: Season;
+  }
+
+  export interface MovieRating extends Rating {
     movie: Movie;
+  }
+
+  export interface Ratings {
+    total: number;
+    lastModified: string;
+    type: string;
+    ratings: ShowRating[] | EpisodeRating[] | SeasonRating[] | MovieRating[];
   }
 
   export interface Comments {
@@ -75,12 +94,6 @@ export namespace Trakt {
         slug: string;
       };
     };
-  }
-
-  export interface Ratings {
-    total: number;
-    lastModified: string;
-    ratings: Rating[];
   }
 
   export interface Episode {

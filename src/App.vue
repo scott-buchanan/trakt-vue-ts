@@ -81,6 +81,7 @@ onMounted(async () => {
 
   if (store.$state.tmdbConfig) {
     backgroundInfo.value = await getAppBackgroundImg(store.$state.tmdbConfig);
+    store.updateBackgroundInfo(backgroundInfo.value);
   }
 });
 </script>
@@ -165,7 +166,7 @@ onMounted(async () => {
       </div>
     </aside>
 
-    <div class="grow flex flex-col">
+    <div class="grow flex flex-col w-full">
       <Header :page="store.$state.page" />
 
       <div v-if="!store.loaded" class="grow p-2">

@@ -77,7 +77,7 @@ export async function getTraktSettings() {
  * @property {string} rType can be shows or movies
  */
 export async function getRecommendationsFromMe(
-  recommendationType: string,
+  recommendationType: "shows" | "movies",
   page: number,
 ) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
@@ -97,9 +97,9 @@ export async function getRecommendationsFromMe(
 }
 
 export async function getTrending(
-  mType: string,
+  mType: "shows" | "movies",
   page: number,
-): Promise<{ items: Trakt.Show; page: number; pagesTotal: number }> {
+): Promise<{ items: Trakt.Show[]; page: number; pagesTotal: number }> {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
   const response = await axiosNoAuth.get(
     `/${mType}/trending?limit=${limit}&page=${page}`,
@@ -114,7 +114,7 @@ export async function getTrending(
   };
 }
 
-export async function getAnticipated(mType: string, page: number) {
+export async function getAnticipated(mType: "shows" | "movies", page: number) {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
   const response = await axiosNoAuth.get(
     `/${mType}/anticipated?limit=${limit}&page=${page}`,
@@ -130,9 +130,9 @@ export async function getAnticipated(mType: string, page: number) {
 }
 
 export async function getCommunityRecommended(
-  mType: string,
+  mType: "shows" | "movies",
   page: number,
-): Promise<{ items: Trakt.Show; page: number; pagesTotal: number }> {
+): Promise<{ items: Trakt.Show[]; page: number; pagesTotal: number }> {
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
   const response = await axiosNoAuth.get(
     `/${mType}/recommended?limit=${limit}&page=${page}`,
@@ -147,7 +147,7 @@ export async function getCommunityRecommended(
   };
 }
 
-export async function getWatchedHistory(mType: string, page = 1) {
+export async function getWatchedHistory(mType: "shows" | "movies", page = 1) {
   const uName = JSON.parse(localStorage.getItem("trakt-vue-user")!)?.user
     .username;
   const limit = JSON.parse(localStorage.getItem("item-limit")!);
@@ -231,62 +231,65 @@ export async function getShowActors(showId: number) {
   return response.data;
 }
 
-export async function getMyEpisodeRatings(page?: number) {
+export async function getMyEpisodeRatings(initial: boolean = false) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
     ?.user.username;
-  const url = `https://api.trakt.tv/users/${uName}/ratings/episodes${page ? `?limit=10&page=${page}` : ""}`;
+  const url = `https://api.trakt.tv/users/${uName}/ratings/episodes${initial ? "?limit=1" : ""}`;
   const response = await axiosNoAuth.get(url);
-  const ratings: Trakt.Ratings = {
+  let ratings: Trakt.Ratings = {
     lastModified: response.headers["last-modified"]!,
     total: response.headers["x-pagination-item-count"]
-      ? response.headers["x-pagination-item-count"]
+      ? Number.parseInt(response.headers["x-pagination-item-count"])
       : response.data.length,
+    type: "episode",
     ratings: response.data,
   };
   return ratings;
 }
 
-export async function getMySeasonRatings(page?: number) {
+export async function getMySeasonRatings(initial: boolean = false) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
     ?.user.username;
-  const url: string = `https://api.trakt.tv/users/${uName}/ratings/seasons${page ? `?limit=10&page=${page}` : ""}`;
+  const url: string = `https://api.trakt.tv/users/${uName}/ratings/seasons${initial ? "?limit=1" : ""}`;
   const response = await axiosNoAuth.get(url);
-  const ratings: Trakt.Ratings = {
+  let ratings: Trakt.Ratings = {
     lastModified: response.headers["last-modified"]!,
     total: response.headers["x-pagination-item-count"]
-      ? response.headers["x-pagination-item-count"]
+      ? Number.parseInt(response.headers["x-pagination-item-count"])
       : response.data.length,
+    type: "season",
     ratings: response.data,
   };
   return ratings;
 }
 
-export async function getMyShowRatings(page?: number) {
+export async function getMyShowRatings(initial: boolean = false) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
     ?.user.username;
-  const url: string = `https://api.trakt.tv/users/${uName}/ratings/shows${page ? `?limit=10&page=${page}` : ""}`;
+  const url: string = `https://api.trakt.tv/users/${uName}/ratings/shows${initial ? "?limit=1" : ""}`;
   const response = await axiosNoAuth.get(url);
-  console.log(response.data);
-  const ratings: Trakt.Ratings = {
+  let ratings: Trakt.Ratings = {
     lastModified: response.headers["last-modified"]!,
     total: response.headers["x-pagination-item-count"]
-      ? response.headers["x-pagination-item-count"]
+      ? Number.parseInt(response.headers["x-pagination-item-count"])
       : response.data.length,
+    type: "show",
     ratings: response.data,
   };
   return ratings;
 }
 
-export async function getMyMovieRatings(page?: number) {
+export async function getMyMovieRatings(initial: boolean = false) {
   const uName: string = JSON.parse(localStorage.getItem("trakt-vue-user")!)
     ?.user.username;
-  const url = `https://api.trakt.tv/users/${uName}/ratings/movies${page ? `?limit=10&page=${page}` : ""}`;
+  const url = `https://api.trakt.tv/users/${uName}/ratings/movies${initial ? `?limit=1` : ""}`;
   const response = await axiosNoAuth.get(url);
-  const ratings: Trakt.Ratings = {
+  let ratings: Trakt.Ratings = {
     lastModified: response.headers["last-modified"]!,
     total: response.headers["x-pagination-item-count"]
-      ? response.headers["x-pagination-item-count"]
+      ? Number.parseInt(response.headers["x-pagination-item-count"])
       : response.data.length,
+    type: "movie",
     ratings: response.data,
   };
   return ratings;
@@ -369,6 +372,10 @@ export async function getShowWatchedProgress(
 export async function getMyWatchedMovies() {
   const response = await axiosWithAuth.get(
     "https://api.trakt.tv/sync/watched/movies",
+  );
+  localStorage.setItem(
+    "trakt-vue-watched-movies",
+    JSON.stringify(response.data),
   );
   return response.data;
 }

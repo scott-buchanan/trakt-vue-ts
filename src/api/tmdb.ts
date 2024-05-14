@@ -20,14 +20,7 @@ export async function getImageUrls(): Promise<Tmdb.TmdbConfig> {
 
 export async function getAppBackgroundImg(
   tmdbConfig: Tmdb.TmdbConfig,
-): Promise<{
-  id: number;
-  title: string;
-  backgroundUrl: string;
-  type: string;
-  year: string;
-  posterUrl: string;
-}> {
+): Promise<Tmdb.BackgroundInfo> {
   const response = await axios({
     method: "GET",
     url: "https://api.themoviedb.org/3/trending/all/day?api_key=89c6bd3331244e97eed61741fc798ab5",

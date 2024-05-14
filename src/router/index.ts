@@ -35,60 +35,63 @@ router.beforeEach(async (to, from, next) => {
     let myLikes: Trakt.Like[] = [];
     let myWatchedMovies = [];
 
-    const getRatings = (
-      item: string,
-      initialCallRatings: Trakt.Ratings,
-      ratingFunction: () => Promise<Trakt.Ratings>,
-    ) => {
-      // get show ratings
-      const storedRatings: Trakt.Ratings = JSON.parse(
-        localStorage.getItem(`trakt-vue-${item}-ratings`)!,
-      );
-
-      if (!storedRatings) {
-        // set to localStorage here to eliminate delay
-        localStorage.setItem(
-          `trakt-vue-${item}-ratings`,
-          JSON.stringify(initialCallRatings),
-        );
-      }
-
-      if (initialCallRatings.total > Number(storedRatings.total)) {
-        console.log(initialCallRatings);
-        console.log(storedRatings);
-        // only get the big rating object if new ratings have been added
-        ratingFunction().then((remainingRatings: Trakt.Ratings) => {
-          localStorage.setItem(
-            `trakt-vue-${item}-ratings`,
-            JSON.stringify(remainingRatings),
-          );
-        });
-      }
-    };
-
-    if (to.path.split("/")[1] === "movie") {
+    if (to.path.split("/")[1] === "movies") {
       [myMovieRatings, myLikes, myWatchedMovies] = await Promise.all([
-        getMyMovieRatings(1),
+        getMyMovieRatings(true),
         getMyLikes(1),
         getMyWatchedMovies(),
       ]);
-      getRatings("movie", myMovieRatings, getMyMovieRatings);
-      // set watched movies
-      localStorage.setItem(
-        "trakt-vue-watched-movies",
-        JSON.stringify(myWatchedMovies),
-      );
+      store.updateRatings("movie", myMovieRatings);
     } else {
+      // tv section route
       [myShowRatings, mySeasonRatings, myEpRatings, myLikes] =
         await Promise.all([
-          getMyShowRatings(1),
-          getMySeasonRatings(1),
-          getMyEpisodeRatings(1),
+          getMyShowRatings(true),
+          getMySeasonRatings(true),
+          getMyEpisodeRatings(true),
           getMyLikes(1),
         ]);
-      getRatings("show", myShowRatings, getMyShowRatings);
-      getRatings("season", mySeasonRatings, getMySeasonRatings);
-      getRatings("episode", myEpRatings, getMyEpisodeRatings);
+
+      for (const ratings of [myShowRatings, mySeasonRatings, myEpRatings]) {
+        // get localStorage ratings
+        const localStorageStr = localStorage.getItem(
+          `trakt-vue-${ratings.type}-ratings`,
+        );
+
+        // if no localStorage or if API return modified date doesn't match localStorage modified date
+        if (
+          !localStorageStr ||
+          ratings.lastModified !== JSON.parse(localStorageStr).lastModified
+        ) {
+          switch (ratings.type) {
+            case "show":
+              myShowRatings = await getMyShowRatings();
+              localStorage.setItem(
+                `trakt-vue-${ratings.type}-ratings`,
+                JSON.stringify(myShowRatings),
+              );
+              break;
+            case "season":
+              mySeasonRatings = await getMySeasonRatings();
+              localStorage.setItem(
+                `trakt-vue-${ratings.type}-ratings`,
+                JSON.stringify(mySeasonRatings),
+              );
+              break;
+            case "episode":
+              myEpRatings = await getMyEpisodeRatings();
+              localStorage.setItem(
+                `trakt-vue-${ratings.type}-ratings`,
+                JSON.stringify(myEpRatings),
+              );
+          }
+        }
+      }
+
+      // update the store with new ratings
+      store.updateRatings("show", myShowRatings);
+      store.updateRatings("season", mySeasonRatings);
+      store.updateRatings("episode", myEpRatings);
     }
 
     const storedLikes: Trakt.Like[] =

@@ -176,7 +176,7 @@ onMounted(() => {
     >
       <div
         v-for="(item, index) in sortedData"
-        :key="item[store.filterType].ids.slug"
+        :key="item[store.filterType]?.ids.slug"
         class="cursor-pointer relative pb-[56.25%]"
         @click="clickDetails(item)"
         @keyDown="clickDetails(item)"

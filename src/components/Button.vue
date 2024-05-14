@@ -11,7 +11,7 @@ withDefaults(defineProps<Props>(), {
 <template>
   <button
     :class="{
-      'px-4 border border-solid border-white/25 bg-black/50 rounded-full uppercase flex items-center text-xs':
+      'px-4 border border-solid border-white/25 bg-black/50 backdrop-blur-sm rounded-full uppercase flex items-center text-xs':
         !img,
     }"
   >

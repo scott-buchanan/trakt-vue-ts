@@ -135,5 +135,14 @@ namespace Tmdb {
     key: string;
     type: string;
   }
+
+  export interface BackgroundInfo {
+    id: number;
+    title: string;
+    backgroundUrl: string;
+    type: string;
+    year: string;
+    posterUrl: string;
+  }
 }
 export default Tmdb;
