@@ -1,60 +1,58 @@
 <script setup lang="ts">
-import { ref } from "vue";
-
 // api
-import { useRoute, useRouter } from "vue-router";
-import { useQuasar } from "quasar";
-import { getSearchResults } from "~/api/tmdb";
+import { useRoute, useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { getSearchResults } from '~/api/tmdb'
 
 // store
-import { useStore } from "~/store/index";
+import { useStore } from '~/store/index'
 
 // components
-import ItemCardContainer from "~/components/ItemCardContainer.vue";
-import ItemCard from "~/components/ItemCard.vue";
+import ItemCardContainer from '~/components/ItemCardContainer.vue'
+import ItemCard from '~/components/ItemCard.vue'
 
-const store = useStore();
-const $q = useQuasar();
-const route = useRoute();
-const router = useRouter();
+const store = useStore()
+const $q = useQuasar()
+const route = useRoute()
+const router = useRouter()
 
 // data
-const searchPage = ref(1);
-const searchResults = ref(null);
-const searchTerm = ref(null);
-const loaded = ref(false);
+const searchPage = ref(1)
+const searchResults = ref(null)
+const searchTerm = ref(null)
+const loaded = ref(false)
 
 // computed
 const screenGreaterThan = computed(() => {
-  return $q.screen.gt;
-});
+  return $q.screen.gt
+})
 
 // methods
 async function getData() {
-  store.updateLoading(false);
+  store.updateLoading(false)
   searchResults.value = await getSearchResults(
     route.params.term,
     searchPage.value,
-  );
+  )
   setTimeout(() => {
-    store.updateLoading(true);
-  }, 1000);
+    store.updateLoading(true)
+  }, 1000)
 }
 async function goToDetails(item) {
-  const mType = item.media_type === "tv" ? "show" : "movie";
+  const mType = item.media_type === 'tv' ? 'show' : 'movie'
   router.push({
-    name: mType === "show" ? "show-details" : "movie-details",
+    name: mType === 'show' ? 'show-details' : 'movie-details',
     params: {
       [mType]: item.ids.slug,
     },
-  });
+  })
 }
 function handleRemoveTerm(term: string) {
   searchTerm.value = searchTerm.value
-    .split(" ")
+    .split(' ')
     .filter((word: string) => word !== term)
-    .join(" ");
-  router.push({ name: "search", params: { term: searchTerm.value } });
+    .join(' ')
+  router.push({ name: 'search', params: { term: searchTerm.value } })
 }
 function changePage() {
   // loadData();
@@ -72,25 +70,27 @@ function changePage() {
 // lifecycle methods
 onMounted(async () => {
   store.$subscribe((mutated, state) => {
-    searchPage.value = state.searchPage;
-    loaded.value = state.loaded;
-  });
-  searchTerm.value = route.params.term;
-  await getData();
-});
+    searchPage.value = state.searchPage
+    loaded.value = state.loaded
+  })
+  searchTerm.value = route.params.term
+  await getData()
+})
 onUpdated(async () => {
   if (route.params.term !== searchTerm.value) {
-    searchTerm.value = route.params.term;
-    await getData();
+    searchTerm.value = route.params.term
+    await getData()
   }
-});
+})
 </script>
 
 <template>
   <div v-if="loaded" class="search-container">
     <div>
       <div class="flex items-center q-mb-sm q-mt-xs">
-        <h1 class="search-heading">Search:</h1>
+        <h1 class="search-heading">
+          Search:
+        </h1>
         <q-chip
           v-for="term in searchTerm.split(' ')"
           :key="term"
@@ -118,7 +118,9 @@ onUpdated(async () => {
             @click="goToDetails(result)"
           />
         </ItemCardContainer>
-        <div v-else>No results found for "{{ searchTerm }}"</div>
+        <div v-else>
+          No results found for "{{ searchTerm }}"
+        </div>
       </q-scroll-area>
     </div>
   </div>

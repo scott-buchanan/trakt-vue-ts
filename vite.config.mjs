@@ -1,11 +1,11 @@
 /// <reference types="vitest" />
 
-import path from "path";
-import { defineConfig } from "vite";
-import Vue from "@vitejs/plugin-vue";
-import Components from "unplugin-vue-components/vite";
-import AutoImport from "unplugin-auto-import/vite";
-import { quasar, transformAssetUrls } from "@quasar/vite-plugin";
+import path from 'node:path'
+import { defineConfig } from 'vite'
+import Vue from '@vitejs/plugin-vue'
+import Components from 'unplugin-vue-components/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
 
 export default defineConfig({
   css: {
@@ -13,7 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "~/": `${path.resolve(__dirname, "src")}/`,
+      '~/': `${path.resolve(__dirname, 'src')}/`,
     },
   },
   plugins: [
@@ -22,7 +22,7 @@ export default defineConfig({
       template: {
         transformAssetUrls,
         compilerOptions: {
-          isCustomElement: (tag) => ["iconify-icon"].includes(tag),
+          isCustomElement: tag => ['iconify-icon'].includes(tag),
         },
       },
     }),
@@ -39,12 +39,17 @@ export default defineConfig({
 
     // https://github.com/antfu/unplugin-auto-import
     AutoImport({
-      imports: ["vue", "vue/macros", "vue-router", "@vueuse/core"],
+      imports: ['vue', 'vue/macros', 'vue-router', '@vueuse/core'],
       dts: true,
       // dirs: [
       //   './src/composables',
       // ],
       vueTemplate: true,
+      eslintrc: {
+        enabled: true, // Default `false`
+        filepath: './.eslintrc-auto-import.json', // Default `./.eslintrc-auto-import.json`
+        globalsPropValue: true, // Default `true`, (true | false | 'readonly' | 'readable' | 'writable' | 'writeable')
+      },
     }),
 
     // https://github.com/antfu/vite-plugin-components
@@ -52,12 +57,12 @@ export default defineConfig({
       dts: true,
     }),
     quasar({
-      sassVariables: "src/quasar-variables.scss",
+      sassVariables: 'src/quasar-variables.scss',
     }),
   ],
 
   // https://github.com/vitest-dev/vitest
   test: {
-    environment: "jsdom",
+    environment: 'jsdom',
   },
-});
+})

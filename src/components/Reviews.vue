@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import * as emoji from 'node-emoji'
 import dayjs from 'dayjs'
 import { useQuasar } from 'quasar'
@@ -34,7 +33,9 @@ const filteredReviews = computed(() => {
     return props.reviews
   return props.reviews?.filter(comment => comment.user_rating !== null)
 })
-const truncateReviews = computed(() => reviewsMore.value ? filteredReviews.value : filteredReviews.value.slice(0, 2))
+const truncateReviews = computed(() =>
+  reviewsMore.value ? filteredReviews.value : filteredReviews.value.slice(0, 2),
+)
 
 async function getReplies(review) {
   if (!reviewReplies.value[review.id]) {
@@ -52,17 +53,19 @@ function likedReview(review) {
 async function likeReview(review) {
   const deleteLike = likedReview(review)
   const success = await likeComment(review.id, deleteLike)
-  if (deleteLike)
-    likes.value = likes.value.filter(item => item.comment.id !== review.id)
-  else
-    likes.value.push({ liked_at: new Date().toISOString(), comment: { id: review.id } })
+  if (deleteLike) { likes.value = likes.value.filter(item => item.comment.id !== review.id) }
+  else {
+    likes.value.push({
+      liked_at: new Date().toISOString(),
+      comment: { id: review.id },
+    })
+  }
 
   if (success) {
     const current = props.reviews.find(item => item.id === review.id)
     if (deleteLike)
       current.likes -= 1
-    else
-      current.likes += 1
+    else current.likes += 1
 
     $q.notify({
       message: deleteLike ? 'Like removed' : 'Like added',
@@ -81,7 +84,10 @@ function truncateReviewCard(text, length) {
   return `${text.substring(0, length)}...`
 }
 function formatReviews(text) {
-  return emoji.emojify(text).replaceAll('[spoiler]', '').replaceAll('[/spoiler]', '')
+  return emoji
+    .emojify(text)
+    .replaceAll('[spoiler]', '')
+    .replaceAll('[/spoiler]', '')
 }
 function formattedDate(wDate) {
   return dayjs(wDate).format('MMM DD, YYYY')
@@ -89,15 +95,15 @@ function formattedDate(wDate) {
 function toggleActive(review) {
   if (review.id in reviewSeeMore.value)
     reviewSeeMore.value[review.id] = !reviewSeeMore.value[review.id]
-
-  else
-    reviewSeeMore.value[review.id] = true
+  else reviewSeeMore.value[review.id] = true
 }
 
 // lifecycle hooks
 onMounted(() => {
   if (!props.reply) {
-    const onlyRated = props.reviews.filter(review => review.user_rating !== null)
+    const onlyRated = props.reviews.filter(
+      review => review.user_rating !== null,
+    )
     if (onlyRated.length < 1) {
       showUnrated.value = true
       showUnratedButton.value = false
@@ -108,43 +114,70 @@ onMounted(() => {
 
 <template>
   <div v-if="props.reviews?.length > 0" color="secondary" dark>
-    <div v-if="props.reply === false" class="flex items-start justify-between no-wrap">
+    <div
+      v-if="props.reply === false"
+      class="flex items-start justify-between no-wrap"
+    >
       <h2>
         User Reviews
         <sup>
-          <q-badge color="secondary" class="text-dark"> {{ props.reviewCount }} </q-badge>
+          <q-badge color="secondary" class="text-dark">
+            {{ props.reviewCount }}
+          </q-badge>
         </sup>
       </h2>
       <div v-if="showUnratedButton" class="unrated-toggle">
-        Unrated <q-toggle v-model="showUnrated" class="q-ml-xs" color="secondary" dark dense />
+        Unrated
+        <q-toggle
+          v-model="showUnrated"
+          class="q-ml-xs"
+          color="secondary"
+          dark
+          dense
+        />
       </div>
     </div>
     <div class="grid grid-cols-2 grid-cols-sm-1 gap-4">
       <div v-for="review in truncateReviews" :key="review.id">
         <div class="flex items-center">
-          <div class="flex q-mb-sm" :class="[{ 'full-width wrap ': !$q.screen.gt.sm }]">
+          <div
+            class="flex q-mb-sm"
+            :class="[{ 'full-width wrap ': !$q.screen.gt.sm }]"
+          >
             <q-avatar class="q-mr-sm">
               <q-img :src="review.avatar" alt="" referrerpolicy="no-referrer" />
             </q-avatar>
             <div class="username">
-              {{ review.user?.name ? review.user.name : review.user.username }}<br>
+              {{ review.user?.name ? review.user.name : review.user.username
+              }}<br>
               <small>{{ formattedDate(review.created_at) }}</small>
             </div>
           </div>
           <q-space />
-          <div class="column" :class="[$q.screen.gt.sm ? 'items-end' : 'items-start']">
+          <div
+            class="column"
+            :class="[$q.screen.gt.sm ? 'items-end' : 'items-start']"
+          >
             <div
               v-show="review.user_rating || review.user_stats?.rating"
-              class="review-rating q-mb-sm" :class="[
-                $q.screen.gt.sm ? 'justify-end' : 'justify-start',
-              ]"
+              class="review-rating q-mb-sm"
+              :class="[$q.screen.gt.sm ? 'justify-end' : 'justify-start']"
             >
               <div>
-                <q-icon name="o_star" color="yellow" size="1.5em" class="star" />
+                <q-icon
+                  name="o_star"
+                  color="yellow"
+                  size="1.5em"
+                  class="star"
+                />
               </div>
               <div>
                 <span>
-                  {{ review.userating ? review.user_rating : review.user_stats?.rating }}
+                  {{
+                    review.userating
+                      ? review.user_rating
+                      : review.user_stats?.rating
+                  }}
                 </span>
                 <small>&nbsp;/10</small>
               </div>
@@ -155,7 +188,9 @@ onMounted(() => {
           <div class="q-mr-sm">
             <q-btn
               v-if="user"
-              :icon="likedReview(review) ? 'o_thumb_up_alt' : 'o_thumb_up_off_alt'"
+              :icon="
+                likedReview(review) ? 'o_thumb_up_alt' : 'o_thumb_up_off_alt'
+              "
               color="secondary"
               size="md"
               flat
@@ -164,7 +199,12 @@ onMounted(() => {
               :ripple="false"
               @click="likeReview(review)"
             />
-            <q-icon v-else name="o_thumb_up_off_alt" color="secondary" size="24px" />
+            <q-icon
+              v-else
+              name="o_thumb_up_off_alt"
+              color="secondary"
+              size="24px"
+            />
             {{ review.likes === 1 ? review.likes : review.likes }}
           </div>
           <div v-if="review.replies > 0">
@@ -176,12 +216,17 @@ onMounted(() => {
               :ripple="false"
               @click="getReplies(review)"
             >
-              <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
-              {{
-                review.replies === 1 ? review.replies : review.replies
-              }}
               <q-icon
-                :class="reviewReplies[review.id]?.show ? 'expand-less' : 'expand-more'"
+                class="q-pr-xs"
+                name="o_comment"
+                size="24px"
+                color="secondary"
+              />
+              {{ review.replies === 1 ? review.replies : review.replies }}
+              <q-icon
+                :class="
+                  reviewReplies[review.id]?.show ? 'expand-less' : 'expand-more'
+                "
                 name="o_expand_less"
                 size="xs"
                 color="white"
@@ -189,17 +234,26 @@ onMounted(() => {
             </q-btn>
           </div>
           <div v-else>
-            <q-icon class="q-pr-xs" name="o_comment" size="24px" color="secondary" />
+            <q-icon
+              class="q-pr-xs"
+              name="o_comment"
+              size="24px"
+              color="secondary"
+            />
             {{ `${review.replies} replies` }}
           </div>
         </div>
-        <div v-if="formatReviews(review.comment).length > 400" class="review-bubble q-pa-md">
-          {{ reviewSeeMore[review.id] === true ? formatReviews(review.comment) : truncateReviewCard(formatReviews(review.comment), 400) }}
-          <button
-            role="link"
-            @click="toggleActive(review)"
-          >
-            {{ reviewSeeMore[review.id] === true ? 'Read less' : 'Read more' }}
+        <div
+          v-if="formatReviews(review.comment).length > 400"
+          class="review-bubble q-pa-md"
+        >
+          {{
+            reviewSeeMore[review.id] === true
+              ? formatReviews(review.comment)
+              : truncateReviewCard(formatReviews(review.comment), 400)
+          }}
+          <button role="link" @click="toggleActive(review)">
+            {{ reviewSeeMore[review.id] === true ? "Read less" : "Read more" }}
           </button>
         </div>
         <div v-else class="review-bubble q-pa-md">
@@ -229,7 +283,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-@import '~/quasar-variables.scss';
+@import "~/quasar-variables.scss";
 
 // needed to override timeline heading
 :deep(h2) {
@@ -300,7 +354,7 @@ sup {
   position: relative;
   &::before {
     // layout
-    content: '';
+    content: "";
     position: absolute;
     width: 0;
     height: 0;

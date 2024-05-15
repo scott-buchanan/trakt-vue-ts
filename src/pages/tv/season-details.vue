@@ -51,7 +51,7 @@ async function getData() {
   store.updateLoading(false)
 
   const { show, season } = route.params
-  info.value = await getSeasonDetails(show as string, parseInt(season as string, 10))
+  info.value = await getSeasonDetails(show as string, Number.parseInt(season as string, 10))
   arrDetails.value = [
     { label: 'aired', value: formattedDate(info.value.tmdb_data.air_date) },
     { label: 'network', value: info.value.network },

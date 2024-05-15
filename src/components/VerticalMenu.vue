@@ -1,34 +1,33 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-import { useStore } from "~/store/index";
-import type { Filter, FilterOptions } from "~/store/models";
-
-const router = useRouter();
-const store = useStore();
+import { useRouter } from 'vue-router'
+import { useStore } from '~/store/index'
+import type { Filter, FilterOptions } from '~/store/models'
 
 defineProps<{
-  filters: FilterOptions;
-}>();
+  filters: FilterOptions
+}>()
+const router = useRouter()
+const store = useStore()
 
 function getLabel(key: string | number) {
-  if (key === "show") {
-    return "tv shows";
-  } else {
-    return "movies";
-  }
+  if (key === 'show')
+    return 'tv shows'
+  else
+    return 'movies'
 }
 
 function handleClick(item: Filter, filterType: string) {
   if (store.filter.val === item.val && store.filterType === filterType) {
-    return;
-  } else {
-    store.updateLoading(false);
-    store.updateFilterType(filterType);
-    store.updatePage(1);
-    store.updateFilter(item);
+
+  }
+  else {
+    store.updateLoading(false)
+    store.updateFilterType(filterType)
+    store.updatePage(1)
+    store.updateFilter(item)
     router.push({
-      path: filterType === "movie" ? `/movies/${item.val}` : `/tv/${item.val}`,
-    });
+      path: filterType === 'movie' ? `/movies/${item.val}` : `/tv/${item.val}`,
+    })
   }
 }
 </script>

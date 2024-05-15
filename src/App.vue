@@ -1,45 +1,45 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from "vue-router";
-import { useStore } from "~/store/index";
+import { useRoute, useRouter } from 'vue-router'
+import { getToken, getTraktSettings } from './api/trakt'
+import type Trakt from './api/trakt.types'
+import { useStore } from '~/store/index'
 // api
-import { getToken, getTraktSettings, getTokenFromRefresh } from "./api/trakt";
-import { getAppBackgroundImg, getImageUrls } from "~/api/tmdb";
+import { getAppBackgroundImg, getImageUrls } from '~/api/tmdb'
 // assets
-import defaultImage from "~/assets/drawer-image-1.jpg";
-import vuejsLogo from "~/assets/vuejs.png";
-import traktLogo from "~/assets/trakt-icon-red.svg";
+import defaultImage from '~/assets/drawer-image-1.jpg'
+import vuejsLogo from '~/assets/vuejs.png'
+import traktLogo from '~/assets/trakt-icon-red.svg'
 // types
-import Trakt from "./api/trakt.types";
 
-import "iconify-icon";
+import 'iconify-icon'
 
-const store = useStore();
-const route = useRoute();
-const router = useRouter();
+const store = useStore()
+const route = useRoute()
+const router = useRouter()
 
-const defaultBack = defaultImage;
+const defaultBack = defaultImage
 
 interface BackgroundInfoType {
-  backgroundUrl: string;
-  posterUrl: string;
-  id: number;
-  title: string;
-  type: string;
-  year: string;
+  backgroundUrl: string
+  posterUrl: string
+  id: number
+  title: string
+  type: string
+  year: string
 }
 
-const backgroundInfo: Ref<BackgroundInfoType> = ref({} as BackgroundInfoType);
+const backgroundInfo: Ref<BackgroundInfoType> = ref({} as BackgroundInfoType)
 
 // computed
 const filterOptions = computed(() => {
-  const options = { ...store.filterOptions };
+  const options = { ...store.filterOptions }
   if (!store.myInfo) {
-    let key: keyof typeof options;
+    let key: keyof typeof options
     for (key in options)
-      options[key] = options[key].filter((item) => item.auth === false);
+      options[key] = options[key].filter(item => item.auth === false)
   }
-  return options;
-});
+  return options
+})
 
 // Watch for code in route query and login
 watch(
@@ -48,42 +48,44 @@ watch(
     // check for code if redirecting from Trakt oauth
     if (code) {
       // take code and get token using authorization code
-      const authTokens: Trakt.AuthTokens = await getToken(code as string);
+      const authTokens: Trakt.AuthTokens = await getToken(code as string)
 
       if (authTokens) {
-        const myInfo: Trakt.MyInfo = await getTraktSettings();
+        const myInfo: Trakt.MyInfo = await getTraktSettings()
 
-        store.updateTokens(authTokens);
-        store.updateMyInfo(myInfo);
+        store.updateTokens(authTokens)
+        store.updateMyInfo(myInfo)
 
         // remove code from url
-        if (route.name) router.push({ name: route.name });
+        if (route.name)
+          router.push({ name: route.name })
       }
     }
   },
-);
+)
 
 // lifecycle hooks
 onMounted(async () => {
   // log in
-  const tokenString: string | null = localStorage.getItem("trakt-vue-token");
+  const tokenString: string | null = localStorage.getItem('trakt-vue-token')
 
   if (tokenString !== null) {
-    const authTokens: Trakt.AuthTokens = JSON.parse(tokenString);
-    const myInfo: Trakt.MyInfo = await getTraktSettings();
+    const authTokens: Trakt.AuthTokens = JSON.parse(tokenString)
+    const myInfo: Trakt.MyInfo = await getTraktSettings()
 
-    store.updateTokens(authTokens);
-    store.updateMyInfo(myInfo);
+    store.updateTokens(authTokens)
+    store.updateMyInfo(myInfo)
   }
 
   // get tmdbConfig and store in state
-  if (!store.tmdbConfig) store.updateTmdbConfig(await getImageUrls());
+  if (!store.tmdbConfig)
+    store.updateTmdbConfig(await getImageUrls())
 
   if (store.$state.tmdbConfig) {
-    backgroundInfo.value = await getAppBackgroundImg(store.$state.tmdbConfig);
-    store.updateBackgroundInfo(backgroundInfo.value);
+    backgroundInfo.value = await getAppBackgroundImg(store.$state.tmdbConfig)
+    store.updateBackgroundInfo(backgroundInfo.value)
   }
-});
+})
 </script>
 
 <template>
@@ -100,12 +102,12 @@ onMounted(async () => {
           <img
             :src="traktLogo"
             class="self-start object-contain max-w-14 mt-4 -mr-2"
-          />
+          >
           <span class="self-center text-9xl">/</span>
           <img
             :src="vuejsLogo"
             class="self-end object-contain max-w-14 mb-4 -ml-2"
-          />
+          >
         </a>
 
         <div
@@ -128,7 +130,7 @@ onMounted(async () => {
                 :alt="store.myInfo?.user.name"
                 referrerpolicy="no-referrer"
                 class="h-12 mr-2 rounded-full outline outline-2 outline-white/75"
-              />
+              >
             </div>
             <div>
               <div class="font-bold">
@@ -159,7 +161,7 @@ onMounted(async () => {
               :alt="backgroundInfo.title"
               referrerpolicy="no-referrer"
               class="inline-block"
-            />
+            >
             <span v-else>{{ backgroundInfo.title }}</span>
           </Button>
         </div>

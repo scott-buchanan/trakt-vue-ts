@@ -1,8 +1,8 @@
 export interface autocompleteResult {
   ids: {
-    slug: string,
-    imdb: string,
-    tmdb: string,
+    slug: string
+    imdb: string
+    tmdb: string
   }
   label: string
   value: string

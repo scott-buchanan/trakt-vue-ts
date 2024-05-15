@@ -52,7 +52,7 @@ onMounted(() => {
   loadData()
 
   if (route.query.page && typeof route.query.page === 'string')
-    page.value = parseInt(route.query.page, 10)
+    page.value = Number.parseInt(route.query.page, 10)
 })
 
 // computed

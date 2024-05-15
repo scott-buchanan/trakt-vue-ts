@@ -1,11 +1,11 @@
 <script setup lang="ts">
 export interface Props {
-  img?: boolean;
+  img?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   img: false,
-});
+})
 </script>
 
 <template>
