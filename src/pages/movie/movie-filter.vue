@@ -14,19 +14,22 @@ import CardContainer from '~/components/CardContainer.vue'
 
 // types
 import type Trakt from '~/api/trakt.types'
+import type { Filter } from '~/store/models'
 
 const route = useRoute()
 const router = useRouter()
 const $q = useQuasar()
 const store = useStore()
 
-// data
-const data = ref({})
-const filter = ref(store.filter)
-const maxPages = ref(10)
+// refs
+const data: Ref<Trakt.MovieData | null> = ref(null)
+const filter: Ref<Filter> = ref(store.filter)
 const myMovieRatings: Ref<Trakt.Ratings | null> = ref(null)
-const page = ref(store.page)
-const tokens = ref(store.tokens)
+const page: Ref<string> = ref(store.page)
+const tokens: Ref<Trakt.AuthTokens | null> = ref(store.tokens)
+
+// static
+const maxPages: number = 10
 
 store.$subscribe((mutated, state) => {
   let triggerLoad = false
@@ -52,7 +55,7 @@ onMounted(() => {
   loadData()
 
   if (route.query.page && typeof route.query.page === 'string')
-    page.value = Number.parseInt(route.query.page, 10)
+    page.value = route.query.page
 })
 
 // computed
@@ -64,15 +67,13 @@ const screenGreaterThan = computed(() => {
 async function loadData() {
   store.updateLoading(false)
 
-  // this makes it so the card container always has a full last line
-  localStorage.setItem('item-limit', '18')
-
   switch (filter.value?.val) {
     case 'history':
-      data.value = await getWatchedHistory('movies', page.value)
+      data.value = await getWatchedHistory('movies', page.value) as Trakt.MovieData
       break
     case 'recommended':
-      data.value = await getRecommendationsFromMe('movies', page.value)
+      if (store.myInfo)
+        data.value = await getRecommendationsFromMe('movies', store.myInfo.user.username, page.value)
       break
     case 'trending':
       data.value = await getTrending('movies', page.value)
@@ -89,7 +90,7 @@ async function loadData() {
   const items = await fetchCardInfo(myMovieRatings.value)
 
   if (filter.value?.val === 'history')
-    items.sort((a, b) => new Date(b.watched_at) - new Date(a.watched_at))
+    items.sort((a, b) => new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime())
   else if (filter?.value.val === 'trending')
     items.sort((a, b) => b.watchers - a.watchers)
 
@@ -98,19 +99,26 @@ async function loadData() {
   store.updateLoading(true)
 }
 async function fetchCardInfo(ratingsObj: Trakt.Ratings) {
-  const items = []
-  await Promise.all(
+  const findMyRating = (item: any) => {
+    return ratingsObj?.ratings.find((rating) => {
+      if (mType === 'show')
+        return !('episode' in rating) && rating.show.ids.trakt === item.show.ids.trakt
+      else
+        return rating.episode.ids.trakt === item.episode.ids.trakt
+    }) || { my_rating: null }
+  }
+
+  const items = await Promise.all(
     data.value.items.map(async (item) => {
       const cardInfo = await getMovieInfoCard(item.movie)
-      const myRating = {}
-      myRating.my_rating = ratingsObj?.ratings.find(
-        rating => rating.movie.ids.trakt === item.movie.ids.trakt,
-      )
-      items.push({ ...item, ...cardInfo, ...myRating })
+      const myRating = findMyRating(item)
+      return { ...item, ...cardInfo, ...myRating }
     }),
   )
+
   return items
 }
+
 function changePage() {
   loadData()
   store.updatePage(page.value)

@@ -19,14 +19,14 @@ const store = useStore()
 
 const autocompleteApiResults: Ref<Array<autocompleteResult>> = ref([])
 const searchTypedValue: Ref<string> = ref('')
-const selectFilterModel: Ref<Filter> = ref(store.filterOptions.show[0])
+// const selectFilterModel: Ref<Filter> = ref(store.filterOptions.show[0])
 const showMobileFilterMenu: Ref<boolean> = ref(false)
 const showMenu: Ref<boolean> = ref(false)
 const backgroundInfo: Ref<Tmdb.BackgroundInfo | null> = ref(null)
 
 // subscribe to store updates
 store.$subscribe((mutated, state) => {
-  selectFilterModel.value = state.filter
+  // selectFilterModel.value = state.filter
   backgroundInfo.value = state.backgroundInfo
 })
 
@@ -265,7 +265,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
           @blur="showMobileFilterMenu = false"
         >
           <div class="flex no-wrap justify-between items-center">
-            <div>{{ selectFilterModel.label }}</div>
+            <div>{{ store.filter.label }}</div>
             <div>
               <iconify-icon
                 icon="bi:caret-down-fill"
@@ -283,16 +283,16 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
           <Transition name="slide-up">
             <ul
               v-if="showMobileFilterMenu"
-              class="absolute w-full mt-1 top-0 left-0 bg-slate-900/95 rounded-md z-40 border border-dark-list"
+              class="absolute w-full mt-1 top-0 left-0 z-40 rounded-md border border-slate-300/25 overflow-hidden"
             >
-              <template v-for="(filter, key) in store.filterOptions">
-                <li class="text-dark-list py-2 px-3 uppercase">
+              <template v-for="(filter, key) in store.filterOptions" :key="key">
+                <li class="text-dark-list py-2 px-3 uppercase bg-slate-900 ">
                   {{ key === "movie" ? "movies" : "tv shows" }}
                 </li>
                 <li
                   v-for="option in filter"
                   :key="JSON.stringify(option)"
-                  class="p-1 hover:bg-slate-200/10"
+                  class="p-1 pl-3 bg-slate-900 hover:bg-slate-800"
                   role="button"
                   @click="(e) => handleClickFilterItem(e, key, option)"
                 >

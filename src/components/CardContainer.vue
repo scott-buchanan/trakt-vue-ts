@@ -2,7 +2,6 @@
 import type { Ref } from 'vue'
 import dayjs from 'dayjs'
 // store
-import Badge from './Badge.vue'
 import { useStore } from '~/store/index'
 // types
 import type Trakt from '~/api/trakt.types'
@@ -10,7 +9,6 @@ import type { CardInfo } from '~/api/combinedCall.types'
 // images
 import tmdb from '~/assets/tmdb_tall.svg'
 import { MediaType } from '~/types/types'
-// components
 
 // types
 interface LoopKeys {
@@ -167,10 +165,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <q-scroll-area class="h-full w-full" :thumb-style="{ opacity: '0.5' }">
+  <ScrollArea>
     <div
-      v-if="sortedData?.length > 0"
-      class="relative grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-5 bg-black/50"
+      class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-5"
     >
       <div
         v-for="(item, index) in sortedData"
@@ -226,7 +223,7 @@ onMounted(() => {
         >
           <table>
             <tr>
-              <td v-for="i in ratings(item)" class="p-1">
+              <td v-for="i in ratings(item)" :key="JSON.stringify(i)" class="p-1">
                 <div>
                   <img
                     v-if="i.img"
@@ -246,7 +243,7 @@ onMounted(() => {
               </td>
             </tr>
             <tr>
-              <td v-for="i in ratings(item)">
+              <td v-for="i in ratings(item)" :key="JSON.stringify(i)">
                 {{ i.value }}
               </td>
             </tr>
@@ -293,5 +290,5 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </q-scroll-area>
+  </ScrollArea>
 </template>

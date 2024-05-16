@@ -7,11 +7,11 @@ import {
   getMyMovieRatings,
   getMySeasonRatings,
   getMyShowRatings,
-  getMyWatchedMovies,
+  getTraktSettings,
+  // getMyWatchedMovies,
 } from '~/api/trakt'
-
+import { getGenres, getImageUrls } from '~/api/tmdb'
 import type Trakt from '~/api/trakt.types'
-import { getGenres } from '~/api/tmdb'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,11 +21,25 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const store = useStore()
 
+  // Update myInfo if logged in
+  const authTokens: Trakt.AuthTokens = JSON.parse(localStorage.getItem('trakt-vue-token') || '{}') as Trakt.AuthTokens
+
+  if (authTokens.access_token) {
+    const myInfo: Trakt.MyInfo = await getTraktSettings()
+
+    store.updateTokens(authTokens)
+    store.updateMyInfo(myInfo)
+  }
+
+  // get tmdbConfig and store in state
+  if (!store.tmdbConfig)
+    store.updateTmdbConfig(await getImageUrls())
+
   // get tmdb genres and store in state
   if (store.genres.tv.length === 0 || store.genres.movie.length === 0)
     store.updateGenres(await getGenres())
 
-  if (localStorage.getItem('trakt-vue-token')) {
+  if (authTokens.access_token) {
     // if local storage has tokens, get the accessToken from the refreshToken
 
     let myShowRatings: Trakt.Ratings
@@ -33,14 +47,19 @@ router.beforeEach(async (to, from, next) => {
     let myEpRatings: Trakt.Ratings
     let myMovieRatings: Trakt.Ratings
     let myLikes: Trakt.Like[] = []
-    let myWatchedMovies = []
+    // let myWatchedMovies: Trakt.WatchedMovie[] = []
 
     if (to.path.split('/')[1] === 'movies') {
-      [myMovieRatings, myLikes, myWatchedMovies] = await Promise.all([
+      // [myMovieRatings, myLikes, myWatchedMovies] = await Promise.all([
+      //   getMyMovieRatings(true),
+      //   getMyLikes(1),
+      //   getMyWatchedMovies(),
+      // ])
+      [myMovieRatings, myLikes] = await Promise.all([
         getMyMovieRatings(true),
         getMyLikes(1),
-        getMyWatchedMovies(),
       ])
+
       store.updateRatings('movie', myMovieRatings)
     }
     else {
@@ -55,14 +74,14 @@ router.beforeEach(async (to, from, next) => {
 
       for (const ratings of [myShowRatings, mySeasonRatings, myEpRatings]) {
         // get localStorage ratings
-        const localStorageStr = localStorage.getItem(
+        const localStorageRatings: Trakt.Ratings = JSON.parse(localStorage.getItem(
           `trakt-vue-${ratings.type}-ratings`,
-        )
+        ) || '{}') as Trakt.Ratings
 
         // if no localStorage or if API return modified date doesn't match localStorage modified date
         if (
-          !localStorageStr
-          || ratings.lastModified !== JSON.parse(localStorageStr).lastModified
+          !localStorageRatings
+          || ratings.lastModified !== localStorageRatings.lastModified
         ) {
           switch (ratings.type) {
             case 'show':
@@ -96,24 +115,24 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const storedLikes: Trakt.Like[]
-      = localStorage.getItem('trakt-vue-likes') !== 'undefined'
-        ? JSON.parse(localStorage.getItem('trakt-vue-likes')!)
-        : null
+      = JSON.parse(localStorage.getItem('trakt-vue-likes') || '{}') as Trakt.Like[]
     // set to localStorage here to eliminate delay
     localStorage.setItem('trakt-vue-likes', JSON.stringify(myLikes))
     // need to add this check because this call needs token
     if (storedLikes && storedLikes[0] !== myLikes[0]) {
       if (storedLikes.length > 99) {
-        getMyLikes().then((remainingLikes) => {
-          const total = { ...myLikes, ...remainingLikes }
-          localStorage.setItem('trakt-vue-likes', JSON.stringify(total))
-        })
+        const remainingLikes = await getMyLikes()
+        const total = { ...myLikes, ...remainingLikes }
+        localStorage.setItem('trakt-vue-likes', JSON.stringify(total))
       }
       else {
         localStorage.setItem('trakt-vue-likes', JSON.stringify(myLikes))
       }
     }
   }
+
+  if (to.query.page)
+    store.updatePage(to.query.page as string)
 
   next()
 })

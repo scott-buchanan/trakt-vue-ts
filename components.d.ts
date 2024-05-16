@@ -26,6 +26,7 @@ declare module 'vue' {
     Reviews: typeof import('./src/components/Reviews.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScrollArea: typeof import('./src/components/ScrollArea.vue')['default']
     Tooltip: typeof import('./src/components/Tooltip.vue')['default']
     VerticalMenu: typeof import('./src/components/VerticalMenu.vue')['default']
   }

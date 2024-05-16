@@ -4,7 +4,7 @@ import { getToken, getTraktSettings } from './api/trakt'
 import type Trakt from './api/trakt.types'
 import { useStore } from '~/store/index'
 // api
-import { getAppBackgroundImg, getImageUrls } from '~/api/tmdb'
+import { getAppBackgroundImg } from '~/api/tmdb'
 // assets
 import defaultImage from '~/assets/drawer-image-1.jpg'
 import vuejsLogo from '~/assets/vuejs.png'
@@ -28,7 +28,7 @@ interface BackgroundInfoType {
   year: string
 }
 
-const backgroundInfo: Ref<BackgroundInfoType> = ref({} as BackgroundInfoType)
+const backgroundInfo: Ref<BackgroundInfoType | null> = ref(null)
 
 // computed
 const filterOptions = computed(() => {
@@ -64,28 +64,16 @@ watch(
   },
 )
 
-// lifecycle hooks
-onMounted(async () => {
-  // log in
-  const tokenString: string | null = localStorage.getItem('trakt-vue-token')
-
-  if (tokenString !== null) {
-    const authTokens: Trakt.AuthTokens = JSON.parse(tokenString)
-    const myInfo: Trakt.MyInfo = await getTraktSettings()
-
-    store.updateTokens(authTokens)
-    store.updateMyInfo(myInfo)
-  }
-
-  // get tmdbConfig and store in state
-  if (!store.tmdbConfig)
-    store.updateTmdbConfig(await getImageUrls())
-
-  if (store.$state.tmdbConfig) {
-    backgroundInfo.value = await getAppBackgroundImg(store.$state.tmdbConfig)
+store.$subscribe(async (mutation, state) => {
+  if (state.tmdbConfig && !backgroundInfo.value) {
+    backgroundInfo.value = await getAppBackgroundImg(state.tmdbConfig)
     store.updateBackgroundInfo(backgroundInfo.value)
   }
 })
+// lifecycle hooks
+// onMounted(async () => {
+
+// })
 </script>
 
 <template>
@@ -154,16 +142,18 @@ onMounted(async () => {
           <h1 class="text-sm uppercase text-dark-list font-semibold">
             Background
           </h1>
-          <Button img>
-            <img
-              v-if="backgroundInfo.posterUrl"
-              :src="backgroundInfo.posterUrl"
-              :alt="backgroundInfo.title"
-              referrerpolicy="no-referrer"
-              class="inline-block"
-            >
-            <span v-else>{{ backgroundInfo.title }}</span>
-          </Button>
+          <template v-if="backgroundInfo">
+            <Button img>
+              <img
+                v-if="backgroundInfo.posterUrl"
+                :src="backgroundInfo.posterUrl"
+                :alt="backgroundInfo.title"
+                referrerpolicy="no-referrer"
+                class="inline-block"
+              >
+              <span v-else>{{ backgroundInfo.title }}</span>
+            </Button>
+          </template>
         </div>
       </div>
     </aside>

@@ -2,6 +2,9 @@ import type { AxiosInstance, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import type Trakt from '~/api/trakt.types'
 
+// item limit per page
+const limit = 30
+
 // base config for axios instances
 const baseConfig: AxiosRequestConfig = {
   baseURL: 'https://api.trakt.tv',
@@ -45,30 +48,31 @@ export async function getToken(
   code: string,
   refresh: boolean = false,
 ): Promise<Trakt.AuthTokens> {
-  const redirect_uri: string = import.meta.env.VITE_REDIRECT_URI
+  const redirect_uri: string = import.meta.env.VITE_REDIRECT_URI as string
   const response = await axios({
     method: 'POST',
     url: 'https://api.trakt.tv/oauth/token',
     headers: { 'Content-Type': 'application/json' },
     data: {
       code,
-      client_id: import.meta.env.VITE_TRAKT_API_KEY,
-      client_secret: import.meta.env.VITE_TRAKT_CLIENT_SECRET,
+      client_id: import.meta.env.VITE_TRAKT_API_KEY as string,
+      client_secret: import.meta.env.VITE_TRAKT_CLIENT_SECRET as string,
       redirect_uri,
 
       grant_type: refresh ? 'refresh_token' : 'authorization_code',
     },
   })
+
   localStorage.setItem('trakt-vue-token', JSON.stringify(response.data))
-  return response.data
+  return response.data as Trakt.AuthTokens
 }
 // -------- </AUTHENTICATION> -----------
 
 // -------- <SETTINGS> -----------
-export async function getTraktSettings() {
+export async function getTraktSettings(): Promise<Trakt.MyInfo> {
   const response = await axiosWithAuth.get('/users/settings')
   localStorage.setItem('trakt-vue-user', JSON.stringify(response.data))
-  return response.data
+  return response.data as Trakt.MyInfo
 }
 // -------- </SETTINGS> -----------
 
@@ -78,11 +82,9 @@ export async function getTraktSettings() {
  */
 export async function getRecommendationsFromMe(
   recommendationType: 'shows' | 'movies',
-  page: number,
-) {
-  const uName: string = JSON.parse(localStorage.getItem('trakt-vue-user')!)
-    ?.user.username
-  const limit: string = JSON.parse(localStorage.getItem('item-limit')!)
+  uName: string,
+  page: string,
+): Promise<Trakt.ShowData | Trakt.MovieData> {
   const response = await axiosWithAuth.get(
     `/users/${uName}/recommendations/${recommendationType}/rank?limit=${limit}&page=${page}`,
   )
@@ -98,9 +100,8 @@ export async function getRecommendationsFromMe(
 
 export async function getTrending(
   mType: 'shows' | 'movies',
-  page: number,
-): Promise<{ items: Trakt.Show[], page: number, pagesTotal: number }> {
-  const limit = JSON.parse(localStorage.getItem('item-limit')!)
+  page: string,
+): Promise<Trakt.ShowData | Trakt.MovieData> {
   const response = await axiosNoAuth.get(
     `/${mType}/trending?limit=${limit}&page=${page}`,
   )
@@ -114,8 +115,7 @@ export async function getTrending(
   }
 }
 
-export async function getAnticipated(mType: 'shows' | 'movies', page: number) {
-  const limit = JSON.parse(localStorage.getItem('item-limit')!)
+export async function getAnticipated(mType: 'shows' | 'movies', page: string) {
   const response = await axiosNoAuth.get(
     `/${mType}/anticipated?limit=${limit}&page=${page}`,
   )
@@ -131,9 +131,8 @@ export async function getAnticipated(mType: 'shows' | 'movies', page: number) {
 
 export async function getCommunityRecommended(
   mType: 'shows' | 'movies',
-  page: number,
-): Promise<{ items: Trakt.Show[], page: number, pagesTotal: number }> {
-  const limit = JSON.parse(localStorage.getItem('item-limit')!)
+  page: string,
+): Promise<Trakt.ShowData | Trakt.MovieData> {
   const response = await axiosNoAuth.get(
     `/${mType}/recommended?limit=${limit}&page=${page}`,
   )
@@ -147,20 +146,21 @@ export async function getCommunityRecommended(
   }
 }
 
-export async function getWatchedHistory(mType: 'shows' | 'movies', page = 1) {
-  const uName = JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user
-    .username
-  const limit = JSON.parse(localStorage.getItem('item-limit')!)
+export async function getWatchedHistory(mType: 'shows' | 'movies', uName: string, page: string = '1'): Promise<Trakt.EpisodeData | Trakt.MovieData> {
   const response = await axiosNoAuth.get(
     `/users/${uName}/history/${mType}?limit=${limit}&page=${page}`,
   )
+  let items
+  if (mType === 'shows')
+    items = response.data as Trakt.EpisodeWatchers
+  else
+    items = response.data as Trakt.MovieWatchers
+
   return {
-    items: response.data,
-    page: Number.parseInt(response.headers['x-pagination-page'], 10),
-    pagesTotal: Number.parseInt(
+    items,
+    page: response.headers['x-pagination-page'],
+    pagesTotal:
       response.headers['x-pagination-page-count'],
-      10,
-    ),
   }
 }
 
@@ -374,16 +374,16 @@ export async function getShowWatchedProgress(
   return { ...response.data, ...{ type: 'show' } }
 }
 
-export async function getMyWatchedMovies() {
-  const response = await axiosWithAuth.get(
-    'https://api.trakt.tv/sync/watched/movies',
-  )
-  localStorage.setItem(
-    'trakt-vue-watched-movies',
-    JSON.stringify(response.data),
-  )
-  return response.data
-}
+// export async function getMyWatchedMovies(): Promise<Trakt.WatchedMovie> {
+//   const response = await axiosWithAuth.get(
+//     'https://api.trakt.tv/sync/watched/movies',
+//   )
+//   localStorage.setItem(
+//     'trakt-vue-watched-movies',
+//     JSON.stringify(response.data),
+//   )
+//   return response.data as Trakt.WatchedMovie
+// }
 
 export async function getIdLookupTmdb(
   id: number,

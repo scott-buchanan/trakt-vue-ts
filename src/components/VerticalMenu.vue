@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { useStore } from '~/store/index'
 import type { Filter, FilterOptions } from '~/store/models'
 
 defineProps<{
   filters: FilterOptions
 }>()
+
+const route = useRoute()
 const router = useRouter()
 const store = useStore()
 
@@ -18,7 +19,7 @@ function getLabel(key: string | number) {
 
 function handleClick(item: Filter, filterType: string) {
   if (store.filter.val === item.val && store.filterType === filterType) {
-
+    router.push({ path: route.path })
   }
   else {
     store.updateLoading(false)
@@ -33,7 +34,7 @@ function handleClick(item: Filter, filterType: string) {
 </script>
 
 <template>
-  <template v-for="(filter, key) in filters">
+  <div v-for="(filter, key) in filters" :key="key">
     <h1 class="text-sm uppercase text-dark-list font-semibold p-3 mb-0 mt-6">
       {{ getLabel(key) }}
     </h1>
@@ -52,5 +53,5 @@ function handleClick(item: Filter, filterType: string) {
         {{ item.label }}
       </li>
     </ul>
-  </template>
+  </div>
 </template>

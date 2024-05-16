@@ -27,79 +27,67 @@ const router = useRouter()
 const $q = useQuasar()
 const store = useStore()
 
-interface Data {
-  items: Trakt.Show[] | Trakt.Episode[]
-  page: number
-  pagesTotal: number
-}
-
 // data
-const data: Ref<Data | null> = ref(null)
+const data: Ref<Trakt.EpisodeData | null> = ref(null)
 const filter: Ref<Filter> = ref(store.filter)
 const maxPages: Ref<number> = ref(10)
 const myEpRatings: Ref<Trakt.Ratings | null> = ref(null)
-const page: Ref<number> = ref(store.page)
+const page: Ref<string> = ref(route.query.page as string || '1')
 
 const myShowRatings: Ref<Trakt.Ratings> = ref({} as Trakt.Ratings)
-const tokens: Ref<Trakt.AuthTokens> = ref(store.tokens)
+const tokens: Ref<Trakt.AuthTokens | null> = ref(store.tokens)
 
 store.$subscribe((mutated, state) => {
-  let triggerLoad = false
-  if (
-    state.filterType === 'show'
-    && state.filter
-    && state.filter.val !== filter.value.val
-  )
-    triggerLoad = true
-
   filter.value = state.filter
   tokens.value = state.tokens
-  page.value = state.page
-
-  if (triggerLoad)
-    loadData()
 })
 
-async function loadData() {
+watch(() => route.query.page, (newPage) => {
+  page.value = newPage as string
+  store.updatePage(page.value)
+  loadData(page.value)
+})
+
+async function loadData(page: string) {
   store.updateLoading(false)
 
-  // this makes it so the card container always has a full last line
-  localStorage.setItem('item-limit', '30')
-
   // if watched history
-  if (store.filterType === 'show' && filter.value?.val === 'history') {
+  if (filter.value.val === 'history') {
     // get Trakt data
-    data.value = await getWatchedHistory('episodes', page.value)
+    if (store.myInfo) {
+      data.value = await getWatchedHistory('shows', store.myInfo.user.username, page) as Trakt.EpisodeData
 
-    // get episode ratings object from local storage
-    myEpRatings.value = JSON.parse(
-      localStorage.getItem('trakt-vue-episode-ratings')!,
-    )
+      // get episode ratings object from local storage
+      myEpRatings.value = JSON.parse(
+        localStorage.getItem('trakt-vue-episode-ratings') || '{}',
+      )
 
-    // get images and ratings
-    const items = await fetchCardInfo('episode', myEpRatings.value!)
+      // get images and ratings
+      const items = await fetchCardInfo('episode', myEpRatings.value)
 
-    // sort by watched date (no logic here because only one filter)
-    items.sort(
-      (a: CardInfo, b: CardInfo) =>
-        new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
-    )
+      // sort by watched date (no logic here because only one filter)
+      console.log(items)
+      items.sort(
+        (a: CardInfo, b: CardInfo) =>
+          new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
+      )
 
-    data.value.items = [...items]
+      data.value.items = [...items]
+    }
   }
   else {
     switch (filter.value?.val) {
       case 'anticipated':
-        data.value = await getAnticipated('shows', page.value)
+        data.value = await getAnticipated('shows', page)
         break
       case 'trakt_recommended':
-        data.value = await getCommunityRecommended('shows', page.value)
+        data.value = await getCommunityRecommended('shows', page)
         break
       case 'recommended':
-        data.value = await getRecommendationsFromMe('shows', page.value)
+        data.value = await getRecommendationsFromMe('shows', page)
         break
       case 'trending':
-        data.value = await getTrending('shows', page.value)
+        data.value = await getTrending('shows', page)
         break
       default:
         store.updateLoading(true)
@@ -122,54 +110,49 @@ async function loadData() {
   store.updateLoading(true)
 }
 
-async function fetchCardInfo(mType: string, ratingsObj: Trakt.Ratings) {
-  const items = []
-  await Promise.all(
-    data.value.items.map(async (item) => {
-      const cardInfo
-        = mType === 'show'
-          ? await getShowInfoCard(item.show)
-          : await getEpisodeInfoCard(item.show, item.episode)
-      const myRating = { my_rating: null }
-      myRating.my_rating = ratingsObj?.ratings.find((rating) => {
-        if (mType === 'show') {
-          return (
-            !('episode' in rating)
-            && rating.show.ids.trakt === item.show.ids.trakt
-          )
-        }
+async function fetchCardInfo(mType: string, ratingsObj: Trakt.Ratings | null) {
+  const getCardInfo = async (item) => {
+    if (mType === 'show')
+      return await getShowInfoCard(item.show as Trakt.Show)
 
+    else return await getEpisodeInfoCard(item.show as Trakt.Show, item.episode as Trakt.Episode)
+  }
+
+  const findMyRating = (item: any) => {
+    return ratingsObj?.ratings.find((rating) => {
+      if (mType === 'show')
+        return !('episode' in rating) && rating.show.ids.trakt === item.show.ids.trakt
+      else
         return rating.episode.ids.trakt === item.episode.ids.trakt
-      })
-      items.push({ ...item, ...cardInfo, ...myRating })
+    }) || { my_rating: null }
+  }
+
+  const items = await Promise.all(
+    data.value.items.map(async (item) => {
+      const cardInfo = await getCardInfo(item)
+      const myRating = findMyRating(item)
+      return { ...item, ...cardInfo, ...myRating }
     }),
   )
+
   return items
 }
 
 function changePage() {
-  loadData()
-  store.updatePage(page.value)
-  router.replace({ query: { page: page.value } })
-  localStorage.setItem('trakt-vue-page', page.value)
-  window.scrollTo(0, 0)
+  router.push({ path: route.path, query: { page: page.value } })
 }
 
 onMounted(() => {
   store.updateFilterType('show')
 
   if (route.params.filter) {
-    store.updateFilter(
-      store.filterOptions.show.find(
-        filter => filter.val === route.params.filter,
-      )!,
-    )
+    filter.value = store.filterOptions.show.find(
+      (f: Filter) => f.val === route.params.filter,
+    ) || store.filterOptions.show[0]
+    store.updateFilter(filter.value)
   }
 
-  loadData()
-
-  if (route.query.page && typeof route.query.page === 'string')
-    page.value = Number.parseInt(route.query.page, 10)
+  loadData(page.value)
 })
 </script>
 

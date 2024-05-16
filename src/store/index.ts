@@ -6,7 +6,7 @@ import type Tmdb from '~/api/tmdb.types'
 const defaultFilter = { label: 'Trending', val: 'trending', auth: false }
 
 const defaultState: StateObj = {
-  page: 1,
+  page: '1',
   filter: defaultFilter,
   filterOptions: {
     show: [
@@ -46,7 +46,7 @@ const defaultState: StateObj = {
 export const useStore = defineStore('main', {
   state: () => ({ ...defaultState }),
   actions: {
-    updatePage(page: number) {
+    updatePage(page: string) {
       this.page = page
     },
     updateFilter(filter: Filter) {
@@ -76,7 +76,7 @@ export const useStore = defineStore('main', {
     updateTmdbConfig(value: Tmdb.TmdbConfig) {
       this.tmdbConfig = value
     },
-    updateSearchPage(value: any) {
+    updateSearchPage(value: number) {
       this.searchPage = value
     },
     updateRatings(

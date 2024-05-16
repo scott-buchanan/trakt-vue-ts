@@ -106,6 +106,17 @@ export namespace Trakt {
     type?: string
   }
 
+  export interface EpisodeData {
+    items: Episode[]
+    page: number
+    pagesTotal: number
+  }
+
+  export interface EpisodeWatchers {
+    watchers: number
+    show: Show
+  }
+
   export interface Season {
     ids: Ids
     number: number
@@ -122,12 +133,29 @@ export namespace Trakt {
     type: string
   }
 
+  export interface ShowData {
+    items: Show[]
+    page: number
+    pagesTotal: number
+  }
+
   export interface Movie {
     ids: Ids
     title: string
     year: number
     slug: string
     type: string
+  }
+
+  export interface MovieData {
+    items: Movie[]
+    page: number
+    pagesTotal: number
+  }
+
+  export interface MovieWatchers {
+    watchers: number
+    movie: Movie
   }
 
   export interface WatchedProgress {
@@ -149,6 +177,8 @@ export namespace Trakt {
   }
 
   export interface WatchedMovie {
+    last_updated_at: string
+    last_watched_at: string
     movie: Trakt.Movie
     plays: number
   }
