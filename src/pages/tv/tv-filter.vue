@@ -66,7 +66,6 @@ async function loadData(page: string) {
       const items = await fetchCardInfo('episode', myEpRatings.value)
 
       // sort by watched date (no logic here because only one filter)
-      console.log(items)
       items.sort(
         (a: CardInfo, b: CardInfo) =>
           new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
