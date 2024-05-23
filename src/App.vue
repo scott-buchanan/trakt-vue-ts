@@ -2,7 +2,7 @@
 import { useRoute, useRouter } from 'vue-router'
 import { getToken, getTraktSettings } from './api/trakt'
 import type Trakt from './api/trakt.types'
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 // api
 import { getAppBackgroundImg } from '~/api/tmdb'
 // assets
@@ -161,17 +161,19 @@ store.$subscribe(async (mutation, state) => {
     <div class="grow flex flex-col max-w-full">
       <Header :page="store.$state.page" />
 
-      <div v-if="!store.loaded" class="grow p-2">
+      <!-- <div v-if="!store.loaded" class="grow p-2">
         <div
           class="bg-black/50 h-full w-full flex items-center justify-center rounded-md"
         >
           <LoaderFingers />
         </div>
-      </div>
+      </div> -->
 
-      <div :class="{ hidden: !store.loaded }" class="grow">
+      <!-- <div :class="{ hidden: !store.loaded }" class="grow"> -->
+      <div class="grow">
         <router-view />
       </div>
+      <!-- </div> -->
     </div>
   </div>
 </template>

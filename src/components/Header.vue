@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
 import dayjs from 'dayjs'
-import type { Filter, FilterType } from '~/store/models'
+import type { Filter, FilterType } from '~/stores/mainStore.types'
 import type { autocompleteResult } from '~/types/header'
 import type Tmdb from '~/api/tmdb.types'
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 // api
 import { getSearchResults } from '~/api/tmdb'
 // assets
@@ -121,7 +121,9 @@ function searchSubmit(e: Event) {
 }
 function goToLogin() {
   window.location.href
-    = `https://trakt.tv/oauth/authorize?redirect_uri=${import.meta.env.VITE_REDIRECT_URI}&response_type=code&`
+    = `https://trakt.tv/oauth/authorize?redirect_uri=${
+      import.meta.env.VITE_REDIRECT_URI
+    }&response_type=code&`
     + 'client_id=8b333edc96a59498525b416e49995b338e2c53a03738becfce16461c1e1086a3'
 }
 function logout() {
@@ -286,7 +288,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
               class="absolute w-full mt-1 top-0 left-0 z-40 rounded-md border border-slate-300/25 overflow-hidden"
             >
               <template v-for="(filter, key) in store.filterOptions" :key="key">
-                <li class="text-dark-list py-2 px-3 uppercase bg-slate-900 ">
+                <li class="text-dark-list py-2 px-3 uppercase bg-slate-900">
                   {{ key === "movie" ? "movies" : "tv shows" }}
                 </li>
                 <li
@@ -294,7 +296,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
                   :key="JSON.stringify(option)"
                   class="p-1 pl-3 bg-slate-900 hover:bg-slate-800"
                   role="button"
-                  @click="(e) => handleClickFilterItem(e, key, option)"
+                  @click="e => handleClickFilterItem(e, key, option)"
                 >
                   <div class="p-2">
                     {{ option.label }}
@@ -308,7 +310,12 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
 
       <div class="self-center ml-2 h-full">
         <Button v-if="store.myInfo" class="h-12 sm:h-full" @click="logout">
-          <iconify-icon icon="ic:round-logout" width="1.5em" height="1.5em" />
+          <iconify-icon
+            icon="ic:round-logout"
+            width="1.5em"
+            height="1.5em"
+            class="mr-1"
+          />
           <div>logout</div>
         </Button>
         <Button v-else class="h-12 sm:h-full" @click="goToLogin">
@@ -316,7 +323,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
             icon="simple-icons:trakt"
             width="1.5em"
             height="1.5em"
-            class="text-trakt mr-2"
+            class="text-trakt mr-1"
           />
           <div>login</div>
         </Button>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useStore } from '~/store/index'
-import type { Filter, FilterOptions } from '~/store/models'
+import { useStore } from '~/stores/mainStore'
+import type { Filter, FilterOptions } from '~/stores/mainStore.types'
 
 defineProps<{
   filters: FilterOptions
@@ -13,8 +13,7 @@ const store = useStore()
 function getLabel(key: string | number) {
   if (key === 'show')
     return 'tv shows'
-  else
-    return 'movies'
+  else return 'movies'
 }
 
 function handleClick(item: Filter, filterType: string) {

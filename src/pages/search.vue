@@ -5,7 +5,7 @@ import { useQuasar } from 'quasar'
 import { getSearchResults } from '~/api/tmdb'
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 // components
 import ItemCardContainer from '~/components/ItemCardContainer.vue'

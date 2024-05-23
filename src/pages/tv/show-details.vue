@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import type { ShowDetails } from '~/api/combinedCall.types'
 import type Tmdb from '~/api/tmdb.types'
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 // api
 import { getShowDetails } from '~/api/combinedCalls'
 // components
@@ -94,8 +94,9 @@ async function getData() {
         useTimeoutFn(() => {
           seasons.value[index].watched_progress
             = season.completed / season.aired
-          seasons.value[index].watched_percent
-            = `${season.completed} out of ${season.aired} watched`
+          seasons.value[
+            index
+          ].watched_percent = `${season.completed} out of ${season.aired} watched`
         }, delay)
       }
     })
@@ -234,9 +235,7 @@ onMounted(async () => {
         padding: 0.6em;
         left: -150px;
         opacity: 0;
-        transition:
-          opacity 200ms ease-in-out 0ms,
-          left 200ms ease-in-out 50ms;
+        transition: opacity 200ms ease-in-out 0ms, left 200ms ease-in-out 50ms;
       }
     }
     &:hover {
@@ -246,8 +245,7 @@ onMounted(async () => {
         & .caption-text {
           left: 0;
           opacity: 1;
-          transition:
-            opacity 200ms ease-in-out 200ms,
+          transition: opacity 200ms ease-in-out 200ms,
             left 200ms ease-in-out 100ms;
         }
       }

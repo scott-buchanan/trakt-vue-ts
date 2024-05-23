@@ -10,7 +10,7 @@ const baseConfig: AxiosRequestConfig = {
   baseURL: 'https://api.trakt.tv',
   headers: {
     'trakt-api-version': '2',
-    'trakt-api-key': import.meta.env.VITE_TRAKT_API_KEY,
+    'trakt-api-key': import.meta.env.VITE_TRAKT_API_KEY as string,
   },
 }
 
@@ -90,11 +90,9 @@ export async function getRecommendationsFromMe(
   )
   return {
     items: response.data,
-    page: Number.parseInt(response.headers['x-pagination-page'], 10),
-    pagesTotal: Number.parseInt(
-      response.headers['x-pagination-page-count'],
-      10,
-    ),
+    page: Number.parseInt(response.headers['x-pagination-page']),
+    pagesTotal:
+    Number.parseInt(response.headers['x-pagination-page-count']),
   }
 }
 
@@ -107,11 +105,10 @@ export async function getTrending(
   )
   return {
     items: response.data,
-    page: Number.parseInt(response.headers['x-pagination-page'], 10),
-    pagesTotal: Number.parseInt(
-      response.headers['x-pagination-page-count'],
-      10,
-    ),
+    page: Number.parseInt(response.headers['x-pagination-page']),
+    pagesTotal:
+    Number.parseInt(response.headers['x-pagination-page-count']),
+
   }
 }
 
@@ -121,11 +118,10 @@ export async function getAnticipated(mType: 'shows' | 'movies', page: string) {
   )
   return {
     items: response.data,
-    page: Number.parseInt(response.headers['x-pagination-page'], 10),
-    pagesTotal: Number.parseInt(
-      response.headers['x-pagination-page-count'],
-      10,
-    ),
+    page: Number.parseInt(response.headers['x-pagination-page']),
+    pagesTotal:
+    Number.parseInt(response.headers['x-pagination-page-count']),
+
   }
 }
 
@@ -138,11 +134,10 @@ export async function getCommunityRecommended(
   )
   return {
     items: response.data,
-    page: Number.parseInt(response.headers['x-pagination-page'], 10),
-    pagesTotal: Number.parseInt(
-      response.headers['x-pagination-page-count'],
-      10,
-    ),
+    page: Number.parseInt(response.headers['x-pagination-page']),
+    pagesTotal:
+    Number.parseInt(response.headers['x-pagination-page-count']),
+
   }
 }
 
@@ -158,9 +153,9 @@ export async function getWatchedHistory(mType: 'shows' | 'movies', uName: string
 
   return {
     items,
-    page: response.headers['x-pagination-page'],
+    page: Number.parseInt(response.headers['x-pagination-page']),
     pagesTotal:
-      response.headers['x-pagination-page-count'],
+    Number.parseInt(response.headers['x-pagination-page-count']),
   }
 }
 
@@ -210,20 +205,29 @@ export async function getEpisodeRating(
   season: number,
   episode: number,
 ) {
-  const response = await axiosNoAuth.get(
+  if (showId && season && episode) {
+    const response = await axiosNoAuth.get(
     `/shows/${showId}/seasons/${season}/episodes/${episode}/ratings`,
-  )
-  return response.data.rating.toFixed(1)
+    )
+    return response.data.rating.toFixed(1)
+  }
+  return null
 }
 
 export async function getShowRating(showId: string) {
-  const response = await axiosNoAuth.get(`/shows/${showId}/ratings`)
-  return response.data.rating.toFixed(1)
+  if (showId) {
+    const response = await axiosNoAuth.get(`/shows/${showId}/ratings`)
+    return response.data.rating.toFixed(1)
+  }
+  return null
 }
 
 export async function getMovieRating(movieId: string) {
-  const response = await axiosNoAuth.get(`/movies/${movieId}/ratings`)
-  return response.data.rating.toFixed(1)
+  if (movieId) {
+    const response = await axiosNoAuth.get(`/movies/${movieId}/ratings`)
+    return response.data.rating.toFixed(1)
+  }
+  return null
 }
 
 export async function getShowActors(showId: number) {

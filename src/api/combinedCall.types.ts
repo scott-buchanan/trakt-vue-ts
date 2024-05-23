@@ -2,7 +2,7 @@ import type Trakt from './trakt.types'
 import type Tmdb from './tmdb.types'
 import type { MediaType } from '~/types/types'
 
-interface backdrop {
+export interface Backdrop {
   backdrop_sm: string
   backdrop_lg: string
 }
@@ -11,7 +11,7 @@ export interface CardInfo {
   title: string
   ids: Trakt.Ids
   type: MediaType
-  backdrop: backdrop
+  backdrop: Backdrop
   imdb_rating: string
   trakt_rating: string
   tmdb_rating: string
@@ -33,7 +33,7 @@ export interface ShowDetails {
   actors: Tmdb.Actor[]
   aired_episodes: number
   airs: { day: string, time: string, timezone: string }
-  backdrop: backdrop
+  backdrop: Backdrop
   certification: string
   clear_logo: string
   country: string
@@ -61,7 +61,7 @@ export interface ShowDetails {
 
 export interface MovieDetails {
   actors: Tmdb.Actor[]
-  backdrop: backdrop
+  backdrop: Backdrop
   certification: string
   clear_logo: string
   country: string
@@ -95,7 +95,7 @@ export interface EpisodeDetails {
   number: number
   runtime: number
   first_aired: string
-  backdrop: backdrop
+  backdrop: Backdrop
   season_poster: string
   clear_logo: string
   imdb_rating: number
@@ -115,7 +115,7 @@ export interface SeasonDetails {
   number: number
   runtime: number
   first_aired: string
-  backdrop: backdrop
+  backdrop: Backdrop
   season_poster: string
   season: number
   clear_logo: string

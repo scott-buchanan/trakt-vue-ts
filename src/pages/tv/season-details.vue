@@ -3,7 +3,7 @@ import type { Ref } from 'vue'
 import dayjs from 'dayjs'
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 // api
 import { getSeasonDetails } from '~/api/combinedCalls'
@@ -40,9 +40,10 @@ const unairedEpisodes = computed(() => {
 
 // methods
 function episodeTitle(episode: Tmdb.EpisodeDetails) {
-  return `${episode.season_number}x${String(episode.episode_number).padStart(2, '0')} ${
-        episode.name
-      }`
+  return `${episode.season_number}x${String(episode.episode_number).padStart(
+    2,
+    '0',
+  )} ${episode.name}`
 }
 function isBeforeToday(episodeDate: string) {
   return new Date(episodeDate) < new Date()
@@ -51,7 +52,10 @@ async function getData() {
   store.updateLoading(false)
 
   const { show, season } = route.params
-  info.value = await getSeasonDetails(show as string, Number.parseInt(season as string, 10))
+  info.value = await getSeasonDetails(
+    show as string,
+    Number.parseInt(season as string, 10),
+  )
   arrDetails.value = [
     { label: 'aired', value: formattedDate(info.value.tmdb_data.air_date) },
     { label: 'network', value: info.value.network },
@@ -94,7 +98,9 @@ onMounted(async () => {
       <div class="q-mt-lg">
         <h1>
           {{ info.tmdb_data?.episodes.length }} Episodes
-          <small v-if="unairedEpisodes > 0"> ({{ unairedEpisodes }} unaired episodes) </small>
+          <small v-if="unairedEpisodes > 0">
+            ({{ unairedEpisodes }} unaired episodes)
+          </small>
         </h1>
         <ItemCardContainer one-row-longer>
           <ItemCard
@@ -117,7 +123,7 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
-@import '~/quasar-variables.scss';
+@import "~/quasar-variables.scss";
 
 h1 {
   font-weight: 400;

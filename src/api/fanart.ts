@@ -1,91 +1,104 @@
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import axios from 'axios'
+import type { Fanart } from './fanart.types'
 
-export async function getShowClearLogo(showId) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/tv/${showId}?api_key=6c7b80e914b8b4a7f630895236272ee0`,
-    })
-    return response.data.hdtvlogo
-      ? response.data.hdtvlogo.filter(item => item.lang === 'en')[0].url
-      : response.data.clearlogo.filter(item => item.lang === 'en')[0].url
-  }
-  catch (error) {
-    return null
-  }
+// base config for axios instances
+const baseConfig: AxiosRequestConfig = {
+  baseURL: 'https://webservice.fanart.tv/v3',
+  params: {
+    api_key: import.meta.env.VITE_FANART_API_KEY as string,
+  },
 }
 
-export async function getMovieClearLogo(movieId) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/movies/${movieId}?api_key=6c7b80e914b8b4a7f630895236272ee0&lang=en`,
-    })
-    return response.data.hdmovielogo.filter(item => item.lang === 'en')[0].url
-  }
-  catch (error) {
-    return null
-  }
+// for public requests
+const axiosInstance: AxiosInstance = axios.create(baseConfig)
+
+axiosInstance.interceptors.response.use((response) => {
+  return response
+}, () => {
+  return { data: null }
+})
+
+export async function getTvFanartInfo(id: number): Promise<Fanart | null> {
+  const response: AxiosResponse<Fanart> = await axiosInstance.get(`/tv/${id}`)
+  if (response.data)
+    return response.data
+  return null
 }
 
-export async function getClearLogo(id: string | number, mType: string) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/${mType === 'show' ? 'tv' : 'movies'}/${id}?api_key=6c7b80e914b8b4a7f630895236272ee0&lang=en`,
-    })
-    if (mType === 'show') {
-      return response.data.hdtvlogo
-        ? response.data.hdtvlogo.filter(item => item.lang === 'en')[0].url
-        : response.data.clearlogo.filter(item => item.lang === 'en')[0].url
-    }
-    else {
-      return response.data.hdmovielogo.filter(item => item.lang === 'en')[0].url
-    }
-  }
-  catch (error) {
-    return null
-  }
+export async function getMovieFanartInfo(id: number): Promise<Fanart | null> {
+  const response: AxiosResponse<Fanart> = await axiosInstance.get(`/movie/${id}`)
+  if (response.data)
+    return response.data
+  return null
 }
 
-export async function getBanner(showId) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/tv/${showId}?api_key=6c7b80e914b8b4a7f630895236272ee0`,
-    })
-    return response.data.tvbanner[0].url
-  }
-  catch (error) {
-    return null
-  }
-}
+// export async function getShowClearLogo(showId: number): Promise<string | null> {
+//   if (!showId)
+//     return null
 
-export async function getTvBackground(showId) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/tv/${showId}?api_key=6c7b80e914b8b4a7f630895236272ee0`,
-    })
-    if (response.data.tvthumb.length < 1)
-      return response.data.tvthumb[0].url
+//   const response: AxiosResponse<Fanart> = await axiosInstance.get(`/${showId}`)
 
-    return response.data.tvthumb[0].url
-  }
-  catch (error) {
-    return null
-  }
-}
+//   if (response.data) {
+//     const info = response.data
+//     if (info && info.hdtvlogo?.length > 0)
+//       return info.hdtvlogo.filter(item => item.lang === 'en')[0]?.url
 
-export async function getMovieBackground(showId) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://webservice.fanart.tv/v3/tv/${showId}?api_key=6c7b80e914b8b4a7f630895236272ee0`,
-    })
-    return response.data.tvthumb[0].url
-  }
-  catch (error) {
-    return null
-  }
-}
+//     else if (info && info.clearlogo?.length > 0)
+//       return info.clearlogo.filter(item => item.lang === 'en')[0]?.url
+
+//     else return null
+//   }
+//   return null
+// }
+
+// export async function getMovieClearLogo(movieId) {
+//   if (movieId) {
+//     const response = await axiosInstance.get(`/${movieId}`)
+//     return response.data.hdmovielogo.filter(item => item.lang === 'en')[0].url
+//   }
+// }
+
+// export async function getClearLogo(id: string | number, mType: string) {
+//   if (id) {
+//     const response = await axiosInstance.get(`/${mType === 'show' ? 'tv' : 'movies'}/${id}&lang=en`)
+//     if (mType === 'show') {
+//       if (response.data?.hdtvlogo)
+//         return response.data.hdtvlogo.filter(item => item.lang === 'en')[0].url
+
+//       else if (response.data?.clearlogo)
+//         return response.data.clearlogo.filter(item => item.lang === 'en')[0].url
+
+//       else return null
+//     }
+//     else {
+//       if (response.data?.hdtvlogo)
+//         return response.data.hdtvlogo.filter(item => item.lang === 'en')[0].url
+
+//       else return null
+//     }
+//   }
+// }
+
+// export async function getBanner(showId) {
+//   if (showId) {
+//     const response = await axiosInstance.get(`/tv/${showId}`)
+//     return response.data.tvbanner[0].url
+//   }
+// }
+
+// export async function getTvBackground(showId) {
+//   if (showId) {
+//     const response = await axiosInstance.get(`/tv/${showId}`)
+//     if (response.data)
+//       return response.data.tvthumb[0]?.url
+//     return null
+//   }
+// }
+
+// export async function getMovieBackground(showId) {
+//   if (showId) {
+//     const response = await axiosInstance.get(`/tv/${showId}`)
+//     return response.data.tvthumb[0].url
+//   }
+// }

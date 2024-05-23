@@ -15,7 +15,7 @@ import {
   tmdbShowDetails,
   tmdbShowSeasonDetails,
 } from '~/api/tmdb'
-import { getMovieClearLogo, getShowClearLogo } from '~/api/fanart'
+import { getMovieFanartInfo, getTvFanartInfo } from '~/api/fanart'
 import {
   getComments,
   getEpisodeRating,
@@ -42,60 +42,102 @@ import type {
 export async function getEpisodeInfoCard(
   show: Trakt.Show,
   episode: Trakt.Episode,
-) {
-  const res = {} as CardInfo
+): Promise<CardInfo | null> {
+  if (!show.ids || !episode.ids)
+    return null
 
-  if (episode.ids) {
-    await Promise.all([
-      getEpisodeBackdrop(show, episode),
-      getShowClearLogo(show.ids.tvdb),
-      getImdbRating(episode.ids.imdb),
-      getEpisodeRating(show.ids.trakt, episode.season, episode.number),
-      tmdbEpisodeDetails(show, episode),
-    ]).then((results) => {
-      [res.backdrop, res.clear_logo, res.imdb_rating, res.trakt_rating]
-        = results
-      res.tmdb_rating = results[4]?.vote_average.toFixed(1)
-      res.type = MediaType.episode
-    })
-    return res
+  const [
+    backdrop,
+    fanartInfo,
+    imdbRating,
+    traktRating,
+    tmdbDetails,
+  ] = await Promise.all([
+    getEpisodeBackdrop(show, episode),
+    getTvFanartInfo(show.ids.tvdb),
+    getImdbRating(episode.ids.imdb),
+    getEpisodeRating(show.ids.trakt, episode.season, episode.number),
+    tmdbEpisodeDetails(show, episode),
+  ])
+
+  const result: CardInfo = {
+    backdrop,
+    clear_logo: fanartInfo?.clearlogo,
+    imdb_rating: imdbRating,
+    trakt_rating: traktRating,
+    tmdb_rating: tmdbDetails?.vote_average.toFixed(1),
+    type: MediaType.episode,
   }
+
+  return result
 }
 
-export async function getShowInfoCard(show: Trakt.Show) {
-  const res = {} as CardInfo
-  await Promise.all([
+export async function getShowInfoCard(show: Trakt.Show): Promise<CardInfo | null> {
+  if (!show.ids)
+    return null
+
+  const [
+    backdrop,
+    fanartInfo,
+    imdbRating,
+    traktRating,
+    tmdbDetails,
+  ] = await Promise.all([
     getShowBackdrop(show),
-    getShowClearLogo(show.ids.tvdb),
+    getTvFanartInfo(show.ids.tvdb),
     getImdbRating(show.ids.imdb),
     getShowRating(show.ids.trakt),
     tmdbShowDetails(show),
-  ]).then((results) => {
-    [res.backdrop, res.clear_logo, res.imdb_rating, res.trakt_rating] = results
-    res.tmdb_rating = results[4]?.vote_average.toFixed(1)
-    res.genres = results[4]?.genres
-    res.type = MediaType.show
-  })
-  return res
+  ])
+
+  const result: CardInfo = {
+    backdrop,
+    clear_logo: fanartInfo?.clearLogo,
+    imdb_rating: imdbRating,
+    trakt_rating: traktRating,
+    tmdb_rating: tmdbDetails?.vote_average.toFixed(1),
+    genres: tmdbDetails?.genres,
+    type: MediaType.show,
+  }
+
+  return result
 }
 
-export async function getMovieInfoCard(movie: Trakt.Movie) {
-  const res = {} as CardInfo
-  await Promise.all([
+export async function getMovieInfoCard(movie: Trakt.Movie): Promise<CardInfo | null> {
+  if (!movie.ids)
+    return null
+
+  const [
+    backdrop,
+    fanartInfo,
+    imdbRating,
+    traktRating,
+    tmdbDetails,
+  ] = await Promise.all([
     getMovieBackdrop(movie),
-    getMovieClearLogo(movie.ids.tmdb),
+    getMovieFanartInfo(movie.ids.tmdb),
     getImdbRating(movie.ids.imdb),
     getMovieRating(movie.ids.trakt),
     tmdbMovieDetails(movie),
-  ]).then((results) => {
-    [res.backdrop, res.clear_logo, res.imdb_rating, res.trakt_rating] = results
-    res.tmdb_rating = results[4]?.vote_average.toFixed(1)
-    res.genres = results[4]?.genres
-    res.type = MediaType.movie
-  })
+  ])
+
+  const res = {} as CardInfo
+  res.backdrop = backdrop
+  res.clear_logo = fanartInfo?.clearlogo
+  res.imdb_rating = imdbRating
+  res.trakt_rating = traktRating
+
+  if (tmdbDetails) {
+    res.tmdb_rating = tmdbDetails.vote_average.toFixed(1)
+    res.genres = tmdbDetails.genres
+  }
+
+  res.type = MediaType.movie
+
   return res
 }
 
+// TODO: finish refactoring this file -- below
 export async function getEpisodeDetails(
   slug: string,
   season: number,
@@ -113,7 +155,7 @@ export async function getEpisodeDetails(
     const results = await Promise.all([
       getEpisodeBackdrop(show, summary),
       getSeasonPoster(show, summary.season),
-      getShowClearLogo(show.ids.tvdb),
+      getTvFanartInfo(show.ids.tvdb),
       getImdbRating(summary.ids.imdb),
       getEpisodeRating(show.ids.trakt, summary.season, summary.number),
       getComments(summary),
@@ -124,7 +166,7 @@ export async function getEpisodeDetails(
 
     res.backdrop = results[0]
     res.season_poster = results[1]
-    res.clear_logo = results[2]
+    res.clear_logo = results[2]?.clearlogo
     res.imdb_rating = results[3]
     res.trakt_rating = results[4]
     res.reviews = results[5]
@@ -162,46 +204,45 @@ export async function getEpisodeDetails(
 export async function getSeasonDetails(
   slug: string,
   season: number,
-): Promise<SeasonDetails | false> {
-  const res: SeasonDetails = {} as SeasonDetails
-  const show: Trakt.Show = await getShowSummary(slug)
-  const seasonInfo = await getSeasonSummary(slug, season)
+): Promise<SeasonDetails | null> {
+  const [show, seasonInfo] = await Promise.all([getShowSummary(slug), getSeasonSummary(slug, season)])
 
-  if (show.ids) {
-    [res.backdrop, res.clear_logo, res.tmdb_data, res.reviews]
-      = await Promise.all([
-        getShowBackdrop(show),
-        getShowClearLogo(show.ids.tvdb),
-        tmdbShowSeasonDetails(show, season),
-        getComments(show),
-      ])
+  if (!show.ids)
+    return null
 
-    res.trakt_rating = seasonInfo.rating.toFixed(1)
+  const [backdrop, fanartInfo, tmdbData, reviews] = await Promise.all([
+    getShowBackdrop(show),
+    getTvFanartInfo(show.ids.tvdb),
+    tmdbShowSeasonDetails(show, season),
+    getComments(show),
+  ])
 
-    if (!res.tmdb_data.poster_path)
-      res.tmdb_data.poster_path = await getShowPoster(show)
-    else
-      res.tmdb_data.poster_path = `https://image.tmdb.org/t/p/w780${res.tmdb_data.poster_path}`
-
-    if (localStorage.getItem('trakt-vue-user')) {
-      // get my rating from ratings in local storage
-      const { ratings }: { ratings: Trakt.Rating[] } = JSON.parse(
-        localStorage.getItem('trakt-vue-season-ratings')!,
-      )
-
-      const myRating: Trakt.Rating | undefined = ratings.find((item) => {
-        if (item.season?.ids && seasonInfo.ids) {
-          if (item.season.ids.trakt === seasonInfo.ids.trakt)
-            return item
-        }
-      })
-
-      if (myRating)
-        res.my_rating = myRating.rating
-    }
-    return { ...res, ...seasonInfo, ...{ show } }
+  const seasonDetails: SeasonDetails = {
+    backdrop,
+    clear_logo: fanartInfo?.clearlogo,
+    tmdb_data: tmdbData,
+    reviews,
+    trakt_rating: seasonInfo.rating.toFixed(1),
   }
-  return false
+
+  if (!tmdbData.poster_path)
+    seasonDetails.tmdb_data.poster_path = await getShowPoster(show)
+  else
+    seasonDetails.tmdb_data.poster_path = `https://image.tmdb.org/t/p/w780${tmdbData.poster_path}`
+
+  const user = localStorage.getItem('trakt-vue-user')
+  if (user) {
+    const { ratings }: { ratings: Trakt.Rating[] } = JSON.parse(
+      localStorage.getItem('trakt-vue-season-ratings'),
+    )
+    const myRating = ratings.find(
+      item => item.season?.ids?.trakt === seasonInfo.ids?.trakt,
+    )
+    if (myRating)
+      seasonDetails.my_rating = myRating.rating
+  }
+
+  return { ...seasonDetails, ...seasonInfo, show }
 }
 
 /**
@@ -213,36 +254,46 @@ export async function getSeasonDetails(
 export async function getShowDetails(
   traktId: number | string,
 ): Promise<ShowDetails> {
-  const summary: Trakt.Show = await getShowSummary(traktId)
+  const summary = await getShowSummary(traktId)
   const res: any = { ...summary }
 
-  await Promise.all([
+  const [
+    backdrop,
+    showPoster,
+    fanartInfo,
+    imdbRating,
+    traktRating,
+    tmdbData,
+    reviews,
+    actors,
+    watchedProgress,
+  ] = await Promise.all([
     getShowBackdrop(summary),
     getShowPoster(summary),
-    getShowClearLogo(summary.ids.tvdb),
+    getTvFanartInfo(summary.ids.tvdb),
     getImdbRating(summary.ids.imdb),
     getShowRating(summary.ids.trakt),
     tmdbShowDetails(summary),
     getComments(summary),
     tmdbActors(summary),
     getShowWatchedProgress(summary.ids.trakt),
-  ]).then((results) => {
-    [
-      res.backdrop,
-      res.show_poster,
-      res.clear_logo,
-      res.imdb_rating,
-      res.trakt_rating,
-      res.tmdb_data,
-      res.reviews,
-      res.actors,
-      res.watched_progress,
-    ] = results
-    res.tmdb_rating = results[5]?.vote_average.toFixed(1)
+  ])
+
+  Object.assign(res, {
+    backdrop,
+    show_poster: showPoster,
+    clear_logo: fanartInfo?.clearlogo,
+    imdb_rating: imdbRating,
+    trakt_rating: traktRating,
+    tmdb_data: tmdbData,
+    reviews,
+    actors,
+    watched_progress: watchedProgress,
+    tmdb_rating: tmdbData?.vote_average?.toFixed(1),
   })
 
-  if (localStorage.getItem('trakt-vue-user')) {
-    // get my rating from ratings in local storage
+  const user = localStorage.getItem('trakt-vue-user')
+  if (user) {
     const { ratings } = JSON.parse(
       localStorage.getItem('trakt-vue-show-ratings')!,
     )
@@ -262,64 +313,72 @@ export async function getShowDetails(
  */
 export async function getMovieDetails(
   slug: string,
-): Promise<MovieDetails | false> {
+): Promise<MovieDetails | null> {
   const summary = await getMovieSummary(slug)
-  const res: MovieDetails = {} as MovieDetails
+  if (!summary.ids)
+    return null
 
-  if (summary.ids) {
-    summary.type = 'movie'
+  summary.type = 'movie'
 
-    const results = await Promise.all([
-      getMovieBackdrop(summary),
-      getMoviePoster(summary),
-      getMovieClearLogo(summary.ids.tmdb),
-      getImdbRating(summary.ids.imdb),
-      getMovieRating(summary.ids.trakt),
-      tmdbMovieDetails(summary),
-      getComments(summary),
-      tmdbActors(summary),
-    ])
-    res.backdrop = results[0]
-    res.poster = results[1]
-    res.clear_logo = results[2]
-    res.imdb_rating = results[3]
-    res.trakt_rating = results[4]
-    res.tmdb_data = results[5]
-    res.tmdb_rating = results[5]?.vote_average.toFixed(1)
-    res.reviews = results[6]
-    res.actors = results[7]
+  const [
+    backdrop,
+    poster,
+    fanartInfo,
+    imdbRating,
+    traktRating,
+    tmdbData,
+    reviews,
+    actors,
+  ] = await Promise.all([
+    getMovieBackdrop(summary),
+    getMoviePoster(summary),
+    getMovieFanartInfo(summary.ids.tmdb),
+    getImdbRating(summary.ids.imdb),
+    getMovieRating(summary.ids.trakt),
+    tmdbMovieDetails(summary),
+    getComments(summary),
+    tmdbActors(summary),
+  ])
 
-    const watchedMovies: Trakt.WatchedMovie[] = localStorage.getItem(
-      'trakt-vue-watched-movies',
-    )
-      ? JSON.parse(localStorage.getItem('trakt-vue-watched-movies')!)
-      : null
-
-    if (watchedMovies) {
-      res.watched_progress = watchedMovies.find(
-        item => item.movie.ids.trakt === summary.ids.trakt,
-      )
-    }
-
-    if (localStorage.getItem('trakt-vue-user')) {
-      // get my rating from ratings in local storage
-      const { ratings }: { ratings: Trakt.Rating[] } = JSON.parse(
-        localStorage.getItem('trakt-vue-movie-ratings')!,
-      )
-
-      const myRating: Trakt.Rating | undefined = ratings.find((item) => {
-        if (item.movie?.ids && summary.ids) {
-          if (item.movie.ids.trakt === summary.ids.trakt)
-            return item
-        }
-      })
-
-      if (myRating)
-        res.my_rating = myRating.rating
-    }
-    return { ...summary, ...res }
+  const movieDetails: MovieDetails = {
+    ...summary,
+    backdrop,
+    poster,
+    clear_logo: fanartInfo?.clearlogo,
+    imdb_rating: imdbRating,
+    trakt_rating: traktRating,
+    tmdb_data: tmdbData,
+    tmdb_rating: tmdbData?.vote_average?.toFixed(1),
+    reviews,
+    actors,
   }
-  return false
+
+  const watchedMovies: Trakt.WatchedMovie[] = localStorage.getItem(
+    'trakt-vue-watched-movies',
+  )
+    ? JSON.parse(localStorage.getItem('trakt-vue-watched-movies')!)
+    : []
+
+  if (watchedMovies.length > 0) {
+    movieDetails.watched_progress = watchedMovies.find(
+      item => item.movie.ids.trakt === summary.ids.trakt,
+    )
+  }
+
+  const user = localStorage.getItem('trakt-vue-user')
+  if (user) {
+    const { ratings }: { ratings: Trakt.Rating[] } = JSON.parse(
+      localStorage.getItem('trakt-vue-movie-ratings')!,
+    )
+
+    const myRating = ratings.find(
+      item => item.movie?.ids?.trakt === summary.ids.trakt,
+    )
+    if (myRating)
+      movieDetails.my_rating = myRating.rating
+  }
+
+  return movieDetails
 }
 
 export async function getMovieCollection(collectionId: number) {

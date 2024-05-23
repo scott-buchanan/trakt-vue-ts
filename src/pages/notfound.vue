@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 const store = useStore()
 store.updateLoading(true)
@@ -17,7 +17,7 @@ store.updateLoading(true)
 </template>
 
 <style lang="scss" scoped>
-@import url('https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap");
 
 .background {
   &.text {

@@ -42,7 +42,7 @@ export namespace Trakt {
     type: string
   }
 
-  interface Rating {
+  export interface Rating {
     rated_at: string
     rating: number
     type: MediaType

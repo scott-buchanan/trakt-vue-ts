@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import routes from './routes'
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 import {
   getMyEpisodeRatings,
   getMyLikes,

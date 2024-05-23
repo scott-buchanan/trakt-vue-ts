@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
-import type { Filter, FilterType, StateObj } from './models'
+import type { Filter, FilterType, StateObj } from './mainStore.types'
 import type Trakt from '~/api/trakt.types'
 import type Tmdb from '~/api/tmdb.types'
 
 const defaultFilter = { label: 'Trending', val: 'trending', auth: false }
 
 const defaultState: StateObj = {
-  page: '1',
+  page: 1,
   filter: defaultFilter,
   filterOptions: {
     show: [
@@ -46,7 +46,7 @@ const defaultState: StateObj = {
 export const useStore = defineStore('main', {
   state: () => ({ ...defaultState }),
   actions: {
-    updatePage(page: string) {
+    updatePage(page: number) {
       this.page = page
     },
     updateFilter(filter: Filter) {

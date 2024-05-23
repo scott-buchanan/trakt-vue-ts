@@ -1,37 +1,35 @@
 <template>
-  <div class="loading">
-    <div class="finger finger-1">
-      <div class="finger-item">
-        <span /><i />
+  <div class="w-full h-full rounded-md bg-black/50 flex justify-center items-center">
+    <div class="loading">
+      <div class="finger finger-1">
+        <div class="finger-item">
+          <span /><i />
+        </div>
       </div>
-    </div>
-    <div class="finger finger-2">
-      <div class="finger-item">
-        <span /><i />
+      <div class="finger finger-2">
+        <div class="finger-item">
+          <span /><i />
+        </div>
       </div>
-    </div>
-    <div class="finger finger-3">
-      <div class="finger-item">
-        <span /><i />
+      <div class="finger finger-3">
+        <div class="finger-item">
+          <span /><i />
+        </div>
       </div>
-    </div>
-    <div class="finger finger-4">
-      <div class="finger-item">
-        <span /><i />
+      <div class="finger finger-4">
+        <div class="finger-item">
+          <span /><i />
+        </div>
       </div>
-    </div>
-    <div class="last-finger">
-      <div class="last-finger-item" />
+      <div class="last-finger">
+        <div class="last-finger-item" />
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .loading {
-  // position: absolute;
-  // left: 50%;
-  // top: 50%;
-  // margin: -35px 0 0 -56px;
   width: 112px;
   height: 70px;
   *zoom: 1;

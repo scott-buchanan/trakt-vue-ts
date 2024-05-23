@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 
 // store
 import type { Ref } from 'vue'
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 // api
 import { getEpisodeDetails } from '~/api/combinedCalls'
@@ -19,9 +19,12 @@ const store = useStore()
 const info: Ref<EpisodeDetails> = ref({} as EpisodeDetails)
 const arrDetails: Ref<TechnicalDetails[]> = ref([])
 
-const episodeTitle = computed(() => `${info.value.season}x${info.value.number.toString().padStart(2, '0')} ${
-  info.value.title
-  }`)
+const episodeTitle = computed(
+  () =>
+    `${info.value.season}x${info.value.number.toString().padStart(2, '0')} ${
+      info.value.title
+    }`,
+)
 
 function formattedDate(wDate: string) {
   return dayjs(wDate).format('MMM DD, YYYY')
@@ -33,7 +36,9 @@ onMounted(async () => {
   store.updateFilter({ label: null, val: null, auth: null })
 
   info.value = await getEpisodeDetails(
-    store.currentIds?.trakt ? store.currentIds?.trakt : route.params.show.toString(),
+    store.currentIds?.trakt
+      ? store.currentIds?.trakt
+      : route.params.show.toString(),
     route.params.season.toString(),
     route.params.episode.toString(),
   )

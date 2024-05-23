@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import type { MovieDetails } from '~/api/combinedCall.types'
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 // api
 import { getMovieDetails } from '~/api/combinedCalls'
@@ -129,8 +129,8 @@ onUpdated(async () => {
 </template>
 
 <style lang="scss" scoped>
-@use 'sass:map';
-@import '~/quasar-variables.scss';
+@use "sass:map";
+@import "~/quasar-variables.scss";
 
 h1 {
   font-weight: 400;
@@ -189,7 +189,7 @@ h1 {
 .show-info {
   flex-wrap: wrap;
   & > div {
-    margin-right:map.get($space-md, x);;
+    margin-right: map.get($space-md, x);
   }
   & span {
     @include darkText;

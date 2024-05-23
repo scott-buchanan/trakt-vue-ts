@@ -100,12 +100,12 @@ h2 {
   @include text-ellipsis;
   margin-top: 0;
 }
-button {
+/* button {
   background: none;
   border: none;
   padding: 0;
   min-width: 0;
-}
+} */
 .card {
   height: 200px;
   width: 100%;

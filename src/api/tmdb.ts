@@ -1,128 +1,134 @@
+import type { AxiosInstance, AxiosRequestConfig } from 'axios'
 import axios from 'axios'
 import dayjs from 'dayjs'
 // api
-import { getMovieBackground, getTvBackground } from './fanart'
+import { getMovieFanartInfo, getTvFanartInfo } from './fanart'
 import { getIdLookupActorTmdb, getIdLookupTmdb } from './trakt'
 // types
 import type Tmdb from './tmdb.types'
+import type { Backdrop } from './combinedCall.types'
 import type Trakt from '~/api/trakt.types'
 import { MediaType } from '~/types/types'
 // assets
 import * as fallback from '~/assets/fallback-tv.jpg'
 
+// base config for axios instances
+const baseConfig: AxiosRequestConfig = {
+  baseURL: 'https://api.themoviedb.org/3/',
+  params: {
+    api_key: import.meta.env.VITE_TMDB_API_KEY as string,
+    language: 'en',
+  },
+}
+
+// for public requests
+const axiosInstance: AxiosInstance = axios.create(baseConfig)
+
+axiosInstance.interceptors.response.use((response) => {
+  return response
+}, () => {
+  return { data: null }
+})
+
 export async function getImageUrls(): Promise<Tmdb.TmdbConfig> {
-  const response = await axios({
-    method: 'GET',
-    url: 'https://api.themoviedb.org/3/configuration?api_key=89c6bd3331244e97eed61741fc798ab5',
-  })
-  return response.data
+  const response = await axiosInstance.get('/configuration')
+  return response.data as Tmdb.TmdbConfig
 }
 
 export async function getAppBackgroundImg(
   tmdbConfig: Tmdb.TmdbConfig,
-): Promise<Tmdb.BackgroundInfo> {
-  const response = await axios({
-    method: 'GET',
-    url: 'https://api.themoviedb.org/3/trending/all/day?api_key=89c6bd3331244e97eed61741fc798ab5',
-  })
-  const rando = Math.floor(Math.random() * response.data.results.length)
-  const imgObj = response.data.results[rando]
-  return {
-    id: imgObj.id,
-    title: imgObj.title ? imgObj.title : imgObj.name,
-    type: imgObj.media_type,
-    year: dayjs(imgObj.release_date).format('YYYY'),
-    posterUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.poster_sizes[3]}${imgObj.poster_path}`,
-    backgroundUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.backdrop_sizes[3]}${imgObj.backdrop_path}`,
+): Promise<Tmdb.BackgroundInfo | null> {
+  const response = await axiosInstance.get('/trending/all/day')
+  if (response.data) {
+    const rando = Math.floor(Math.random() * response.data.results.length)
+    const imgObj = response.data.results[rando]
+    return {
+      id: imgObj.id,
+      title: imgObj.title ? imgObj.title : imgObj.name,
+      type: imgObj.media_type,
+      year: dayjs(imgObj.release_date).format('YYYY'),
+      posterUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.poster_sizes[3]}${imgObj.poster_path}`,
+      backgroundUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.backdrop_sizes[3]}${imgObj.backdrop_path}`,
+    }
   }
+  return null
 }
 
 export async function getShowPoster(show: Trakt.Show) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/images?language=en&api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/images`)
 
-  if (response.data.posters.length > 0)
-    return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
+  if (response.data) {
+    if (response.data.posters.length > 0)
+      return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
 
-  // Sometimes the details call has a poster where the images call does not. Weird.
-  const details = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}?language=en&api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
-  return details.data.poster_path
-    ? `https://image.tmdb.org/t/p/w780/${details.data.poster_path}`
-    : fallback.default
+    // Sometimes the details call has a poster where the images call does not. Weird.
+    const details = await axiosInstance.get(`/tv/${show.ids.tmdb}`)
+    return details.data?.poster_path
+      ? `https://image.tmdb.org/t/p/w780/${details.data.poster_path}`
+      : fallback.default
+  }
+  return null
 }
 
 export async function getSeasonPoster(show: Trakt.Show, seasonNumber: number) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${seasonNumber}/images?language=en&api_key=89c6bd3331244e97eed61741fc798ab5`,
-    })
+  const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${seasonNumber}/images`)
+  if (response.data)
     return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
-  }
-  catch {
+  else
     return getShowPoster(show)
-  }
 }
 
 export async function getMoviePoster(movie: Trakt.Movie) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}/images?language=en&api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/movie/${movie.ids.tmdb}/images`)
 
-  if (response.data.posters.length > 0)
-    return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
+  if (response.data) {
+    if (response.data.posters.length > 0)
+      return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
 
-  // Sometimes the details call has a poster where the images call does not. Weird.
-  const details = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}?language=en&api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
-  return details.data.poster_path
-    ? `https://image.tmdb.org/t/p/w780/${details.data.poster_path}`
-    : fallback.default
+    // Sometimes the details call has a poster where the images call does not. Weird.
+    const details = await axiosInstance.get(`/movie/${movie.ids.tmdb}`)
+    return details.data?.poster_path
+      ? `https://image.tmdb.org/t/p/w780/${details.data.poster_path}`
+      : fallback.default
+  }
+  return null
 }
 
-/**
- * Gets the info needed to display episode info in the CardContainer component.
- * @function
- * @param {object} show - Show object.
- * @returns {string} image url.
- */
 export async function getShowBackdrop(show: Trakt.Show) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/images?api_key=89c6bd3331244e97eed61741fc798ab5&include_image_language=null`,
-    })
-    if (response.data.backdrops.length < 1) {
-      const fanartBackground = await getTvBackground(show.ids.tvdb)
-      if (!fanartBackground)
-        throw new Error('no images found')
+  if (show.ids.tmdb) {
+    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/images?include_image_language=null`)
+    if (response.data) {
+      if (response.data.backdrops.length < 1) {
+        const fanartInfo = await getTvFanartInfo(show.ids.tvdb)
+        if (!fanartInfo) {
+          return {
+            backdrop_sm: fallback.default,
+            backdrop_lg: fallback.default,
+          }
+        }
+        else {
+          return {
+            backdrop_sm: fanartInfo.tvthumb[0]?.url,
+            backdrop_lg: fanartInfo.tvthumb[0]?.url,
+          }
+        }
+      }
+      interface backdrop {
+        vote_average: number
+        height: number
+      }
+      response.data.backdrops.sort(
+        (a: backdrop, b: backdrop) =>
+          b.vote_average - a.vote_average || b.height - a.height,
+      )
       return {
-        backdrop_sm: fanartBackground,
-        backdrop_lg: fanartBackground,
+        backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.backdrops[0].file_path}`,
+        backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.backdrops[0].file_path}`,
       }
     }
-    interface backdrop {
-      vote_average: number
-      height: number
-    }
-    response.data.backdrops.sort(
-      (a: backdrop, b: backdrop) =>
-        b.vote_average - a.vote_average || b.height - a.height,
-    )
-    return {
-      backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.backdrops[0].file_path}`,
-      backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.backdrops[0].file_path}`,
-    }
+    return { backdrop_sm: fallback.default, backdrop_lg: fallback.default }
   }
-  catch {
+  else {
     return { backdrop_sm: fallback.default, backdrop_lg: fallback.default }
   }
 }
@@ -130,22 +136,22 @@ export async function getShowBackdrop(show: Trakt.Show) {
 export async function getEpisodeBackdrop(
   show: Trakt.Show,
   episode: Trakt.Episode,
-) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}/images?api_key=89c6bd3331244e97eed61741fc798ab5&include_image_language=null`,
-    })
-    if (response.data.stills.length < 1)
-      return await getShowBackdrop(show)
+): Promise<Backdrop | null> {
+  if (!show.ids.tmdb && !episode.season && !episode.number)
+    return null
 
+  const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}/images?include_image_language=null`)
+  if (response.data?.stills?.length < 1) {
+    return await getShowBackdrop(show)
+  }
+  else if (response.data.stills.length > 0) {
     return {
       backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.stills[0].file_path}`,
       backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.stills[0].file_path}`,
     }
   }
-  catch {
-    return getShowBackdrop(show)
+  else {
+    return await getShowBackdrop(show)
   }
 }
 
@@ -156,24 +162,26 @@ export async function getEpisodeBackdrop(
  * @returns {string} image url.
  */
 export async function getMovieBackdrop(movie: Trakt.Movie) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}/images?api_key=89c6bd3331244e97eed61741fc798ab5&include_image_language=null`,
-    })
-    if (response.data.backdrops.length < 1) {
-      const fanartBackground = await getMovieBackground(movie.ids.tvdb)
+  if (movie.ids.tmdb) {
+    const response = await axiosInstance.get(`/movie/${movie.ids.tmdb}/images?include_image_language=null`)
+    if (response.data?.backdrops.length < 1) {
+      const fanartInfo = await getMovieFanartInfo(movie.ids.tvdb)
       return {
-        backdrop_sm: fanartBackground,
-        backdrop_lg: fanartBackground,
+        backdrop_sm: fanartInfo?.tvthumb[0].url,
+        backdrop_lg: fanartInfo?.tvthumb[0].url,
       }
     }
-    return {
-      backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.backdrops[0].file_path}`,
-      backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.backdrops[0].file_path}`,
+    else if (response.data.backdrops.length > 0) {
+      return {
+        backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.backdrops[0].file_path}`,
+        backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.backdrops[0].file_path}`,
+      }
+    }
+    else {
+      return { backdrop_sm: fallback.default, backdrop_lg: fallback.default }
     }
   }
-  catch {
+  else {
     return { backdrop_sm: fallback.default, backdrop_lg: fallback.default }
   }
 }
@@ -182,66 +190,52 @@ export async function tmdbEpisodeDetails(
   show: Trakt.Show,
   episode: Trakt.Episode,
 ) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}?api_key=89c6bd3331244e97eed61741fc798ab5`,
-    })
+  if (show.ids.tmdb && episode.season && episode.number) {
+    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}`)
     return response.data
-  }
-  catch {
-    return null
   }
 }
 
 export async function tmdbShowDetails(show: Trakt.Show) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5&append_to_response=videos`,
-    })
-    const { data } = response
-    const seasons: Tmdb.Season[] = []
-    await Promise.all(
-      data.seasons.map(async (season: Tmdb.Season) => {
-        if (season.episode_count > 0) {
-          let path
-          if (!season.poster_path)
-            path = await getShowPoster(show)
-          else path = `https://image.tmdb.org/t/p/w200${season.poster_path}`
+  if (show.ids.tmdb) {
+    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}?append_to_response=videos`)
+    if (response.data) {
+      const seasons: Tmdb.Season[] = await Promise.all(
+        response.data.seasons.map(async (season: Tmdb.Season) => {
+          if (season.episode_count > 0) {
+            let path
+            if (!season.poster_path)
+              path = await getShowPoster(show)
+            else path = `https://image.tmdb.org/t/p/w200${season.poster_path}`
 
-          seasons.push({ ...season, ...{ poster_path: path } })
-        }
-      }),
-    )
-    data.seasons = seasons
-    data.seasons.sort(
-      (a: Tmdb.Season, b: Tmdb.Season) => a.season_number - b.season_number,
-    )
+            return { ...season, ...{ poster_path: path } }
+          }
+        }),
+      )
+      response.data.seasons = seasons
+      response.data.seasons.sort(
+        (a: Tmdb.Season, b: Tmdb.Season) => a.season_number - b.season_number,
+      )
 
-    if (data.seasons[0].name.toLowerCase() === 'specials') {
-      const specials = data.seasons.shift()
-      data.seasons.push(specials)
+      if (response.data.seasons[0].name.toLowerCase() === 'specials') {
+        const specials = response.data.seasons.shift()
+        response.data.seasons.push(specials)
+      }
+
+      response.data.videos = response.data.videos.results.filter(
+        (v: Tmdb.Video) =>
+          v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
+      )
+
+      return response.data
     }
-
-    data.videos = data.videos.results.filter(
-      (v: Tmdb.Video) =>
-        v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
-    )
-
-    return data
-  }
-  catch {
     return null
   }
 }
 
 export async function tmdbShowSeasonDetails(show: Trakt.Show, season: number) {
   try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${season}?api_key=89c6bd3331244e97eed61741fc798ab5`,
-    })
+    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${season}`)
     const episodes: Tmdb.EpisodeDetails[] = []
     await Promise.all(
       response.data.episodes.map(async (episode: Tmdb.EpisodeDetails) => {
@@ -264,19 +258,13 @@ export async function tmdbShowSeasonDetails(show: Trakt.Show, season: number) {
 }
 
 export async function tmdbMovieDetails(movie: Trakt.Movie) {
-  try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/movie/${movie.ids.tmdb}?api_key=89c6bd3331244e97eed61741fc798ab5&append_to_response=videos`,
-    })
+  if (movie) {
+    const response = await axiosInstance.get(`/movie/${movie.ids.tmdb}?append_to_response=videos`)
     response.data.videos = response.data.videos.results.filter(
       (v: Tmdb.Video) =>
         v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
     )
     return response.data
-  }
-  catch {
-    return null
   }
 }
 
@@ -285,10 +273,7 @@ export async function tmdbEpisodeActors(
   episode: Trakt.Episode,
 ) {
   try {
-    const response = await axios({
-      method: 'GET',
-      url: `https://api.themoviedb.org/3/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}/credits?api_key=89c6bd3331244e97eed61741fc798ab5`,
-    })
+    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}/credits`)
     const data = response.data.cast
     const actors: Tmdb.Actor[] = []
     await Promise.all(
@@ -314,10 +299,7 @@ export async function tmdbActors(
 ): Promise<Tmdb.Actor[]> {
   const mType: MediaType | string
     = item.type === MediaType.movie ? MediaType.movie : 'tv'
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/${mType}/${item.ids.tmdb}/credits?api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/${mType}/${item.ids.tmdb}/credits`)
   const data = response.data.cast
   const actors: Tmdb.Actor[] = []
   await Promise.all(
@@ -335,10 +317,7 @@ export async function tmdbActors(
 }
 
 export async function getActorImage(tmdbId: string) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/person/${tmdbId}/images?api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/person/${tmdbId}/images`)
   return response.data
 }
 
@@ -348,34 +327,21 @@ export async function rateEpisode(
   episode: number,
   rating: number,
 ) {
-  const response = await axios({
-    method: 'POST',
-    url: `https://api.themoviedb.org/3/tv/${showId}/season/${season}/episode/${episode}/rating?api_key=89c6bd3331244e97eed61741fc798ab5`,
-    data: {
-      value: rating,
-    },
+  const response = await axiosInstance.post(`/tv/${showId}/season/${season}/episode/${episode}/rating`, {
+    value: rating,
   })
   return response.status === 201
 }
 
 export async function getShowVideos(showId: number) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/tv/${showId}/videos?api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/tv/${showId}/videos`)
   return response.data.results
 }
 
 export async function getGenres(): Promise<Tmdb.Genres> {
   const response = await Promise.all([
-    axios({
-      method: 'GET',
-      url: 'https://api.themoviedb.org/3/genre/tv/list?api_key=89c6bd3331244e97eed61741fc798ab5&language=en',
-    }),
-    axios({
-      method: 'GET',
-      url: 'https://api.themoviedb.org/3/genre/movie/list?api_key=89c6bd3331244e97eed61741fc798ab5&language=en',
-    }),
+    axiosInstance.get('/genre/tv/list'),
+    axiosInstance.get('/genre/movie/list'),
   ])
   return {
     tv: response[0].data.genres,
@@ -384,9 +350,7 @@ export async function getGenres(): Promise<Tmdb.Genres> {
 }
 
 export async function getSearchResults(keyword: string, page = 1) {
-  const response = await axios.get(
-    `https://api.themoviedb.org/3/search/multi?&query=${keyword}&include_adult=true&language=en-US&page=${page}&api_key=89c6bd3331244e97eed61741fc798ab5`,
-  )
+  const response = await axiosInstance.get(`/search/multi?&query=${keyword}&include_adult=true&language=en-US&page=${page}`)
   const modified = await Promise.all(
     response.data.results.map(async (item: any) => {
       const ids = await getIdLookupTmdb(item.id, item.media_type)
@@ -400,10 +364,7 @@ export async function getSearchResults(keyword: string, page = 1) {
 }
 
 export async function getMovieCollection(collectionId: number) {
-  const response = await axios({
-    method: 'GET',
-    url: `https://api.themoviedb.org/3/collection/${collectionId}?api_key=89c6bd3331244e97eed61741fc798ab5`,
-  })
+  const response = await axiosInstance.get(`/collection/${collectionId}`)
   response.data.parts = response.data.parts
     .filter((c: Tmdb.MovieDetails) => c.release_date !== '')
     .sort((a: Tmdb.Collection, b: Tmdb.Collection) => (a.id < b.id ? 1 : -1))

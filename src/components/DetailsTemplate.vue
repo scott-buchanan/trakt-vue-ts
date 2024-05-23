@@ -10,7 +10,7 @@ import Rating from './Rating.vue'
 import Reviews from './Reviews.vue'
 import DarkList from './DarkList.vue'
 import Badge from './Badge.vue'
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 // components
 // assets
 import trailerErrorBack from '~/assets/trailer-error.jpg'
@@ -167,7 +167,9 @@ function trailerReady(event: any) {
 async function trailerError() {
   if (trailerUrl.value === props.info.tmdb_data.videos[0]?.key) {
     const newTrailer = await axios.get(
-      `https://youtube.googleapis.com/youtube/v3/search?q=${props.info.title}+trailer&type=video&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`,
+      `https://youtube.googleapis.com/youtube/v3/search?q=${
+        props.info.title
+      }+trailer&type=video&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`,
     )
     if (newTrailer.status === 200) {
       trailerUrl.value = newTrailer.data.items[0].id.videoId

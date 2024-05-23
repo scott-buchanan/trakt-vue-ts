@@ -2,7 +2,7 @@
 import type { Ref } from 'vue'
 import dayjs from 'dayjs'
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 // types
 import type Trakt from '~/api/trakt.types'
 import type { CardInfo } from '~/api/combinedCall.types'
@@ -104,7 +104,9 @@ function ratings(data: RatingData) {
 }
 
 function formattedDateTime(wDate: string) {
-  return `${dayjs(wDate).format('MMM DD, YYYY')} at ${dayjs(wDate).format('h:mma')}`
+  return `${dayjs(wDate).format('MMM DD, YYYY')} at ${dayjs(wDate).format(
+    'h:mma',
+  )}`
 }
 
 function hasRatings(index: number) {
@@ -120,7 +122,9 @@ function clickDetails(item: CardInfo) {
 
   if (item.type === MediaType.episode) {
     router.push({
-      path: `${store.filterType === 'movie' ? 'movie' : 'show'}/${ids.slug}/season/${item.episode?.season}/episode/${item.episode?.number}`,
+      path: `${store.filterType === 'movie' ? 'movie' : 'show'}/${
+        ids.slug
+      }/season/${item.episode?.season}/episode/${item.episode?.number}`,
     })
   }
   else {
@@ -188,6 +192,7 @@ onMounted(() => {
           />
         </div>
         <img
+          v-if="item.backdrop"
           :src="item.backdrop.backdrop_sm"
           aria-hidden="true"
           class="absolute transition-opacity duration-700"
@@ -223,7 +228,11 @@ onMounted(() => {
         >
           <table>
             <tr>
-              <td v-for="i in ratings(item)" :key="JSON.stringify(i)" class="p-1">
+              <td
+                v-for="i in ratings(item)"
+                :key="JSON.stringify(i)"
+                class="p-1"
+              >
                 <div>
                   <img
                     v-if="i.img"
@@ -236,7 +245,8 @@ onMounted(() => {
                     :icon="i.icon"
                     width="2em"
                     height="2em"
-                    class="block" :class="[i.color]"
+                    class="block"
+                    :class="[i.color]"
                   />
                 </div>
                 <Tooltip v-if="i.tooltip" :value="i.tooltip" />

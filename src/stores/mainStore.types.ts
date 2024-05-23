@@ -15,7 +15,7 @@ export interface FilterOptions {
 export type FilterType = 'show' | 'movie'
 
 export interface StateObj {
-  page: string
+  page: number
   filter: Filter
   filterOptions: FilterOptions
   filterType: FilterType

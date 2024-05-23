@@ -1,14 +1,5 @@
 {
-  "cSpell.words": [
-    "Neue",
-    "pinia",
-    "Pinia",
-    "Roboto",
-    "Segoe",
-    "tailwindcss",
-    "Vitesse",
-    "vuejs"
-  ],
+  "cSpell.words": ["Neue", "pinia", "Pinia", "Roboto", "Segoe", "tailwindcss", "Vitesse", "vuejs"],
   "files.associations": {
     "*.css": "tailwindcss"
   },
@@ -29,6 +20,7 @@
 
   // Disable the default formatter, use eslint instead
   "prettier.enable": false,
+  "prettier.proseWrap": "always",
   "editor.formatOnSave": false,
 
   // Auto fix

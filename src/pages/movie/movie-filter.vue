@@ -3,18 +3,22 @@ import type { Ref } from 'vue'
 import { useQuasar } from 'quasar'
 
 // api
-import { getRecommendationsFromMe, getTrending, getWatchedHistory } from '~/api/trakt'
+import {
+  getRecommendationsFromMe,
+  getTrending,
+  getWatchedHistory,
+} from '~/api/trakt'
 import { getMovieInfoCard } from '~/api/combinedCalls'
 
 // store
-import { useStore } from '~/store/index'
+import { useStore } from '~/stores/mainStore'
 
 // components
 import CardContainer from '~/components/CardContainer.vue'
 
 // types
 import type Trakt from '~/api/trakt.types'
-import type { Filter } from '~/store/models'
+import type { Filter } from '~/stores/mainStore.types'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,7 +52,9 @@ store.$subscribe((mutated, state) => {
 onMounted(() => {
   store.updateFilterType('movie')
 
-  const foundFilter = store.filterOptions.show.find(filter => filter.val === route.params?.filter)
+  const foundFilter = store.filterOptions.show.find(
+    filter => filter.val === route.params?.filter,
+  )
   if (foundFilter)
     store.updateFilter(foundFilter)
 
@@ -69,11 +75,19 @@ async function loadData() {
 
   switch (filter.value?.val) {
     case 'history':
-      data.value = await getWatchedHistory('movies', page.value) as Trakt.MovieData
+      data.value = (await getWatchedHistory(
+        'movies',
+        page.value,
+      )) as Trakt.MovieData
       break
     case 'recommended':
-      if (store.myInfo)
-        data.value = await getRecommendationsFromMe('movies', store.myInfo.user.username, page.value)
+      if (store.myInfo) {
+        data.value = await getRecommendationsFromMe(
+          'movies',
+          store.myInfo.user.username,
+          page.value,
+        )
+      }
       break
     case 'trending':
       data.value = await getTrending('movies', page.value)
@@ -84,15 +98,22 @@ async function loadData() {
   }
 
   // get movie ratings object from local storage
-  myMovieRatings.value = JSON.parse(localStorage.getItem('trakt-vue-movie-ratings')!)
+  myMovieRatings.value = JSON.parse(
+    localStorage.getItem('trakt-vue-movie-ratings')!,
+  )
 
   // get images and ratings
   const items = await fetchCardInfo(myMovieRatings.value)
 
-  if (filter.value?.val === 'history')
-    items.sort((a, b) => new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime())
-  else if (filter?.value.val === 'trending')
+  if (filter.value?.val === 'history') {
+    items.sort(
+      (a, b) =>
+        new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
+    )
+  }
+  else if (filter?.value.val === 'trending') {
     items.sort((a, b) => b.watchers - a.watchers)
+  }
 
   data.value.items = [...items]
 
@@ -100,12 +121,19 @@ async function loadData() {
 }
 async function fetchCardInfo(ratingsObj: Trakt.Ratings) {
   const findMyRating = (item: any) => {
-    return ratingsObj?.ratings.find((rating) => {
-      if (mType === 'show')
-        return !('episode' in rating) && rating.show.ids.trakt === item.show.ids.trakt
-      else
-        return rating.episode.ids.trakt === item.episode.ids.trakt
-    }) || { my_rating: null }
+    return (
+      ratingsObj?.ratings.find((rating) => {
+        if (mType === 'show') {
+          return (
+            !('episode' in rating)
+            && rating.show.ids.trakt === item.show.ids.trakt
+          )
+        }
+        else {
+          return rating.episode.ids.trakt === item.episode.ids.trakt
+        }
+      }) || { my_rating: null }
+    )
   }
 
   const items = await Promise.all(
@@ -132,7 +160,10 @@ function changePage() {
   <div v-if="store.loaded" class="full-height q-pa-sm movie-container">
     <CardContainer :data="data.items" m-type="movie" />
   </div>
-  <q-footer v-if="store.loaded && data?.pagesTotal > 1" class="text-white q-pa-sm footer">
+  <q-footer
+    v-if="store.loaded && data?.pagesTotal > 1"
+    class="text-white q-pa-sm footer"
+  >
     <q-toolbar class="flex flex-center">
       <q-pagination
         v-model="page"
@@ -151,7 +182,7 @@ function changePage() {
 </template>
 
 <style lang="scss" scoped>
-@import '~/quasar-variables.scss';
+@import "~/quasar-variables.scss";
 
 .movie-container {
   padding-top: 0;
