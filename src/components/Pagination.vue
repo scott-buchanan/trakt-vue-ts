@@ -2,7 +2,7 @@
 export interface Props {
   data: any
   currentPage: number
-  pagesVisible: number
+  pagesVisible?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {

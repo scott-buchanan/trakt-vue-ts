@@ -141,7 +141,7 @@ export async function getCommunityRecommended(
   }
 }
 
-export async function getWatchedHistory(mType: 'shows' | 'movies', uName: string, page: string = '1'): Promise<Trakt.EpisodeData | Trakt.MovieData> {
+export async function getWatchedHistory(mType: 'shows' | 'movies', uName: string, page: number = 1): Promise<Trakt.EpisodeData | Trakt.MovieData> {
   const response = await axiosNoAuth.get(
     `/users/${uName}/history/${mType}?limit=${limit}&page=${page}`,
   )

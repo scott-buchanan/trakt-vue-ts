@@ -18,15 +18,18 @@ export interface CardInfo {
   my_rating: Trakt.Rating
   clear_logo: string
   watched_at: string
-  watchers?: string
+  watchers: string
   genres: Tmdb.Genre[]
-  show?: Trakt.Show
-  movie?: Trakt.Movie
-  episode?: Trakt.Episode
-  list_count?: number
-  user_count?: number
+  list_count: number
+  user_count: number
   imgLoaded: boolean
   clearImgLoaded: boolean
+  show: Trakt.Show
+  movie: Trakt.Movie
+  episode: Trakt.Episode
+  season: number
+  number: number
+  rank: number
 }
 
 export interface ShowDetails {

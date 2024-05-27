@@ -97,7 +97,7 @@ export namespace Trakt {
   }
 
   export interface Episode {
-    ids?: Ids
+    ids: Ids
     title?: string
     season: number
     number: number
@@ -107,7 +107,7 @@ export namespace Trakt {
   }
 
   export interface EpisodeData {
-    items: Episode[]
+    items: CardInfo[]
     page: number
     pagesTotal: number
   }
