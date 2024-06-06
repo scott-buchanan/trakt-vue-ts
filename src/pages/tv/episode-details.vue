@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import dayjs from 'dayjs'
 
 // store
@@ -52,7 +53,7 @@ onMounted(async () => {
 
 <template>
   <DetailsTemplate
-    v-if="store.loaded"
+    v-if="store.loaded && info"
     :info="info"
     :title="info.show.title"
     :sub-title="episodeTitle"

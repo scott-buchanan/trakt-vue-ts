@@ -138,12 +138,6 @@ function clickDetails(item: CardInfo) {
     }
   }
 }
-function cardImgLoaded(item: CardInfo) {
-  item.imgLoaded = true
-}
-function clearImgLoaded(item: CardInfo) {
-  item.clearImgLoaded = true
-}
 
 // lifecycle methods
 onMounted(() => {
@@ -161,10 +155,6 @@ onMounted(() => {
     default:
       sortedData.value = props.data
   }
-  sortedData.value?.forEach((item) => {
-    item.imgLoaded = false
-    item.clearImgLoaded = false
-  })
 })
 </script>
 
@@ -182,7 +172,6 @@ onMounted(() => {
       >
         <div
           class="absolute w-full h-full flex justify-center items-center bg-slate-400 animate-bg-pulse"
-          :class="item.imgLoaded ? 'invisible' : 'visible'"
         >
           <iconify-icon
             icon="mdi:image"
@@ -191,26 +180,9 @@ onMounted(() => {
             class="text-white"
           />
         </div>
-        <img
-          v-if="item.backdrop"
-          :src="item.backdrop.backdrop_sm"
-          aria-hidden="true"
-          class="absolute transition-opacity duration-700"
-          :class="item.imgLoaded ? 'opacity-100' : 'opacity-0'"
-          @load="cardImgLoaded(item)"
-        >
-        <div v-if="item.clear_logo" class="absolute top-0 m-3">
-          <img
-            :src="item.clear_logo"
-            aria-hidden="true"
-            class="w-1/3 transition-opacity duration-700"
-            :class="
-              item.clearImgLoaded && item.imgLoaded
-                ? 'opacity-100'
-                : 'opacity-0'
-            "
-            @load="clearImgLoaded(item)"
-          >
+        <Image v-if="item.backdrop" :src="item.backdrop.backdrop_sm" aria-hidden class="absolute" />
+        <div v-if="item.clear_logo" class="absolute top-0 m-3 z-10">
+          <Image :src="item.clear_logo" aria-hidden class="w-1/3" />
         </div>
         <div
           v-if="store.filter.val === 'anticipated'"
@@ -224,7 +196,7 @@ onMounted(() => {
           v-else
           ref="ratingsBox"
           class="absolute top-0 right-0 m-2 flex text-center bg-black/50 rounded-md p-3"
-          :class="{ invisible: !hasRatings(index) || !item.imgLoaded }"
+          :class="{ invisible: !hasRatings(index) }"
         >
           <table>
             <tr>
@@ -260,7 +232,6 @@ onMounted(() => {
           </table>
         </div>
         <div
-          v-if="item.imgLoaded"
           class="absolute bottom-0 left-0 right-0 p-3 bg-black/50 flex flex-nowrap justify-between items-center"
         >
           <div class="flex flex-col justify-between">

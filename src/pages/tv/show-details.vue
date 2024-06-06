@@ -88,16 +88,13 @@ async function getData() {
   if (info.value.watched_progress) {
     info.value.watched_progress.seasons?.forEach((season, index) => {
       if (seasons.value[index]) {
-        const delay = season.number > 1 ? season.number * 200 + 500 : 500
         seasons.value[index].watched_progress = 0
 
-        useTimeoutFn(() => {
-          seasons.value[index].watched_progress
+        seasons.value[index].watched_progress
             = season.completed / season.aired
-          seasons.value[
-            index
-          ].watched_percent = `${season.completed} out of ${season.aired} watched`
-        }, delay)
+        seasons.value[
+          index
+        ].watched_percent = `${season.completed} out of ${season.aired} watched`
       }
     })
   }
@@ -107,9 +104,10 @@ function formattedDate(wDate: string) {
   return dayjs(wDate).format('MMM DD, YYYY')
 }
 function watchedProgress(index: number) {
-  return seasons.value[index]?.watched_progress
-    ? seasons.value[index]?.watched_progress
-    : 0
+  if (seasons.value[index]?.watched_progress)
+    return Math.abs(seasons.value[index]?.watched_progress - 1)
+
+  return 1
 }
 
 // lifecycle methods
@@ -140,53 +138,32 @@ onMounted(async () => {
           {{ seasonLength }}
           {{ seasonLength > 1 ? "Seasons" : "Season" }}
         </h2>
-        <div class="seasons">
+        <div class="flex gap-3 mb-6">
           <div v-for="(season, index) in seasons" :key="season.id">
             <router-link
-              class="relative-position"
               :to="{
                 path: `/tv/show/${info.ids.slug}/season/${season.season_number}`,
               }"
             >
-              <q-img
-                width="150px"
-                :ratio="1 / 1.5"
+              <Image
+                v-if="season.poster_path"
                 :src="season.poster_path"
                 :alt="season.name"
-                class="season-poster"
+                class="rounded-md w-36"
               >
                 <div
-                  v-if="user && season.name.toLowerCase() !== 'specials'"
-                  class="season-watched"
+                  v-if="user && season.name.toLowerCase() !== 'specials' && watchedProgress(index) !== 1"
+                  class="absolute top-1 right-1 p-2 rounded-full h-11 w-11 bg-black/50"
                 >
-                  <q-knob
-                    readonly
-                    :max="1"
-                    :model-value="watchedProgress(index)"
-                    show-value
-                    size="30px"
-                    :thickness="0.2"
-                    color="secondary"
-                    track-color="grey-9"
-                    class="text-white"
-                  >
-                    <q-icon
-                      v-if="watchedProgress(index) === 1"
-                      name="o_check_circle_outline"
-                      size="xs"
-                      color="positive"
-                    />
-                  </q-knob>
-                  <q-tooltip>
-                    {{ seasons[index]?.watched_percent }}
-                  </q-tooltip>
+                  <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" :style="{ filter: `grayscale(${watchedProgress(index)})` }" />
+                  <Tooltip :value="seasons[index]?.watched_percent" />
                 </div>
-                <div class="season-caption absolute-bottom">
+                <div class="absolute bottom-0 bg-black/50 w-full rounded-b-md text-sm p-2 overflow-hidden text-ellipsis whitespace-nowrap">
                   <div class="caption-text">
                     {{ season.name }}
                   </div>
                 </div>
-              </q-img>
+              </Image>
             </router-link>
           </div>
         </div>
@@ -197,59 +174,3 @@ onMounted(async () => {
     </template>
   </DetailsTemplate>
 </template>
-
-<style lang="scss" scoped>
-@import "~/quasar-variables.scss";
-
-.seasons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 25px;
-  & :deep(.q-img) {
-    border-radius: 5px;
-  }
-  & .season-caption {
-    font-size: 0.85em;
-    padding: 10px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  & .season-watched {
-    padding: 5px;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    border-radius: 5px;
-  }
-  & .season-poster {
-    & .season-caption {
-      padding: 0;
-      font-weight: bold;
-      font-size: 0.9em;
-      height: 0;
-      transition: height 200ms ease-in-out 100ms;
-      & > .caption-text {
-        position: absolute;
-        padding: 0.6em;
-        left: -150px;
-        opacity: 0;
-        transition: opacity 200ms ease-in-out 0ms, left 200ms ease-in-out 50ms;
-      }
-    }
-    &:hover {
-      & .season-caption {
-        height: 34px;
-        transition: height 200ms ease-in-out;
-        & .caption-text {
-          left: 0;
-          opacity: 1;
-          transition: opacity 200ms ease-in-out 200ms,
-            left 200ms ease-in-out 100ms;
-        }
-      }
-    }
-  }
-}
-</style>

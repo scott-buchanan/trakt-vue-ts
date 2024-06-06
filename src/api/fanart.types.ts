@@ -9,8 +9,9 @@ interface ImageInfo {
 export interface Fanart {
   name: string
   thetvdb_id: string
-  hdtvlogo?: ImageInfo[]
-  clearlogo?: ImageInfo[]
+  hdtvlogo: ImageInfo[]
+  hdmovielogo: ImageInfo[]
+  clearlogo: ImageInfo[]
   showbackground: ImageInfo[]
   tvthumb: ImageInfo[]
   tvbanner: ImageInfo[]

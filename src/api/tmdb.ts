@@ -54,7 +54,7 @@ export async function getAppBackgroundImg(
   return null
 }
 
-export async function getShowPoster(show: Trakt.Show) {
+export async function getShowPoster(show: Trakt.Show): Promise<string | null> {
   const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/images`)
 
   if (response.data) {
@@ -155,26 +155,31 @@ export async function getEpisodeBackdrop(
   }
 }
 
-/**
- * Gets the info needed to display episode info in the CardContainer component.
- * @function
- * @param {object} movie - Movie object.
- * @returns {string} image url.
- */
-export async function getMovieBackdrop(movie: Trakt.Movie) {
+export async function getMovieBackdrop(movie: Trakt.Movie): Promise<Backdrop | null> {
   if (movie.ids.tmdb) {
-    const response = await axiosInstance.get(`/movie/${movie.ids.tmdb}/images?include_image_language=null`)
-    if (response.data?.backdrops.length < 1) {
-      const fanartInfo = await getMovieFanartInfo(movie.ids.tvdb)
-      return {
-        backdrop_sm: fanartInfo?.tvthumb[0].url,
-        backdrop_lg: fanartInfo?.tvthumb[0].url,
-      }
+    interface respBackdrops {
+      backdrops: respBackdrop[]
     }
-    else if (response.data.backdrops.length > 0) {
+    interface respBackdrop {
+      file_path: string
+    }
+    const response = await axiosInstance.get<respBackdrops>(`/movie/${movie.ids.tmdb}/images?include_image_language=null`)
+    if (response.data.backdrops.length > 0) {
       return {
         backdrop_sm: `https://image.tmdb.org/t/p/w780${response.data.backdrops[0].file_path}`,
         backdrop_lg: `https://image.tmdb.org/t/p/w1280${response.data.backdrops[0].file_path}`,
+      }
+    }
+    else if (response.data.backdrops.length < 1) {
+      const fanartInfo = await getMovieFanartInfo(movie.ids.tvdb)
+      if (fanartInfo?.tvthumb[0]) {
+        return {
+          backdrop_sm: fanartInfo?.tvthumb[0].url,
+          backdrop_lg: fanartInfo?.tvthumb[0].url,
+        }
+      }
+      else {
+        return { backdrop_sm: fallback.default, backdrop_lg: fallback.default }
       }
     }
     else {
@@ -189,17 +194,19 @@ export async function getMovieBackdrop(movie: Trakt.Movie) {
 export async function tmdbEpisodeDetails(
   show: Trakt.Show,
   episode: Trakt.Episode,
-) {
+): Promise<Tmdb.EpisodeDetails | null> {
   if (show.ids.tmdb && episode.season && episode.number) {
-    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}`)
+    const response = await axiosInstance.get<Tmdb.EpisodeDetails>(`/tv/${show.ids.tmdb}/season/${episode.season}/episode/${episode.number}`)
     return response.data
   }
+  return null
 }
 
-export async function tmdbShowDetails(show: Trakt.Show) {
+export async function tmdbShowDetails(show: Trakt.Show): Promise<Tmdb.ShowDetails | null> {
   if (show.ids.tmdb) {
-    const response = await axiosInstance.get(`/tv/${show.ids.tmdb}?append_to_response=videos`)
-    if (response.data) {
+    const response = await axiosInstance.get<Tmdb.ShowDetails>(`/tv/${show.ids.tmdb}?append_to_response=videos`)
+    const details: Tmdb.ShowDetails = { ...response.data }
+    if (response.data && 'seasons' in response.data) {
       const seasons: Tmdb.Season[] = await Promise.all(
         response.data.seasons.map(async (season: Tmdb.Season) => {
           if (season.episode_count > 0) {
@@ -210,27 +217,36 @@ export async function tmdbShowDetails(show: Trakt.Show) {
 
             return { ...season, ...{ poster_path: path } }
           }
+          else {
+            return { ...season, poster_path: null }
+          }
         }),
       )
-      response.data.seasons = seasons
-      response.data.seasons.sort(
+      details.seasons = seasons.sort(
         (a: Tmdb.Season, b: Tmdb.Season) => a.season_number - b.season_number,
       )
 
-      if (response.data.seasons[0].name.toLowerCase() === 'specials') {
-        const specials = response.data.seasons.shift()
-        response.data.seasons.push(specials)
+      if (details.seasons[0].name.toLowerCase() === 'specials') {
+        const specials = details.seasons.shift()
+        if (specials)
+          response.data.seasons.push(specials)
       }
 
-      response.data.videos = response.data.videos.results.filter(
-        (v: Tmdb.Video) =>
-          v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
-      )
+      if (response.data.videos && 'results' in response.data.videos) {
+        details.videos = (response.data.videos.results as Tmdb.Video[]).filter(
+          (v: Tmdb.Video) =>
+            v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
+        )
+      }
+      else {
+        details.videos = null
+      }
 
-      return response.data
+      return details
     }
     return null
   }
+  return null
 }
 
 export async function tmdbShowSeasonDetails(show: Trakt.Show, season: number) {
@@ -257,15 +273,24 @@ export async function tmdbShowSeasonDetails(show: Trakt.Show, season: number) {
   }
 }
 
-export async function tmdbMovieDetails(movie: Trakt.Movie) {
+export async function tmdbMovieDetails(movie: Trakt.Movie): Promise<Tmdb.MovieDetails | null> {
   if (movie) {
-    const response = await axiosInstance.get(`/movie/${movie.ids.tmdb}?append_to_response=videos`)
-    response.data.videos = response.data.videos.results.filter(
-      (v: Tmdb.Video) =>
-        v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
-    )
-    return response.data
+    const response = await axiosInstance.get<Tmdb.MovieDetails>(`/movie/${movie.ids.tmdb}?append_to_response=videos`)
+
+    const details = { ...response.data }
+    if (response.data.videos && 'results' in response.data.videos) {
+      details.videos = (response.data.videos.results as Tmdb.Video[]).filter(
+        (v: Tmdb.Video) =>
+          v.type.toLowerCase() === 'trailer' || v.type.toLowerCase() === 'teaser',
+      )
+    }
+    else {
+      details.videos = null
+    }
+
+    return details
   }
+  return null
 }
 
 export async function tmdbEpisodeActors(

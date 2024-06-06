@@ -144,26 +144,26 @@ onUpdated(async () => {
 
 <style lang="scss" scoped>
 @use "sass:map";
-@import "~/quasar-variables.scss";
+/* @import "~/quasar-variables.scss"; */
 
 h1 {
   font-size: 1.5rem;
 }
 .search-heading {
-  margin: 0 map.get($space-sm, x) 0 0;
-  @include text-ellipsis;
+  /* margin: 0 map.get($space-sm, x) 0 0; */
+  /* @include text-ellipsis; */
 }
 .search-container {
   height: 100%;
-  padding: 0 map.get($space-sm, x) map.get($space-sm, x) map.get($space-sm, x);
+  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) map.get($space-sm, x); */
   width: 100%;
   max-width: 100%;
   & > div {
     height: 100%;
     width: 100%;
     max-width: 100%;
-    padding: map.get($space-sm, x);
-    @include background-style;
+    /* padding: map.get($space-sm, x); */
+    /* @include background-style; */
   }
   & .scroll-container {
     height: calc(100% - 60px);
@@ -175,12 +175,12 @@ h1 {
   background: none;
   border: none;
   margin: 0;
-  padding: 0 0 map.get($space-sm, x) 0;
+  /* padding: 0 0 map.get($space-sm, x) 0; */
   &:last-child {
     padding-bottom: 0;
   }
   &.pad {
-    padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0;
+    /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
     &:nth-child(2n) {
       padding-right: 0;
     }
@@ -192,7 +192,7 @@ h1 {
 .search-result {
   height: 200px;
   display: flex;
-  @include background-style;
+  /* @include background-style; */
   overflow: hidden;
   color: white;
   background-position: top center;
@@ -213,11 +213,11 @@ h1 {
   white-space: normal;
 }
 .footer {
-  padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0;
+  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
   background-color: transparent !important;
   padding-left: 0;
   & > div {
-    @include background-style;
+    /* @include background-style; */
   }
 }
 </style>

@@ -15,9 +15,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 <style lang="scss" scoped>
 @use "sass:map";
-@import '~/quasar-variables.scss';
+/* @import '~/quasar-variables.scss'; */
 
-.card-container {
+/* .card-container {
   display: grid;
   grid-gap: map.get($space-sm, x);
   grid-template-columns: repeat(1, 1fr);
@@ -31,5 +31,5 @@ const props = withDefaults(defineProps<Props>(), {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-}
+} */
 </style>

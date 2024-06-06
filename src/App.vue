@@ -70,10 +70,6 @@ store.$subscribe(async (mutation, state) => {
     store.updateBackgroundInfo(backgroundInfo.value)
   }
 })
-// lifecycle hooks
-// onMounted(async () => {
-
-// })
 </script>
 
 <template>
@@ -81,7 +77,7 @@ store.$subscribe(async (mutation, state) => {
     class="bg-no-repeat bg-fixed bg-cover bg-center h-full flex"
     :style="{ backgroundImage: `url(${backgroundInfo?.backgroundUrl})` }"
   >
-    <aside v-if="$q.screen.xs === false" class="p-2 pr-0 w-[250px]">
+    <aside class="p-2 pr-0 w-[250px] hidden sm:block">
       <div class="relative bg-black/50 rounded-md h-full overflow-hidden">
         <a
           href="/"
@@ -161,19 +157,9 @@ store.$subscribe(async (mutation, state) => {
     <div class="grow flex flex-col max-w-full">
       <Header :page="store.$state.page" />
 
-      <!-- <div v-if="!store.loaded" class="grow p-2">
-        <div
-          class="bg-black/50 h-full w-full flex items-center justify-center rounded-md"
-        >
-          <LoaderFingers />
-        </div>
-      </div> -->
-
-      <!-- <div :class="{ hidden: !store.loaded }" class="grow"> -->
       <div class="grow">
         <router-view />
       </div>
-      <!-- </div> -->
     </div>
   </div>
 </template>

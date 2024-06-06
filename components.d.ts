@@ -17,9 +17,11 @@ declare module 'vue' {
     ExampleCounter: typeof import('./src/components/ExampleCounter.vue')['default']
     ExampleFooter: typeof import('./src/components/ExampleFooter.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
+    Image: typeof import('./src/components/Image.vue')['default']
     ItemCard: typeof import('./src/components/ItemCard.vue')['default']
     ItemCardContainer: typeof import('./src/components/ItemCardContainer.vue')['default']
     LoaderFingers: typeof import('./src/components/LoaderFingers.vue')['default']
+    Loading: typeof import('./src/components/Loading.vue')['default']
     MovieCollection: typeof import('./src/components/MovieCollection.vue')['default']
     Pagination: typeof import('./src/components/Pagination.vue')['default']
     Rating: typeof import('./src/components/Rating.vue')['default']
@@ -29,6 +31,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     ScrollArea: typeof import('./src/components/ScrollArea.vue')['default']
     Tooltip: typeof import('./src/components/Tooltip.vue')['default']
+    TrailerModal: typeof import('./src/components/TrailerModal.vue')['default']
     VerticalMenu: typeof import('./src/components/VerticalMenu.vue')['default']
   }
 }

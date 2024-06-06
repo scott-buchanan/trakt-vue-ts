@@ -60,11 +60,10 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 @use 'sass:map';
-@import '~/quasar-variables.scss';
 
 h2 {
   all: revert;
-  margin: 0 0 map.get($space-sm, x) 0;
+  /* margin: 0 0 map.get($space-sm, x) 0; */
 }
 .posters {
   display: flex;
@@ -72,7 +71,7 @@ h2 {
   & .poster {
     border-radius: 5px;
     &.current {
-      outline: 3px solid $secondary;
+      /* outline: 3px solid $secondary; */
     }
     & .poster-watched {
       position: absolute;

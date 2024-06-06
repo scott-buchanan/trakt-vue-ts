@@ -32,19 +32,29 @@ import {
 import type Trakt from '~/api/trakt.types'
 import { MediaType } from '~/types/types'
 import type {
-  CardInfo,
+  EpisodeCardInfo,
   EpisodeDetails,
+  MovieCardInfo,
   MovieDetails,
   SeasonDetails,
+  ShowCardInfo,
   ShowDetails,
 } from '~/api/combinedCall.types'
+import { useCombinedCallsStore } from '~/stores/combinedCallsStore'
 
 export async function getEpisodeInfoCard(
   show: Trakt.Show,
   episode: Trakt.Episode,
-): Promise<CardInfo | null> {
+): Promise<EpisodeCardInfo | null> {
   if (!show.ids || !episode.ids)
     return null
+
+  const store = useCombinedCallsStore()
+
+  // if episode is cached
+  const episodeInfo = store.getEpisodeInfoCard(show.ids.slug, episode.season, episode.number)
+  if (episodeInfo)
+    return episodeInfo
 
   const [
     backdrop,
@@ -60,21 +70,30 @@ export async function getEpisodeInfoCard(
     tmdbEpisodeDetails(show, episode),
   ])
 
-  const result: CardInfo = {
+  const result: EpisodeCardInfo = {
+    show,
+    episode,
     backdrop,
-    clear_logo: fanartInfo?.clearlogo,
+    clear_logo: fanartInfo?.hdtvlogo && fanartInfo?.hdtvlogo.length > 0 ? fanartInfo.hdtvlogo[0].url : null,
     imdb_rating: imdbRating,
     trakt_rating: traktRating,
-    tmdb_rating: tmdbDetails?.vote_average.toFixed(1),
-    type: MediaType.episode,
+    tmdb_rating: tmdbDetails?.vote_average ? Number.parseFloat(tmdbDetails.vote_average.toFixed(1)) : null,
   }
 
+  store.updateEpisodeInfoCards(result)
   return result
 }
 
-export async function getShowInfoCard(show: Trakt.Show): Promise<CardInfo | null> {
+export async function getShowInfoCard(show: Trakt.Show): Promise<ShowCardInfo | null> {
   if (!show.ids)
     return null
+
+  const store = useCombinedCallsStore()
+
+  // if show is cached
+  const showInfo = store.getShowInfoCard(show.ids.slug)
+  if (showInfo)
+    return showInfo
 
   const [
     backdrop,
@@ -90,22 +109,30 @@ export async function getShowInfoCard(show: Trakt.Show): Promise<CardInfo | null
     tmdbShowDetails(show),
   ])
 
-  const result: CardInfo = {
+  console.log(fanartInfo)
+  const result: ShowCardInfo = {
+    show,
     backdrop,
-    clear_logo: fanartInfo?.clearLogo,
+    clear_logo: fanartInfo?.hdtvlogo && fanartInfo?.hdtvlogo.length > 0 ? fanartInfo.hdtvlogo[0].url : null,
     imdb_rating: imdbRating,
     trakt_rating: traktRating,
-    tmdb_rating: tmdbDetails?.vote_average.toFixed(1),
-    genres: tmdbDetails?.genres,
-    type: MediaType.show,
+    tmdb_rating: tmdbDetails?.vote_average ? Number.parseFloat(tmdbDetails.vote_average.toFixed(1)) : null,
+    genres: tmdbDetails ? tmdbDetails.genres : null,
   }
 
+  store.updateShowInfoCards(result)
   return result
 }
 
-export async function getMovieInfoCard(movie: Trakt.Movie): Promise<CardInfo | null> {
+export async function getMovieInfoCard(movie: Trakt.Movie): Promise<MovieCardInfo | null> {
   if (!movie.ids)
     return null
+
+  const store = useCombinedCallsStore()
+
+  const movieInfo = store.getMovieInfoCard(movie.ids.slug)
+  if (movieInfo)
+    return movieInfo
 
   const [
     backdrop,
@@ -121,20 +148,18 @@ export async function getMovieInfoCard(movie: Trakt.Movie): Promise<CardInfo | n
     tmdbMovieDetails(movie),
   ])
 
-  const res = {} as CardInfo
-  res.backdrop = backdrop
-  res.clear_logo = fanartInfo?.clearlogo
-  res.imdb_rating = imdbRating
-  res.trakt_rating = traktRating
-
-  if (tmdbDetails) {
-    res.tmdb_rating = tmdbDetails.vote_average.toFixed(1)
-    res.genres = tmdbDetails.genres
+  const result = {
+    movie,
+    backdrop,
+    clear_logo: fanartInfo?.hdmovielogo && fanartInfo?.hdmovielogo.length > 0 ? fanartInfo.hdmovielogo[0].url : null,
+    imdb_rating: imdbRating,
+    trakt_rating: traktRating,
+    tmdb_rating: tmdbDetails?.vote_average ? Number.parseFloat(tmdbDetails.vote_average.toFixed(1)) : null,
+    genres: tmdbDetails ? tmdbDetails.genres : null,
   }
 
-  res.type = MediaType.movie
-
-  return res
+  store.updateMovieInfoCards(result)
+  return result
 }
 
 // TODO: finish refactoring this file -- below
@@ -144,7 +169,7 @@ export async function getEpisodeDetails(
   episode: number,
 ): Promise<EpisodeDetails | false> {
   const summary: Trakt.Episode = await getEpisodeSummary(slug, season, episode)
-  const res: EpisodeDetails = {} as EpisodeDetails
+  const res: EpisodeDetails = {}
   let show: Trakt.Show
 
   if (summary.ids) {

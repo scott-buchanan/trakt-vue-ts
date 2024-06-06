@@ -7,29 +7,44 @@ export interface Backdrop {
   backdrop_lg: string
 }
 
-export interface CardInfo {
-  title: string
-  ids: Trakt.Ids
-  type: MediaType
-  backdrop: Backdrop
-  imdb_rating: string
-  trakt_rating: string
-  tmdb_rating: string
-  my_rating: Trakt.Rating
-  clear_logo: string
-  watched_at: string
-  watchers: string
-  genres: Tmdb.Genre[]
-  list_count: number
-  user_count: number
-  imgLoaded: boolean
-  clearImgLoaded: boolean
+export interface EpisodeCardInfo {
   show: Trakt.Show
-  movie: Trakt.Movie
   episode: Trakt.Episode
-  season: number
-  number: number
-  rank: number
+  // title: string
+  backdrop: Backdrop | null
+  imdb_rating: number | null
+  trakt_rating: number | null
+  tmdb_rating: number | null
+  // my_rating: Trakt.Rating
+  clear_logo: string | null
+  watched_at?: string
+  // watchers: string
+  // genres: Tmdb.Genre[]
+  // list_count: number
+  // user_count: number
+  // imgLoaded: boolean
+  // clearImgLoaded: boolean
+  // movie: Trakt.Movie
+  // rank: number
+}
+
+export interface ShowCardInfo {
+  show: Trakt.Show
+  backdrop: Backdrop | null
+  imdb_rating: number | null
+  trakt_rating: number | null
+  tmdb_rating: number | null
+  clear_logo: string | null
+  genres: Tmdb.Genre[] | null
+}
+
+export interface MovieCardInfo {
+  movie: Trakt.Movie
+  backdrop: Backdrop | null
+  imdb_rating: number | null
+  trakt_rating: number | null
+  tmdb_rating: number | null
+  clear_logo: string | null
 }
 
 export interface ShowDetails {

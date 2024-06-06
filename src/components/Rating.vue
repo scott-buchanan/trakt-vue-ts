@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useQuasar } from 'quasar'
+// import { useQuasar } from 'quasar'
 import type { Ref } from 'vue'
 // api
 import { rateEpisode, rateMovie, rateSeason, rateShow } from '~/api/trakt'
@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
   rating: null,
 })
 
-const $q = useQuasar()
+// const $q = useQuasar()
 const ratingPopOpen: Ref<boolean> = ref(false)
 const user: Ref<Trakt.User> = ref(
   JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user,
@@ -41,45 +41,45 @@ function closeRatingPopup(delay = false) {
   )
 }
 async function rate() {
-  let response: boolean
+  // let response: boolean
   switch (props.type) {
     case 'episode':
-      response = await rateEpisode(props.item as Trakt.Episode, myRating.value)
+      await rateEpisode(props.item as Trakt.Episode, myRating.value)
       break
     case 'show':
-      response = await rateShow(props.item as Trakt.Show, myRating.value)
+      await rateShow(props.item as Trakt.Show, myRating.value)
       break
     case 'season':
-      response = await rateSeason(props.item as Trakt.Season, myRating.value)
+      await rateSeason(props.item as Trakt.Season, myRating.value)
       break
     default:
       // movie
-      response = await rateMovie(props.item as Trakt.Movie, myRating.value)
+      await rateMovie(props.item as Trakt.Movie, myRating.value)
   }
-  if (response === true) {
-    $q.notify({
-      message: 'Rating saved successfully!',
-      position: 'top',
-      icon: 'o_done',
-      iconColor: 'green',
-      badgeColor: 'secondary',
-      badgeTextColor: 'dark',
-      progress: true,
-      timeout: 2500,
-    })
-  }
-  else {
-    $q.notify({
-      message: 'An error has occurred.',
-      position: 'top',
-      icon: 'o_error',
-      iconColor: 'red',
-      badgeColor: 'secondary',
-      badgeTextColor: 'dark',
-      progress: true,
-      timeout: 2500,
-    })
-  }
+  // if (response === true) {
+  //   $q.notify({
+  //     message: 'Rating saved successfully!',
+  //     position: 'top',
+  //     icon: 'o_done',
+  //     iconColor: 'green',
+  //     badgeColor: 'secondary',
+  //     badgeTextColor: 'dark',
+  //     progress: true,
+  //     timeout: 2500,
+  //   })
+  // }
+  // else {
+  //   $q.notify({
+  //     message: 'An error has occurred.',
+  //     position: 'top',
+  //     icon: 'o_error',
+  //     iconColor: 'red',
+  //     badgeColor: 'secondary',
+  //     badgeTextColor: 'dark',
+  //     progress: true,
+  //     timeout: 2500,
+  //   })
+  // }
   closeRatingPopup()
 }
 
@@ -98,25 +98,24 @@ onMounted(() => {
       @focus="openRatingPopup(true)"
       @blur="closeRatingPopup(true)"
     >
-      <q-avatar id="avatar" size="35px">
-        <q-img
-          :src="user.images.avatar.full"
-          :alt="user.name"
-          referrerpolicy="no-referrer"
-        />
-      </q-avatar>
+      <img
+        :src="user.images.avatar.full"
+        :alt="user.name"
+        referrerpolicy="no-referrer"
+        class="w-9 rounded-full"
+      >
+
       <div class="rating">
         <div>{{ myRating === 10 ? myRating : myRating.toFixed(1) }}</div>
       </div>
     </div>
-    <q-btn
+    <Button
       v-else
       id="btnRate"
-      outline
-      color="secondary"
-      label="Rate"
       @click="openRatingPopup()"
-    />
+    >
+      Rate
+    </Button>
     <q-menu
       v-model="ratingPopOpen"
       :target="myRating ? '#avatar' : '#btnRate'"

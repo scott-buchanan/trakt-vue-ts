@@ -130,7 +130,7 @@ onUpdated(async () => {
 
 <style lang="scss" scoped>
 @use "sass:map";
-@import "~/quasar-variables.scss";
+/* @import "~/quasar-variables.scss"; */
 
 h1 {
   font-weight: 400;
@@ -149,7 +149,7 @@ h1 {
   }
 }
 .details-container {
-  padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0;
+  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
   display: flex;
   height: 100%;
   & > div:first-child {
@@ -180,8 +180,8 @@ h1 {
   }
 }
 .certification {
-  border: 1px solid $secondary;
-  color: $secondary;
+  /* border: 1px solid $secondary; */
+  /* color: $secondary; */
   border-radius: 3px;
   padding: 3px 5px;
   font-size: 0.75em;
@@ -189,10 +189,10 @@ h1 {
 .show-info {
   flex-wrap: wrap;
   & > div {
-    margin-right: map.get($space-md, x);
+    /* margin-right: map.get($space-md, x); */
   }
   & span {
-    @include darkText;
+    /* @include darkText; */
   }
 }
 </style>

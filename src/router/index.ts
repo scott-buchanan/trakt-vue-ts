@@ -132,7 +132,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.query.page)
-    store.updatePage(to.query.page as string)
+    store.updatePage(to.query.page)
 
   next()
 })

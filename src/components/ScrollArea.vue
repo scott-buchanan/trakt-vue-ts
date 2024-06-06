@@ -43,7 +43,7 @@ onUnmounted(() => {
       class="absolute bottom-0 right-0 bg-black/50 transition-opacity duration-500 opacity-0 group-hover/scroll:opacity-100 w-[10px] h-1/4 z-10 rounded-md"
       :style="{ top: `${scrollPos}px`, opacity: isScrolling ? '1' : '' }"
     />
-    <div ref="scrollDiv" class="bg-black/50 h-full w-full overflow-auto no-scrollbar">
+    <div ref="scrollDiv" class="absolute bg-black/50 h-full w-full overflow-auto no-scrollbar">
       <slot />
     </div>
   </div>

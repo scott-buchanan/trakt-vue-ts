@@ -70,9 +70,9 @@ export async function getToken(
 
 // -------- <SETTINGS> -----------
 export async function getTraktSettings(): Promise<Trakt.MyInfo> {
-  const response = await axiosWithAuth.get('/users/settings')
+  const response = await axiosWithAuth.get<Trakt.MyInfo>('/users/settings')
   localStorage.setItem('trakt-vue-user', JSON.stringify(response.data))
-  return response.data as Trakt.MyInfo
+  return response.data
 }
 // -------- </SETTINGS> -----------
 
@@ -200,32 +200,39 @@ export async function getSeasonSummary(slug: string, season: number) {
   return response.data.find((item: Trakt.Episode) => item.number === season)
 }
 
+interface RatingResponse {
+  rating: number
+}
+
 export async function getEpisodeRating(
   showId: string,
   season: number,
   episode: number,
-) {
+): Promise<number | null> {
   if (showId && season && episode) {
-    const response = await axiosNoAuth.get(
+    const response = await axiosNoAuth.get<RatingResponse>(
     `/shows/${showId}/seasons/${season}/episodes/${episode}/ratings`,
     )
-    return response.data.rating.toFixed(1)
+    if ('rating' in response.data)
+      return Number.parseFloat(response.data.rating.toFixed(1))
   }
   return null
 }
 
-export async function getShowRating(showId: string) {
+export async function getShowRating(showId: string): Promise<number | null> {
   if (showId) {
-    const response = await axiosNoAuth.get(`/shows/${showId}/ratings`)
-    return response.data.rating.toFixed(1)
+    const response = await axiosNoAuth.get<RatingResponse>(`/shows/${showId}/ratings`)
+    if ('rating' in response.data)
+      return Number.parseFloat(response.data.rating.toFixed(1))
   }
   return null
 }
 
-export async function getMovieRating(movieId: string) {
+export async function getMovieRating(movieId: string): Promise<number | null> {
   if (movieId) {
-    const response = await axiosNoAuth.get(`/movies/${movieId}/ratings`)
-    return response.data.rating.toFixed(1)
+    const response = await axiosNoAuth.get<RatingResponse>(`/movies/${movieId}/ratings`)
+    if ('rating' in response.data)
+      return Number.parseFloat(response.data.rating.toFixed(1))
   }
   return null
 }

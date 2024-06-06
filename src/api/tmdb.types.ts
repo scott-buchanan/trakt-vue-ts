@@ -45,15 +45,16 @@ namespace Tmdb {
     languages: string[]
     number_of_episodes: number
     number_of_seasons: number
-    poster_path: string
+    poster_path: string | null
     seasons: Season[]
     spoken_languages: SpokenLanguage[]
     origin_country: string[]
     status: string
     tagline: string
     episode_run_time: number[]
-    videos: Video[]
+    videos: Video[] | null
     season: number
+    vote_average: number
   }
 
   export interface MovieDetails {
@@ -75,7 +76,8 @@ namespace Tmdb {
     tagline: string
     runtime: number
     revenue: number
-    videos: Video[]
+    videos: Video[] | null
+    vote_average: number
   }
 
   export interface SeasonDetails {
@@ -98,7 +100,7 @@ namespace Tmdb {
     id: number
     name: string
     overview: string
-    poster_path: string
+    poster_path: string | null
     season_number: number
     watched_percent: string
     watched_progress: number

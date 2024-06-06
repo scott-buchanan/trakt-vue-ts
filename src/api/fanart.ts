@@ -7,6 +7,7 @@ const baseConfig: AxiosRequestConfig = {
   baseURL: 'https://webservice.fanart.tv/v3',
   params: {
     api_key: import.meta.env.VITE_FANART_API_KEY as string,
+    lang: 'en',
   },
 }
 
@@ -21,13 +22,17 @@ axiosInstance.interceptors.response.use((response) => {
 
 export async function getTvFanartInfo(id: number): Promise<Fanart | null> {
   const response: AxiosResponse<Fanart> = await axiosInstance.get(`/tv/${id}`)
-  if (response.data)
-    return response.data
+  if (response.data) {
+    const data = { ...response.data }
+    // make sure only English logos
+    data.hdtvlogo = data.hdtvlogo.filter(item => item.lang === 'en')
+    return data
+  }
   return null
 }
 
 export async function getMovieFanartInfo(id: number): Promise<Fanart | null> {
-  const response: AxiosResponse<Fanart> = await axiosInstance.get(`/movie/${id}`)
+  const response: AxiosResponse<Fanart> = await axiosInstance.get(`/movies/${id}`)
   if (response.data)
     return response.data
   return null

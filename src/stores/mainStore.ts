@@ -85,7 +85,7 @@ export const useStore = defineStore('main', {
     ) {
       this.ratings[mType] = value
     },
-    updateBackgroundInfo(value: Tmdb.BackgroundInfo) {
+    updateBackgroundInfo(value: Tmdb.BackgroundInfo | null) {
       this.backgroundInfo = value
     },
     reset() {

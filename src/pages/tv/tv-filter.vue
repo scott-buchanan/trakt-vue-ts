@@ -19,7 +19,7 @@ import CardContainer from '~/components/CardContainer.vue'
 
 import type Trakt from '~/api/trakt.types'
 import type { Filter } from '~/stores/mainStore.types'
-import type { CardInfo } from '~/api/combinedCall.types'
+import type { EpisodeCardInfo, ShowCardInfo } from '~/api/combinedCall.types'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,11 +69,11 @@ async function loadData(page: number) {
       )
 
       // get images and ratings
-      const items: CardInfo[] = await fetchCardInfo('episode', myEpRatings.value)
+      const items: EpisodeCardInfo[] = await fetchCardInfo('episode', myEpRatings.value)
 
       // sort by watched date (no logic here because only one filter)
       items.sort(
-        (a: CardInfo, b: CardInfo) =>
+        (a: EpisodeCardInfo, b: EpisodeCardInfo) =>
           new Date(b.watched_at).getTime() - new Date(a.watched_at).getTime(),
       )
 
@@ -135,15 +135,15 @@ async function loadData(page: number) {
 async function fetchCardInfo(
   mType: string,
   ratingsObj: Trakt.Ratings | null,
-): Promise<CardInfo[]> {
-  const getCardInfo = async (item: CardInfo) => {
-    if (mType === 'show') {
+): Promise<ShowCardInfo[] | EpisodeCardInfo[]> {
+  const getCardInfo = async (item: ShowCardInfo[] | EpisodeCardInfo[]) => {
+    if (mType === 'show' && 'show' in item) {
       return await getShowInfoCard(item.show as Trakt.Show)
     }
-    else {
+    else if ('show' in item && 'episode' in item) {
       return await getEpisodeInfoCard(
-        item.show as Trakt.Show,
-        item.episode as Trakt.Episode,
+        item.show,
+        item.episode,
       )
     }
   }
@@ -209,7 +209,7 @@ onMounted(() => {
         :m-type="store.filterType"
         class="rounded-md"
       />
-      <LoaderFingers v-else />
+      <Loading v-else />
     </div>
     <footer v-if="store.loaded && data" class="pt-0 p-2">
       <div class="bg-black/50 p-2 rounded-md">

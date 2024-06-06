@@ -3,7 +3,6 @@ import type { Ref } from 'vue'
 import { YoutubeIframe } from '@vue-youtube/component'
 import axios from 'axios'
 import dayjs from 'dayjs'
-import { useQuasar } from 'quasar'
 // store
 import Actors from './Actors.vue'
 import Rating from './Rating.vue'
@@ -38,7 +37,6 @@ const props = defineProps<{
 }>()
 
 // data
-const $q = useQuasar()
 const store = useStore()
 const user: Ref<Trakt.User> = ref(
   JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user,
@@ -49,6 +47,7 @@ const showTrailer: Ref<boolean> = ref(false)
 const trailerVisible: Ref<boolean> = ref(false)
 const trailerHasError: Ref<boolean> = ref(false)
 const seeMoreDetails: Ref<boolean> = ref(false)
+const trailer = ref(null)
 
 // computed
 const links = computed(() => {
@@ -159,10 +158,10 @@ function truncateDetails(details: string) {
   return seeMoreDetails.value ? details : details.split(',', 2).toString()
 }
 function trailerReady(event: any) {
+  // useTimeoutFn(() => {
+  trailerVisible.value = true
   event.target?.playVideo()
-  useTimeoutFn(() => {
-    trailerVisible.value = true
-  }, 500)
+  // }, 500)
 }
 async function trailerError() {
   if (trailerUrl.value === props.info.tmdb_data.videos[0]?.key) {
@@ -181,8 +180,7 @@ async function trailerError() {
   }
 }
 function closeTrailer() {
-  trailerVisible.value = false
-  trailerHasError.value = false
+  showTrailer.value = false
 }
 
 onMounted(() => {
@@ -205,186 +203,199 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="details-container full-height q-pa-sm">
+  <div class="h-full w-full p-2">
     <div
-      class="background text-white"
+      class="flex-1 bg-cover bg-center h-full rounded-md"
       :style="{
         backgroundImage: detailsBackground,
       }"
     >
-      <div class="flex no-wrap full-height relative">
-        <div v-if="$q.screen.gt.md" class="poster q-py-md q-pl-md">
-          <router-link
-            v-if="props.type === 'episode'"
-            :to="{
-              path: `show/${info.show.ids.slug}/season/${props.info.season}`,
-            }"
-          >
-            <q-img class="poster-image" :src="poster" alt="" />
-          </router-link>
-          <q-img v-else class="poster-image" :src="props.poster" alt="" />
+      <div class="flex flex-nowrap h-full p-3">
+        <div class="hidden md:block static w-5/12 min-w-52 max-w-xl py-3 pl-3">
+          <img class="rounded-md" :src="poster" alt="">
         </div>
-        <q-scroll-area
-          class="scroll-area full-width full-height q-pa-md"
-          :thumb-style="{ opacity: '0.5' }"
-        >
-          <div class="flex" :class="{ 'no-wrap': $q.screen.gt.xs }">
-            <div
-              v-if="$q.screen.gt.md === false"
-              class="float-left q-pr-md q-pb-md"
-            >
-              <router-link
-                v-if="props.type === 'episode'"
-                :to="{
-                  path: `/tv/show/${info.show.ids.slug}/season/${props.info.season}`,
-                }"
+        <ScrollArea>
+          <div>
+            <div class="flex">
+              <div
+                class="block md:hidden float-left pr-3 pb-3"
               >
-                <q-img
-                  class="poster-small"
-                  width="20vw"
-                  :ratio="1 / 1.5"
+                <img
+                  class="rounded-md min-w-32 w-[16vw]"
                   :src="props.poster"
                   alt=""
-                />
-              </router-link>
-              <q-img
-                v-else
-                class="poster-small"
-                width="16vw"
-                :ratio="1 / 1.5"
-                :src="props.poster"
-                alt=""
-              />
-            </div>
+                >
+              </div>
 
-            <!-- TITLES -->
-            <div class="w-full break-words">
-              <h1 class="flex">
-                <span class="mr-4">{{ title }}</span>
-                <span v-if="year" class="text-lg font-thin">{{ year }}</span>
-                <div class="text-lg">
-                  <span v-if="info.certification" class="text-primary">
-                    {{ info.certification }}
+              <!-- TITLES -->
+              <div class="w-full break-words">
+                <h1 class="flex text-lg">
+                  <span class="mr-4">{{ title }}</span>
+                  <span v-if="year" class="font-thin">{{ year }}</span>
+                  <div class="p-[6px] text-xs text-pprimary border border-pprimary rounded-md">
+                    <span v-if="info.certification">
+                      {{ info.certification }}
+                    </span>
+                  </div>
+                </h1>
+
+                <!-- TAGLINE -->
+                <p v-if="info.tmdb_data?.tagline" class="text-italic font-light">
+                  "{{ info.tmdb_data.tagline }}"
+                </p>
+
+                <div v-if="info.tmdb_data?.genres" class="mb-4">
+                  <span
+                    v-for="genre in info.tmdb_data.genres"
+                    :key="genre.id"
+                    class="mr-1"
+                  >
+                    <Badge :value="genre.name" />
                   </span>
                 </div>
-              </h1>
 
-              <!-- TAGLINE -->
-              <p v-if="info.tmdb_data?.tagline" class="tagline">
-                "{{ info.tmdb_data.tagline }}"
-              </p>
-
-              <div v-if="info.tmdb_data?.genres" class="q-mb-md">
-                <span
-                  v-for="genre in info.tmdb_data.genres"
-                  :key="genre.id"
-                  class="tags"
-                >
-                  <Badge :value="genre.name" />
-                </span>
-              </div>
-
-              <!-- RATINGS -->
-              <div class="flex">
-                <div v-if="isReleased" class="ratings">
-                  <div v-if="info.imdb_rating">
-                    <img :src="imdb" alt="IMDb">
-                    <div>{{ info.imdb_rating }}</div>
-                  </div>
-                  <div v-if="info.trakt_rating && info.trakt_rating !== '0.0'">
-                    <img :src="trakt" alt="Trakt">
-                    <div>{{ info.trakt_rating }}</div>
-                  </div>
-                  <div v-if="info.tmdb_rating && info.tmdb_rating !== '0.0'">
-                    <img :src="tmdb" alt="The Movie DB">
-                    <div>{{ info.tmdb_rating }}</div>
+                <!-- RATINGS -->
+                <div class="flex mb-5">
+                  <div v-if="isReleased" class="flex flex-wrap">
+                    <div v-if="info.imdb_rating" class="flex items-center">
+                      <img :src="imdb" alt="IMDb" class="w-9">
+                      <div class="text-2xl px-3">
+                        {{ info.imdb_rating }}
+                      </div>
+                    </div>
+                    <div v-if="info.trakt_rating && info.trakt_rating !== '0.0'" class="flex items-center">
+                      <img :src="trakt" alt="Trakt" class="w-9">
+                      <div class="text-2xl px-3">
+                        {{ info.trakt_rating }}
+                      </div>
+                    </div>
+                    <div v-if="info.tmdb_rating && info.tmdb_rating !== '0.0'" class="flex items-center">
+                      <img :src="tmdb" alt="The Movie DB" class="w-9">
+                      <div class="text-2xl px-3">
+                        {{ info.tmdb_rating }}
+                      </div>
+                    </div>
+                    <div v-if="isReleased && user" class="flex items-center">
+                      <Rating
+                        :item="info"
+                        :type="props.type"
+                        :rating="info.my_rating"
+                      />
+                    </div>
+                    <div v-if="trailerUrl" class="flex items-center">
+                      <Button class="p-3 rounded-md" @click="showTrailer = true">
+                        Trailer
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div class="flex q-mb-lg">
-                  <div v-if="isReleased && user" class="q-mr-sm">
-                    <Rating
-                      :item="info"
-                      :type="props.type"
-                      :rating="info.my_rating"
-                    />
-                  </div>
-                  <div v-if="trailerUrl">
-                    <q-btn
-                      icon="o_slideshow"
-                      label="Trailer"
-                      color="secondary"
-                      outline
-                      @click="showTrailer = true"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <!-- LINKS -->
-              <div class="info q-mb-lg">
-                <span class="mr-2">Links: </span>
-                <template v-for="(value, key) in linkIds" :key="key">
-                  <template v-if="links[key]">
-                    <a
-                      :href="links[key].value"
-                      target="blank"
-                      style="text-decoration: none"
-                      class="mr-3"
-                    >
-                      <Badge :value="links[key].label" outline />
-                    </a>
+                <!-- LINKS -->
+                <div class="mb-6">
+                  <span class="mr-2">Links: </span>
+                  <template v-for="(value, key) in linkIds" :key="key">
+                    <template v-if="links[key]">
+                      <a
+                        :href="links[key].value"
+                        target="blank"
+                        class="mr-3 hover:no-underline"
+                      >
+                        <Badge :value="links[key].label" outline />
+                      </a>
+                    </template>
                   </template>
-                </template>
+                </div>
+
+                <!-- WATCHED INFO -->
+                <DarkList :items="watchedInfo()" stacked />
+
+                <!-- TECHNICAL DETAILS -->
+                <DarkList :items="technicalDetails()" />
               </div>
+            </div>
 
-              <!-- WATCHED INFO -->
-              <DarkList :items="watchedInfo()" stacked />
+            <!-- OVERVIEW -->
+            <p v-if="info.tmdb_data.overview" class="text-lg leading-6 mb-0">
+              {{ info.tmdb_data.overview }}
+            </p>
 
-              <!-- TECHNICAL DETAILS -->
-              <DarkList :items="technicalDetails()" />
+            <div>
+              <!-- MOVIE COLLECTION -->
+              <slot name="movie-collection" />
+              <!-- SHOW SEASONS -->
+              <slot name="show-seasons" />
+              <!-- SEASONS EPISODES -->
+              <slot name="season-episode-list" />
+              <!-- MORE LIKE THIS -->
+              <slot name="more-like-this" />
+
+              <Actors
+                v-if="info.actors?.length > 0"
+                class="block sm:hidden"
+                :actors="info.actors"
+                horizontal
+              />
+
+              <Reviews
+                class="mt-6"
+                :reviews="info.reviews.comments"
+                :review-count="info.reviews.total"
+                :m-type="type"
+              />
             </div>
           </div>
-
-          <!-- OVERVIEW -->
-          <p v-if="info.tmdb_data.overview" class="text-lg leading-6 mb-0">
-            {{ info.tmdb_data.overview }}
-          </p>
-
-          <div>
-            <!-- MOVIE COLLECTION -->
-            <slot name="movie-collection" />
-            <!-- SHOW SEASONS -->
-            <slot name="show-seasons" />
-            <!-- SEASONS EPISODES -->
-            <slot name="season-episode-list" />
-            <!-- MORE LIKE THIS -->
-            <slot name="more-like-this" />
-
-            <Actors
-              v-if="$q.screen.gt.sm === false && info.actors?.length > 0"
-              :actors="info.actors"
-              horizontal
-            />
-
-            <Reviews
-              class="q-mt-lg"
-              :reviews="info.reviews.comments"
-              :review-count="info.reviews.total"
-              :m-type="type"
-            />
-          </div>
-        </q-scroll-area>
+        </ScrollArea>
       </div>
     </div>
 
     <Actors
-      v-if="$q.screen.gt.sm && info.actors?.length > 0"
+      v-if="info.actors?.length > 0"
+      class="hidden sm:block"
       :actors="info.actors"
     />
   </div>
 
-  <!-- TRAILER -->
-  <q-dialog
+  <TrailerModal v-if="trailerUrl" :url="trailerUrl" :fallback-query="info.title" :show-trailer="showTrailer" @close="closeTrailer" />
+
+  <!-- TRAILER this has to come out of this component into app or something. Set showTrailer and trailer url by store -->
+<!--  <transition name="fade-scale">
+    <div
+      v-show="showTrailer"
+      class="fade-scale-enter-active fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90"
+      role="dialog"
+    >
+      <div
+        v-if="trailerHasError"
+        :style="{ backgroundImage: `url(${trailerErrorBack})` }"
+      >
+        <div class="h-full">
+          Oops, trailer crashed. Search YouTube for a trailer
+          <a
+            :href="`https://www.youtube.com/results?search_query=${info.title} trailer`"
+            target="blank"
+          >
+            here</a>.
+        </div>
+      </div>
+      <div
+        v-else
+        class="h-full"
+      >
+        <YoutubeIframe
+          ref="trailer"
+          :style="{
+            width: '100%',
+            height: '100%',
+          }"
+          :video-id="trailerUrl"
+          @ready="trailerReady"
+          @error="trailerError"
+        />
+      </div>
+    </div>
+  </transition> -->
+
+  <!-- <q-dialog
     v-model="showTrailer"
     :transition-duration="500"
     class="trailer"
@@ -416,117 +427,5 @@ onMounted(() => {
         />
       </div>
     </div>
-  </q-dialog>
+  </q-dialog> -->
 </template>
-
-<style lang="scss" scoped>
-@use "sass:map";
-@import "~/quasar-variables.scss";
-
-h1 {
-  font-size: 32px;
-}
-button {
-  font-weight: 600;
-}
-.background {
-  background-size: cover;
-  background-position: center;
-  background-color: transparent;
-  height: 100%;
-  border-radius: 5px;
-  overflow: hidden;
-  & > div {
-    overflow-x: hidden;
-  }
-  & .clear-logo {
-    width: 100%;
-    width: 250px;
-    height: 97px;
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
-  }
-}
-.details-container {
-  & > div:first-child {
-    flex: 1;
-  }
-}
-.poster {
-  width: 40%;
-  min-width: 200px;
-  max-width: 600px;
-  position: static;
-  & .poster-image {
-    border-radius: 5px;
-    overflow: hidden;
-  }
-}
-.poster-small {
-  border-radius: 5px;
-  min-width: 120px;
-  overflow: hidden;
-}
-.ratings {
-  display: flex;
-  flex-wrap: wrap;
-  & div {
-    display: flex;
-    align-items: center;
-    margin-bottom: map.get($space-lg, x);
-  }
-  & div img {
-    width: 35px;
-  }
-  & div div:nth-child(2) {
-    font-size: 24px;
-    margin: 0 10px 0 10px;
-  }
-}
-.certification {
-  border: 1px solid $secondary;
-  color: $secondary;
-  border-radius: 5px;
-  padding: 6px;
-  font-size: 0.75em;
-}
-.tagline {
-  font-style: italic;
-  font-weight: 300;
-}
-:deep(.q-dialog) > * {
-  padding: 0 !important;
-}
-.trailer {
-  background-color: black;
-  width: 100vw;
-  max-width: 100vw;
-  height: 70vw;
-  max-height: 70vh;
-  position: relative;
-  & > div {
-    height: 70vw;
-    max-height: 70vh;
-    transition: opacity 5s;
-  }
-  & .trailer-error-text {
-    position: absolute;
-    top: 50%;
-    width: 100%;
-    text-align: center;
-    padding: 25px;
-    background: rgba(0, 0, 0, 0.8);
-    font-size: 2em;
-  }
-}
-.tags {
-  margin-right: 5px;
-  &:last-child {
-    margin-right: 0;
-  }
-}
-.technical-details {
-  & a {
-    color: $accent;
-  }
-}
-</style>

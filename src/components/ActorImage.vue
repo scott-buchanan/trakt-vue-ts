@@ -47,7 +47,7 @@ const getActorTooltip = computed(() => `${props.actor.name} as ${props.actor.cha
 
 <style lang="scss" scoped>
 @use 'sass:map';
-@import '~/quasar-variables.scss';
+/* @import '~/quasar-variables.scss'; */
 .actor-image {
   border-radius: 5px;
   min-height: 264px;
@@ -60,10 +60,10 @@ const getActorTooltip = computed(() => `${props.actor.name} as ${props.actor.cha
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-top: map.get($space-sm, x);
-  padding-bottom: map.get($space-sm, x);
+  /* padding-top: map.get($space-sm, x);
+  padding-bottom: map.get($space-sm, x); */
   &.small {
-    padding: map.get($space-sm, x);
+    /* padding: map.get($space-sm, x); */
     & > strong {
       font-size: 1em;
     }
