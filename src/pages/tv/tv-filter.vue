@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 // api
 import {
   getAnticipated,
@@ -10,13 +9,11 @@ import {
   getWatchedHistory,
 } from '~/api/trakt'
 import { getEpisodeInfoCard, getShowInfoCard } from '~/api/combinedCalls'
-
 // store
 import { useStore } from '~/stores/mainStore'
-
 // components
 import CardContainer from '~/components/CardContainer.vue'
-
+// types
 import type Trakt from '~/api/trakt.types'
 import type { Filter } from '~/stores/mainStore.types'
 import type { EpisodeCardInfo, ShowCardInfo } from '~/api/combinedCall.types'
@@ -32,7 +29,6 @@ const myEpRatings: Ref<Trakt.Ratings | null> = ref(null)
 const currentPage: Ref<number> = ref(
   Number.parseInt(route.query.page as string) || 1,
 )
-
 const myShowRatings: Ref<Trakt.Ratings> = ref({} as Trakt.Ratings)
 const tokens: Ref<Trakt.AuthTokens | null> = ref(store.tokens)
 
@@ -181,8 +177,8 @@ async function fetchCardInfo(
   }
 }
 
-function goToPage(data: { page: number }) {
-  router.push({ path: route.path, query: { page: data.page } })
+function goToPage(page: number) {
+  router.push({ path: route.path, query: { page } })
 }
 
 onMounted(() => {
@@ -211,7 +207,7 @@ onMounted(() => {
       />
       <Loading v-else />
     </div>
-    <footer v-if="store.loaded && data" class="pt-0 p-2">
+    <footer v-if="data" class="pt-0 p-2">
       <div class="bg-black/50 p-2 rounded-md">
         <Pagination
           :data

@@ -381,7 +381,7 @@ export async function getMovieDetails(
   const watchedMovies: Trakt.WatchedMovie[] = localStorage.getItem(
     'trakt-vue-watched-movies',
   )
-    ? JSON.parse(localStorage.getItem('trakt-vue-watched-movies')!)
+    ? JSON.parse(localStorage.getItem('trakt-vue-watched-movies') || '{}')
     : []
 
   if (watchedMovies.length > 0) {
@@ -393,10 +393,10 @@ export async function getMovieDetails(
   const user = localStorage.getItem('trakt-vue-user')
   if (user) {
     const { ratings }: { ratings: Trakt.Rating[] } = JSON.parse(
-      localStorage.getItem('trakt-vue-movie-ratings')!,
+      localStorage.getItem('trakt-vue-movie-ratings') || '{}',
     )
 
-    const myRating = ratings.find(
+    const myRating = ratings?.find(
       item => item.movie?.ids?.trakt === summary.ids.trakt,
     )
     if (myRating)
@@ -408,15 +408,18 @@ export async function getMovieDetails(
 
 export async function getMovieCollection(collectionId: number) {
   const collection = await tmdbMovieCollection(collectionId)
-  const watchedMovies: Trakt.WatchedMovie[] = localStorage.getItem(
-    'trakt-vue-watched-movies',
-  )
-    ? JSON.parse(localStorage.getItem('trakt-vue-watched-movies')!)
-    : null
+  const watchedMovies: Trakt.WatchedMovie[] = JSON.parse(localStorage.getItem('trakt-vue-watched-movies') || '{}')
 
   const parts = await Promise.all(
     collection.parts.map(async (item: Tmdb.MovieDetails) => {
       const ids = await getIdLookupTmdb(item.id, 'movie')
+
+      let watched
+      if (watchedMovies.length > 0) {
+        watched = watchedMovies.find(
+          w => w.movie.ids.tmdb === item.id,
+        )
+      }
 
       if (ids && 'slug' in ids) {
         return {
@@ -424,9 +427,7 @@ export async function getMovieCollection(collectionId: number) {
           ...{
             slug: ids.slug,
             poster_path: `https://image.tmdb.org/t/p/w200${item.poster_path}`,
-            watched_progress: watchedMovies.find(
-              w => w.movie.ids.tmdb === item.id,
-            ),
+            watched_progress: watched,
           },
         }
       }

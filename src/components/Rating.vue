@@ -1,26 +1,26 @@
 <script setup lang="ts">
-// import { useQuasar } from 'quasar'
 import type { Ref } from 'vue'
 // api
 import { rateEpisode, rateMovie, rateSeason, rateShow } from '~/api/trakt'
 import type Trakt from '~/api/trakt.types'
 
-interface Props {
+const props = withDefaults(defineProps<{
   rating: number | null
   item: Trakt.Show | Trakt.Season | Trakt.Episode | Trakt.Movie
   type: string
-}
-const props = withDefaults(defineProps<Props>(), {
+}>(), {
   rating: null,
 })
 
-// const $q = useQuasar()
+// refs
+const showSuccess: Ref<boolean> = ref(false)
 const ratingPopOpen: Ref<boolean> = ref(false)
 const user: Ref<Trakt.User> = ref(
   JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user,
 )
 const myRating: Ref<number> = ref(0)
 const ratingTimeoutId: Ref<ReturnType<typeof setTimeout> | null> = ref(null)
+const ratingHover: Ref<boolean> = ref(false)
 
 // methods
 function openRatingPopup(delay = false) {
@@ -33,54 +33,46 @@ function openRatingPopup(delay = false) {
   )
 }
 function closeRatingPopup(delay = false) {
-  ratingTimeoutId.value = setTimeout(
-    () => {
-      ratingPopOpen.value = false
-    },
-    delay ? 500 : 0,
-  )
+  if (ratingHover.value === false) {
+    ratingTimeoutId.value = setTimeout(
+      () => {
+        ratingPopOpen.value = false
+      },
+      delay ? 500 : 0,
+    )
+  }
 }
-async function rate() {
-  // let response: boolean
+async function rate(number: number) {
+  let success: boolean
   switch (props.type) {
     case 'episode':
-      await rateEpisode(props.item as Trakt.Episode, myRating.value)
+      success = await rateEpisode(props.item as Trakt.Episode, number)
       break
     case 'show':
-      await rateShow(props.item as Trakt.Show, myRating.value)
+      success = await rateShow(props.item as Trakt.Show, number)
       break
     case 'season':
-      await rateSeason(props.item as Trakt.Season, myRating.value)
+      success = await rateSeason(props.item as Trakt.Season, number)
       break
     default:
       // movie
-      await rateMovie(props.item as Trakt.Movie, myRating.value)
+      success = await rateMovie(props.item as Trakt.Movie, number)
   }
-  // if (response === true) {
-  //   $q.notify({
-  //     message: 'Rating saved successfully!',
-  //     position: 'top',
-  //     icon: 'o_done',
-  //     iconColor: 'green',
-  //     badgeColor: 'secondary',
-  //     badgeTextColor: 'dark',
-  //     progress: true,
-  //     timeout: 2500,
-  //   })
-  // }
-  // else {
-  //   $q.notify({
-  //     message: 'An error has occurred.',
-  //     position: 'top',
-  //     icon: 'o_error',
-  //     iconColor: 'red',
-  //     badgeColor: 'secondary',
-  //     badgeTextColor: 'dark',
-  //     progress: true,
-  //     timeout: 2500,
-  //   })
-  // }
+
+  if (success) {
+    myRating.value = number
+    showSuccess.value = true
+  }
+
   closeRatingPopup()
+}
+
+function hover(value: boolean) {
+  ratingHover.value = value
+}
+
+function closeToast() {
+  showSuccess.value = false
 }
 
 onMounted(() => {
@@ -89,7 +81,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="user">
+  <div v-if="user" class="relative">
     <div
       v-if="myRating"
       class="flex"
@@ -106,7 +98,9 @@ onMounted(() => {
       >
 
       <div class="rating">
-        <div>{{ myRating === 10 ? myRating : myRating.toFixed(1) }}</div>
+        <div class="text-2xl mx-2">
+          {{ myRating === 10 ? myRating : myRating.toFixed(1) }}
+        </div>
       </div>
     </div>
     <Button
@@ -116,42 +110,20 @@ onMounted(() => {
     >
       Rate
     </Button>
-    <q-menu
-      v-model="ratingPopOpen"
-      :target="myRating ? '#avatar' : '#btnRate'"
-      dark
-      transition-show="jump-up"
-      transition-hide="jump-down"
-      anchor="top middle"
-      self="top middle"
-      class="q-pa-sm"
-      :offset="[0, 50]"
-      @focus="openRatingPopup"
-      @mouseenter="openRatingPopup"
-      @mouseleave="closeRatingPopup(true)"
-      @blur="closeRatingPopup"
-    >
-      <q-rating
-        v-model="myRating"
-        max="10"
-        size="1.5em"
-        icon="o_star_border"
-        icon-selected="o_star"
-        icon-half="o_star_half"
-        @update:model-value="rate"
-      />
-    </q-menu>
+
+    <Transition name="slide-up">
+      <div v-if="ratingPopOpen" class="absolute top-10 left-1/2 -translate-x-1/2 w-80" @mouseover="hover(true)" @mouseleave="hover(false)">
+        <button v-for="number in 10" :key="number" class="w-8 h-8" @click="rate(number)">
+          <iconify-icon
+            icon="material-symbols:star"
+            width="100%"
+            height="100%"
+            class="p-1 text-yellow-400 transition-transform ease-linear hover:scale-125"
+          />
+        </button>
+      </div>
+    </Transition>
+
+    <ToastMessage message="Successfully rated!" :show-message="showSuccess" @close="closeToast" />
   </div>
 </template>
-
-<style lang="scss" scoped>
-@import "~/quasar-variables.scss";
-
-button {
-  font-weight: 600;
-}
-.rating {
-  font-size: 24px;
-  margin: 0 10px 0 10px;
-}
-</style>

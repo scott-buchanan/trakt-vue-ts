@@ -338,7 +338,8 @@ export async function tmdbActors(
       })
     }),
   )
-  return actors.sort((a, b) => a.order - b.order)
+  console.log(actors)
+  return actors.sort((a, b) => b.popularity - a.popularity)
 }
 
 export async function getActorImage(tmdbId: string) {
@@ -385,7 +386,11 @@ export async function getSearchResults(keyword: string, page = 1) {
       return item
     }),
   )
-  return modified.filter(r => r).sort((a, b) => b.popularity - a.popularity)
+  return {
+    results: modified.filter(r => r).sort((a, b) => b.popularity - a.popularity),
+    page: response.data.page,
+    pagesTotal: response.data.total_pages,
+  }
 }
 
 export async function getMovieCollection(collectionId: number) {

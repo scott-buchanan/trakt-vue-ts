@@ -18,7 +18,7 @@ namespace Tmdb {
     ids: Trakt.Ids
     name: string
     character: string
-    order: number
+    popularity: number
     profile_path: string | null
   }
   export interface Video {

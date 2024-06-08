@@ -19,14 +19,12 @@
     "node-emoji": "^2.1.3",
     "pinia": "^2.1.7",
     "pinia-plugin-persistedstate": "^3.2.1",
-    "quasar": "^2.16.0",
     "vue": "^3.4.27",
     "vue-router": "^4.3.2"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.18.1",
     "@fontsource-variable/inter": "^5.0.18",
-    "@quasar/vite-plugin": "^1.7.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.13",

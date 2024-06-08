@@ -1,7 +1,6 @@
 <script setup lang="ts">
 // api
 import { useRoute, useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 import { getSearchResults } from '~/api/tmdb'
 
 // store
@@ -12,31 +11,43 @@ import ItemCardContainer from '~/components/ItemCardContainer.vue'
 import ItemCard from '~/components/ItemCard.vue'
 
 const store = useStore()
-const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
 
-// data
+// refs
 const searchPage = ref(1)
 const searchResults = ref(null)
 const searchTerm = ref(null)
 const loaded = ref(false)
+const currentPage: Ref<number> = ref(
+  Number.parseInt(route.query.page as string) || 1,
+)
 
-// computed
-const screenGreaterThan = computed(() => {
-  return $q.screen.gt
-})
+watch(
+  () => route.query.page,
+  async (newPage) => {
+    currentPage.value = Number.parseInt(newPage as string)
+    store.updatePage(currentPage.value)
+    await getData()
+  },
+)
+
+watch(
+  () => route.params.term,
+  async () => {
+    await getData()
+  },
+)
 
 // methods
 async function getData() {
   store.updateLoading(false)
   searchResults.value = await getSearchResults(
     route.params.term,
-    searchPage.value,
+    currentPage.value,
   )
-  setTimeout(() => {
-    store.updateLoading(true)
-  }, 1000)
+  console.log(searchResults.value)
+  store.updateLoading(true)
 }
 async function goToDetails(item) {
   const mType = item.media_type === 'tv' ? 'show' : 'movie'
@@ -54,7 +65,8 @@ function handleRemoveTerm(term: string) {
     .join(' ')
   router.push({ name: 'search', params: { term: searchTerm.value } })
 }
-function changePage() {
+function changePage(page: number) {
+  router.push({ path: route.path, query: { page } })
   // loadData();
   // store.updatePage(this.page);
   // router.replace({ query: { page: this.page } });
@@ -85,139 +97,52 @@ onUpdated(async () => {
 </script>
 
 <template>
-  <div v-if="loaded" class="search-container">
-    <div>
-      <div class="flex items-center q-mb-sm q-mt-xs">
-        <h1 class="search-heading">
-          Search:
-        </h1>
-        <q-chip
-          v-for="term in searchTerm.split(' ')"
-          :key="term"
-          :label="term"
-          size="md"
-          color="secondary"
-          class="text-capitalize p-4 pl-2 rounded-2"
-          :removable="searchTerm.split(' ').length > 1"
-          outline
-          square
-          :ripple="false"
-          @remove="handleRemoveTerm(term)"
+  <div class="h-full w-full p-2 flex flex-col">
+    <div class="flex-grow">
+      <ScrollArea v-if="loaded">
+        <div class="p-2">
+          <div class="flex items-center">
+            <Badge
+              v-for="term in searchTerm.split(' ')"
+              :key="term"
+              class="flex items-center text-xl px-2 py-1 mb-2 mr-2"
+            >
+              {{ term }}
+              <button @click="handleRemoveTerm(term)">
+                <iconify-icon icon="fontisto:close" width=".9em" height=".9em" class="pl-1" />
+              </button>
+            </Badge>
+          </div>
+
+          <ItemCardContainer v-if="searchResults.results?.length > 0">
+            <ItemCard
+              v-for="result in searchResults.results"
+              :key="result.id"
+              :title="result.media_type === 'tv' ? result.name : result.title"
+              :media-type="result.media_type === 'tv' ? 'tv' : 'movie'"
+              :poster="result.poster_path"
+              :backdrop="result.backdrop_path"
+              :overview="result.overview"
+              @click="goToDetails(result)"
+            />
+          </ItemCardContainer>
+          <div v-else>
+            No results found for "{{ searchTerm }}"
+          </div>
+        </div>
+      </ScrollArea>
+      <Loading v-else />
+    </div>
+
+    <footer class="pt-2">
+      <div class="bg-black/50 p-2 rounded-md">
+        <Pagination
+          v-if="searchResults"
+          :data="searchResults"
+          :current-page="searchResults.page"
+          @click="changePage"
         />
       </div>
-      <q-scroll-area :thumb-style="{ opacity: 0.5 }" class="scroll-container">
-        <ItemCardContainer v-if="searchResults?.length > 0">
-          <ItemCard
-            v-for="result in searchResults"
-            :key="result.id"
-            :title="result.media_type === 'tv' ? result.name : result.title"
-            :media-type="result.media_type === 'tv' ? 'tv' : 'movie'"
-            :poster="result.poster_path"
-            :backdrop="result.backdrop_path"
-            :overview="result.overview"
-            @click="goToDetails(result)"
-          />
-        </ItemCardContainer>
-        <div v-else>
-          No results found for "{{ searchTerm }}"
-        </div>
-      </q-scroll-area>
-    </div>
+    </footer>
   </div>
-  <q-footer v-if="loaded && store?.pagesTotal > 1" class="text-white footer">
-    <q-toolbar class="flex flex-center">
-      <q-pagination
-        v-model="page"
-        color="secondary"
-        active-color="secondary"
-        outline
-        :max="store?.pagesTotal"
-        :max-pages="screenGreaterThan.sm ? maxPages : 3"
-        boundary-numbers
-        ripple
-        unelevated
-        @click="changePage"
-      />
-    </q-toolbar>
-  </q-footer>
 </template>
-
-<style lang="scss" scoped>
-@use "sass:map";
-/* @import "~/quasar-variables.scss"; */
-
-h1 {
-  font-size: 1.5rem;
-}
-.search-heading {
-  /* margin: 0 map.get($space-sm, x) 0 0; */
-  /* @include text-ellipsis; */
-}
-.search-container {
-  height: 100%;
-  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) map.get($space-sm, x); */
-  width: 100%;
-  max-width: 100%;
-  & > div {
-    height: 100%;
-    width: 100%;
-    max-width: 100%;
-    /* padding: map.get($space-sm, x); */
-    /* @include background-style; */
-  }
-  & .scroll-container {
-    height: calc(100% - 60px);
-    width: 100%;
-    max-width: 100%;
-  }
-}
-.search-result-button {
-  background: none;
-  border: none;
-  margin: 0;
-  /* padding: 0 0 map.get($space-sm, x) 0; */
-  &:last-child {
-    padding-bottom: 0;
-  }
-  &.pad {
-    /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
-    &:nth-child(2n) {
-      padding-right: 0;
-    }
-    &:nth-last-child(-n + 2) {
-      padding-bottom: 0;
-    }
-  }
-}
-.search-result {
-  height: 200px;
-  display: flex;
-  /* @include background-style; */
-  overflow: hidden;
-  color: white;
-  background-position: top center;
-  background-size: cover;
-  border: none;
-  padding: 0;
-  & img {
-    height: 100%;
-    max-width: 133px;
-    object-fit: cover;
-  }
-}
-.truncate-text {
-  overflow: hidden;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  white-space: normal;
-}
-.footer {
-  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
-  background-color: transparent !important;
-  padding-left: 0;
-  & > div {
-    /* @include background-style; */
-  }
-}
-</style>

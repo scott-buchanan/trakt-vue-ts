@@ -95,14 +95,14 @@ onMounted(async () => {
     type="season"
   >
     <template #season-episode-list>
-      <div class="q-mt-lg">
+      <div class="mt-5">
         <h1>
           {{ info.tmdb_data?.episodes.length }} Episodes
           <small v-if="unairedEpisodes > 0">
             ({{ unairedEpisodes }} unaired episodes)
           </small>
         </h1>
-        <ItemCardContainer one-row-longer>
+        <ItemCardContainer>
           <ItemCard
             v-for="episode in info.tmdb_data?.episodes"
             v-show="isBeforeToday(episode.air_date)"
@@ -121,11 +121,3 @@ onMounted(async () => {
     </template>
   </DetailsTemplate>
 </template>
-
-<style lang="scss" scoped>
-@import "~/quasar-variables.scss";
-
-h1 {
-  font-weight: 400;
-}
-</style>

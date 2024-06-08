@@ -15,61 +15,39 @@ const getActorTooltip = computed(() => `${props.actor.name} as ${props.actor.cha
 </script>
 
 <template>
-  <a v-if="actor.ids.imdb" :href="`https://imdb.com/name/${actor.ids.imdb}`" target="blank">
-    <q-img
-      :ratio="1.5 / 1"
-      class="actor-image" :class="[{ small }]"
-      :src="actor.profile_path ? actor.profile_path : noActorImage"
-      :alt="actor.name"
-    >
-      <div class="actor-image-text absolute-bottom flex column" :class="[{ small }]">
+  <div>
+    <a v-if="actor.ids.imdb" :href="`https://imdb.com/name/${actor.ids.imdb}`" target="blank">
+      <div class="relative">
+        <img
+          :src="actor.profile_path ? actor.profile_path : noActorImage"
+          :alt="actor.name"
+          class="rounded-md"
+          :class="small ? 'h-36' : 'h-64'"
+        >
+        <div
+          class="whitespace-nowrap overflow-hidden ellipsis absolute bottom-0 w-full bg-black/50"
+          :class="[small ? 'text-xs font-thin p-1' : 'p-2']"
+        >
+          <strong>{{ actor.name }}</strong>
+          <span v-if="actor.character">as {{ actor.character }}</span>
+        </div>
+      </div>
+    </a>
+    <div v-else class="relative">
+      <img
+        :src="actor.profile_path ? actor.profile_path : noActorImage"
+        :alt="actor.name"
+        class="rounded-md"
+        :class="small ? 'h-36' : 'h-64'"
+      >
+      <div
+        class="text-xs font-thin whitespace-nowrap overflow-hidden ellipsis absolute bottom-0 w-full p-1 bg-black/50"
+        :class="[small ? 'text-xs font-thin p-1' : 'p-2']"
+      >
         <strong>{{ actor.name }}</strong>
         <span v-if="actor.character">as {{ actor.character }}</span>
       </div>
-    </q-img>
-  </a>
-  <q-img
-    v-else
-    :ratio="1.5 / 1"
-    class="actor-image" :class="[{ small }]"
-    :src="actor.profile_path ? actor.profile_path : noActorImage"
-    :alt="actor.name"
-  >
-    <div class="actor-image-text absolute-bottom q-pa-sm flex" :class="[{ small }]">
-      <strong>{{ actor.name }}</strong>
-      <span v-if="actor.character">as {{ actor.character }}</span>
     </div>
-  </q-img>
-  <q-tooltip v-if="small" :delay="500" anchor="top middle" self="center middle">
-    {{ getActorTooltip }}
-  </q-tooltip>
+    <Tooltip v-if="small" :value="getActorTooltip" top />
+  </div>
 </template>
-
-<style lang="scss" scoped>
-@use 'sass:map';
-/* @import '~/quasar-variables.scss'; */
-.actor-image {
-  border-radius: 5px;
-  min-height: 264px;
-  &.small {
-    min-height: 150px;
-  }
-}
-.actor-image-text {
-  font-size: 0.85em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* padding-top: map.get($space-sm, x);
-  padding-bottom: map.get($space-sm, x); */
-  &.small {
-    /* padding: map.get($space-sm, x); */
-    & > strong {
-      font-size: 1em;
-    }
-  }
-  & strong {
-    font-size: 1.3em;
-  }
-}
-</style>

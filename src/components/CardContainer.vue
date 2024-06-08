@@ -114,9 +114,8 @@ function hasRatings(index: number) {
 }
 
 function clickDetails(item: CardInfo) {
-  const mType: keyof CardInfo
-    = item.type === MediaType.movie ? MediaType.movie : MediaType.show
-  const ids: Trakt.Ids = item[mType]!.ids
+  console.log(props.mType, item)
+  const ids: Trakt.Ids = item[props.mType]!.ids
 
   store.updateCurrentIds(ids)
 
@@ -258,14 +257,11 @@ onMounted(() => {
           </div>
           <div v-else class="text-right">
             <span
-              v-for="genre in item.genres?.slice(
-                0,
-                $q.screen.gt.md === false ? 2 : 4,
-              )"
+              v-for="genre in item.genres"
               :key="genre.id"
               class="mr-1 last:mr-0"
             >
-              <Badge :value="genre.name" />
+              <Badge :value="genre.name" class="text-xs" />
             </span>
           </div>
         </div>

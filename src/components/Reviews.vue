@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import * as emoji from 'node-emoji'
 import dayjs from 'dayjs'
-import { useQuasar } from 'quasar'
 import type Trakt from '~/api/trakt.types'
 
 // api
@@ -19,7 +18,6 @@ const props = withDefaults(defineProps<Props>(), {
   mType: null,
 })
 
-const $q = useQuasar()
 const reviewsMore: Ref<boolean> = ref(false)
 const reviewReplies = ref({})
 const reviewSeeMore = ref([])
@@ -27,6 +25,8 @@ const showUnrated = ref(false)
 const showUnratedButton = ref(true)
 const likes = ref(JSON.parse(localStorage.getItem('trakt-vue-likes')!))
 const user = localStorage.getItem('trakt-vue-user')
+const likeAddedSuccess: Ref<boolean> = ref(false)
+const likeAddedMessage: Ref<string> = ref('')
 
 const filteredReviews = computed(() => {
   if (showUnrated.value || props.reply)
@@ -65,21 +65,16 @@ async function likeReview(review) {
     const current = props.reviews.find(item => item.id === review.id)
     if (deleteLike)
       current.likes -= 1
-    else current.likes += 1
+    else
+      current.likes += 1
 
-    $q.notify({
-      message: deleteLike ? 'Like removed' : 'Like added',
-      position: 'top',
-      icon: 'o_done',
-      iconColor: 'green',
-      badgeColor: 'secondary',
-      badgeTextColor: 'dark',
-      progress: true,
-      timeout: 2500,
-    })
+    likeAddedSuccess.value = true
+    likeAddedMessage.value = deleteLike ? 'Like removed' : 'Like added'
   }
 }
-
+function closeToast() {
+  likeAddedSuccess.value = false
+}
 function truncateReviewCard(text, length) {
   return `${text.substring(0, length)}...`
 }
@@ -121,57 +116,46 @@ onMounted(() => {
       <h2>
         User Reviews
         <sup>
-          <q-badge color="secondary" class="text-dark">
+          <Badge class="p-0.5 text-xs">
             {{ props.reviewCount }}
-          </q-badge>
+          </Badge>
         </sup>
       </h2>
-      <div v-if="showUnratedButton" class="unrated-toggle">
+      <div v-if="showUnratedButton" class="mr-1 uppercase text-slate-400 font-medium">
         Unrated
-        <q-toggle
-          v-model="showUnrated"
-          class="q-ml-xs"
-          color="secondary"
-          dark
-          dense
-        />
+        <Toggle v-model="showUnrated" />
       </div>
     </div>
-    <div class="grid grid-cols-2 grid-cols-sm-1 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div v-for="review in truncateReviews" :key="review.id">
         <div class="flex items-center">
           <div
-            class="flex q-mb-sm"
-            :class="[{ 'full-width wrap ': !$q.screen.gt.sm }]"
+            class="flex mb-2 w-full sm:w-auto sm:flex-wrap mr-2"
           >
-            <q-avatar class="q-mr-sm">
-              <q-img :src="review.avatar" alt="" referrerpolicy="no-referrer" />
-            </q-avatar>
-            <div class="username">
+            <img :src="review.avatar" alt="" referrerpolicy="no-referrer" class="mr-2 w-10 h-10 rounded-full">
+            <div class="max-w-44 overflow-hidden ellipsis whitespace-nowrap">
               {{ review.user?.name ? review.user.name : review.user.username
               }}<br>
               <small>{{ formattedDate(review.created_at) }}</small>
             </div>
           </div>
-          <q-space />
+
           <div
-            class="column"
-            :class="[$q.screen.gt.sm ? 'items-end' : 'items-start']"
+            class="items-start sm:items-end"
           >
             <div
               v-show="review.user_rating || review.user_stats?.rating"
-              class="review-rating q-mb-sm"
-              :class="[$q.screen.gt.sm ? 'justify-end' : 'justify-start']"
+              class="flex items-center w-28 justify-start sm:justify-end mb-2"
             >
-              <div>
-                <q-icon
-                  name="o_star"
-                  color="yellow"
-                  size="1.5em"
-                  class="star"
+              <div class="text-3xl">
+                <iconify-icon
+                  icon="material-symbols:star"
+                  width="1.2em"
+                  height="1.2em"
+                  class="text-yellow-400"
                 />
               </div>
-              <div>
+              <div class="text-3xl">
                 <span>
                   {{
                     review.userating
@@ -179,73 +163,44 @@ onMounted(() => {
                       : review.user_stats?.rating
                   }}
                 </span>
-                <small>&nbsp;/10</small>
+                <small class="ml-1">/10</small>
               </div>
             </div>
           </div>
         </div>
         <div class="flex items-center justify-end">
-          <div class="q-mr-sm">
-            <q-btn
-              v-if="user"
-              :icon="
-                likedReview(review) ? 'o_thumb_up_alt' : 'o_thumb_up_off_alt'
-              "
-              color="secondary"
-              size="md"
-              flat
-              dense
-              round
-              :ripple="false"
-              @click="likeReview(review)"
-            />
-            <q-icon
-              v-else
-              name="o_thumb_up_off_alt"
-              color="secondary"
-              size="24px"
-            />
+          <div class="mr-2">
+            <button v-if="user" @click="likeReview(review)">
+              <iconify-icon
+                :icon="likedReview(review) ? 'ic:outline-thumb-up-off-alt' : 'ic:outline-thumb-up-alt'"
+                width="1.5em"
+                height="1.5em"
+              />
+            </button>
+            <iconify-icon v-else icon="ic:outline-thumb-up-off-alt" width="1.5em" height="1.5em" />
             {{ review.likes === 1 ? review.likes : review.likes }}
           </div>
           <div v-if="review.replies > 0">
-            <q-btn
-              class="review-likes-comments"
-              flat
-              dense
-              no-caps
-              :ripple="false"
-              @click="getReplies(review)"
-            >
-              <q-icon
-                class="q-pr-xs"
-                name="o_comment"
-                size="24px"
-                color="secondary"
-              />
+            <button @click="getReplies(review)">
+              <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" />
               {{ review.replies === 1 ? review.replies : review.replies }}
-              <q-icon
-                :class="
-                  reviewReplies[review.id]?.show ? 'expand-less' : 'expand-more'
-                "
-                name="o_expand_less"
-                size="xs"
-                color="white"
+              <iconify-icon
+                icon="ion:chevron-down"
+                :class="reviewReplies[review.id]?.show ? 'rotate-0 transition-transform' : 'rotate-180 transition-transform'"
+                width="1.5em"
+                height="1.5em"
               />
-            </q-btn>
+            </button>
           </div>
           <div v-else>
-            <q-icon
-              class="q-pr-xs"
-              name="o_comment"
-              size="24px"
-              color="secondary"
-            />
+            <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" />
             {{ `${review.replies} replies` }}
           </div>
         </div>
+
         <div
           v-if="formatReviews(review.comment).length > 400"
-          class="review-bubble q-pa-md"
+          class="relative p-4 rounded-md bg-black/50"
         >
           {{
             reviewSeeMore[review.id] === true
@@ -256,113 +211,30 @@ onMounted(() => {
             {{ reviewSeeMore[review.id] === true ? "Read less" : "Read more" }}
           </button>
         </div>
-        <div v-else class="review-bubble q-pa-md">
+        <div v-else class="relative p-4 rounded-md bg-black/50">
           {{ formatReviews(review.comment) }}
         </div>
+
         <Reviews
           v-if="reviewReplies[review.id]?.show"
           reply
           :reviews="reviewReplies[review.id]?.replies"
-          class="review-reply"
+          class="mt-5"
         />
         <div class="text-right">
-          <q-btn
-            v-if="filteredReviews.length > 2"
-            color="secondary"
-            outline
-            no-caps
-            size="md"
-            :icon-right="reviewsMore ? 'o_expand_less' : 'o_expand_more'"
-            :label="reviewsMore ? 'See Less' : 'See More'"
-            @click="reviewsMore = !reviewsMore"
-          />
+          <Button class="py-2" @click="reviewsMore = !reviewsMore">
+            <iconify-icon
+              icon="ion:chevron-down"
+              :class="reviewsMore ? 'rotate-0 transition-transform' : 'rotate-180 transition-transform'"
+              width="1.5em"
+              height="1.5em"
+              class="mr-1"
+            />
+            {{ reviewsMore ? 'See Less' : 'See More' }}
+          </Button>
         </div>
       </div>
     </div>
+    <ToastMessage :show-message="likeAddedSuccess" :message="likeAddedMessage" @close="closeToast" />
   </div>
 </template>
-
-<style lang="scss" scoped>
-@import "~/quasar-variables.scss";
-
-// needed to override timeline heading
-:deep(h2) {
-  @include heading-reset;
-}
-sup {
-  font-weight: 400;
-  font-size: 0.6em;
-  @include darkText;
-}
-:deep(.q-timeline__dot) {
-  top: 10px;
-}
-:deep(.q-timeline__subtitle) {
-  opacity: 1;
-  color: $accent;
-}
-:deep(.q-timeline__content) {
-  margin-top: -10px;
-}
-.review-rating {
-  display: flex;
-  align-items: center;
-  width: 100px;
-  & > div {
-    font-size: 1.8em;
-    color: white;
-    & > small {
-      margin-left: -5px;
-    }
-    & .star {
-      opacity: 1;
-      margin-right: 2px;
-    }
-  }
-}
-.username {
-  max-width: 180px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.review-likes-comments {
-  & .expand-more {
-    rotate: 180deg;
-    transition: rotate 0.5s;
-  }
-  & .expand-less {
-    rotate: 0deg;
-    transition: rotate 0.2s;
-  }
-}
-.unrated-toggle {
-  margin-right: 5px;
-  @include darkText;
-}
-.review-reply {
-  margin-top: 20px;
-  & :deep(.q-timeline__dot) {
-    display: none;
-  }
-  & ul {
-    margin-bottom: 0;
-  }
-}
-.review-bubble {
-  @include background-style;
-  position: relative;
-  &::before {
-    // layout
-    content: "";
-    position: absolute;
-    width: 0;
-    height: 0;
-    bottom: 100%;
-    left: 13px; // offset should move with padding of parent
-    border: 0.75rem solid transparent;
-    border-top: none;
-    border-bottom-color: rgba(0, 0, 0, $opacity-back);
-  }
-}
-</style>

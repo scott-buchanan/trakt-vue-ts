@@ -30,6 +30,8 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     ScrollArea: typeof import('./src/components/ScrollArea.vue')['default']
+    ToastMessage: typeof import('./src/components/ToastMessage.vue')['default']
+    Toggle: typeof import('./src/components/Toggle.vue')['default']
     Tooltip: typeof import('./src/components/Tooltip.vue')['default']
     TrailerModal: typeof import('./src/components/TrailerModal.vue')['default']
     VerticalMenu: typeof import('./src/components/VerticalMenu.vue')['default']

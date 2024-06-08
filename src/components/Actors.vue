@@ -15,57 +15,39 @@ withDefaults(defineProps<Props>(), {
 
 <template>
   <template v-if="actors.length > 0">
-    <div v-if="horizontal" class="actors-container-small q-mb-sm">
-      <div class="full-height">
-        <q-scroll-area class="full-height" dark>
+    <div v-if="horizontal" class="h-52 w-full relative mb-2" v-bind="$attrs">
+      <div class="h-full">
+        <ScrollArea class="h-full">
           <h1>Starring</h1>
-          <div class="flex no-wrap q-pb-sm">
+          <div class="flex flex-nowrap pb-2">
             <div
               v-for="(actor, index) in actors" :key="actor.ids.trakt"
-              class="actor-small"
-              :class="[{ 'q-mr-md': index !== actors.length - 1 }]"
+              class="w-24"
+              :class="[{ 'mr-4': index !== actors.length - 1 }]"
             >
               <ActorImage :actor="actor" small />
             </div>
           </div>
-        </q-scroll-area>
+        </ScrollArea>
       </div>
     </div>
-    <div v-else class="actors-container text-white q-pl-sm">
-      <q-scroll-area
-        class="actors-container-scroll full-height full-width q-pa-sm"
-        :thumb-style="{ opacity: '0.5' }"
+    <div v-else class="w-48 pl-2" v-bind="$attrs">
+      <ScrollArea
+        class="h-full w-full"
       >
-        <h1>Starring</h1>
-        <div
-          v-for="(actor, index) in actors"
-          :key="actor.ids.trakt"
-          :class="{ 'q-mb-sm': index !== actors.length - 1 }"
-        >
-          <ActorImage :actor="actor" />
+        <div class="p-2">
+          <h1>Starring</h1>
+          <div
+            v-for="(actor, index) in actors"
+            :key="actor.ids.trakt"
+            :class="{ 'mb-2': index !== actors.length - 1 }"
+          >
+            {{ actor.popularity }}
+            <ActorImage :actor="actor" />
+          </div>
+          <Button label="See All" class="w-full mt-2 p-3 text-center" />
         </div>
-        <q-btn label="See All" class="full-width q-mt-sm" :ripple="false" flat />
-      </q-scroll-area>
+      </ScrollArea>
     </div>
   </template>
 </template>
-
-<style lang="scss" scoped>
-@import '~/quasar-variables.scss';
-
-.actors-container {
-  width: 200px;
-  & > .actors-container-scroll {
-    @include background-style;
-  }
-}
-.actors-container-small {
-  height: 210px;
-  color: white;
-  width: 100%;
-  position: relative;
-  & .actor-small {
-    width: 100px;
-  }
-}
-</style>

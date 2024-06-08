@@ -5,7 +5,6 @@ import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import { quasar, transformAssetUrls } from '@quasar/vite-plugin'
 
 export default defineConfig({
   css: {
@@ -20,7 +19,6 @@ export default defineConfig({
     Vue({
       reactivityTransform: true,
       template: {
-        transformAssetUrls,
         compilerOptions: {
           isCustomElement: tag => ['iconify-icon'].includes(tag),
         },
@@ -55,9 +53,6 @@ export default defineConfig({
     // https://github.com/antfu/vite-plugin-components
     Components({
       dts: true,
-    }),
-    quasar({
-      sassVariables: 'src/quasar-variables.scss',
     }),
   ],
 

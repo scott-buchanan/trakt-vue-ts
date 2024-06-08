@@ -18,8 +18,9 @@ defineProps({
         ? 'outline outline-1 outline-pprimary text-pprimary'
         : 'bg-pprimary text-slate-900',
     ]"
-    class="text-xs rounded px-1 py-px"
+    class="rounded"
   >
     {{ value }}
+    <slot />
   </span>
 </template>

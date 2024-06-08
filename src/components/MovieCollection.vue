@@ -23,35 +23,29 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="info?.parts.length > 1" class="q-mt-lg">
+  <div v-if="info?.parts.length > 1" class="mt-6">
     <h2>{{ info.name }}</h2>
-    <div class="posters wrap">
+    <div class="flex gap-3">
       <div v-for="item, index in info.parts" :key="item.release_date">
-        <q-img
-          v-if="movie.ids.tmdb === item.id"
-          :src="item.poster_path"
-          :alt="item.title"
-          :ratio="1 / 1.5"
-          width="150px"
-          class="poster current"
-          :class="{ 'q-ml-xs': index === 0 }"
-        >
-          <div v-if="item.watched_progress" class="poster-watched">
-            <q-icon name="o_check_circle_outline" size="sm" color="positive" />
-          </div>
-        </q-img>
-        <router-link v-else :to="{ name: 'movie-details', params: { movie: item.slug } }">
-          <q-img
+        <div v-if="movie.ids.tmdb === item.id" class="relative">
+          <img
             :src="item.poster_path"
             :alt="item.title"
-            :ratio="1 / 1.5"
-            width="150px"
-            class="poster"
+            class="w-36 rounded-md"
           >
-            <div v-if="item.watched_progress" class="poster-watched">
-              <q-icon name="o_check_circle_outline" size="sm" color="positive" />
-            </div>
-          </q-img>
+          <div v-if="item.watched_progress" class="absolute top-1 right-1 bg-black/50 rounded-md p-2">
+            <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" />
+          </div>
+        </div>
+        <router-link v-else :to="{ name: 'movie-details', params: { movie: item.slug } }" class="relative">
+          <img
+            :src="item.poster_path"
+            :alt="item.title"
+            class="w-36 rounded-md"
+          >
+          <div v-if="item.watched_progress" class="absolute top-1 right-1 bg-black/50 rounded-md p-2">
+            <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" />
+          </div>
         </router-link>
       </div>
     </div>
@@ -61,10 +55,6 @@ onMounted(async () => {
 <style lang="scss" scoped>
 @use 'sass:map';
 
-h2 {
-  all: revert;
-  /* margin: 0 0 map.get($space-sm, x) 0; */
-}
 .posters {
   display: flex;
   gap: 10px;

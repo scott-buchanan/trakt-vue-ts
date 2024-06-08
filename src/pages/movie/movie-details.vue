@@ -1,15 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, onUpdated, ref } from 'vue'
 import type { Ref } from 'vue'
 import dayjs from 'dayjs'
 import type { MovieDetails } from '~/api/combinedCall.types'
-
 // store
 import { useStore } from '~/stores/mainStore'
-
 // api
 import { getMovieDetails } from '~/api/combinedCalls'
-
 // components
 import DetailsTemplate from '~/components/DetailsTemplate.vue'
 import MovieCollection from '~/components/MovieCollection.vue'
@@ -25,6 +21,11 @@ const route = useRoute()
 const info: Ref<MovieDetails> = ref({} as MovieDetails)
 const arrDetails: Ref<detailsType[]> = ref([])
 const loaded = ref(false)
+const user = ref(JSON.parse(localStorage.getItem('trakt-vue-user')!)?.user)
+
+store.$subscribe((mutated, state) => {
+  loaded.value = state.loaded
+})
 
 // computed
 const languageListString = computed(() => {
@@ -48,7 +49,7 @@ const PCListString = computed(() => {
 async function getData() {
   store.updateLoading(false)
 
-  info.value = await getMovieDetails(route.params.movie)
+  info.value = await getMovieDetails(route.params.movie as string)
   arrDetails.value = [
     { label: 'runtime', value: `${info.value.runtime} minutes` },
     { label: 'released', value: `${formattedDate(info.value.released)}` },
@@ -112,87 +113,18 @@ onUpdated(async () => {
     :info="info"
     :poster="info.poster"
     :title="info.title"
-    :sub-title="info.year"
+    :year="info.year"
     :technical-details="arrDetails"
     :link-ids="info.ids"
-    m-type="movie"
+    type="movie"
   >
     <template #movie-collection>
       <MovieCollection
         v-if="info.tmdb_data.belongs_to_collection?.id"
         :movie="info"
         :collection-id="info.tmdb_data.belongs_to_collection?.id"
-        class="q-mt-lg"
+        class="mt-6"
       />
     </template>
   </DetailsTemplate>
 </template>
-
-<style lang="scss" scoped>
-@use "sass:map";
-/* @import "~/quasar-variables.scss"; */
-
-h1 {
-  font-weight: 400;
-}
-.background {
-  background-size: cover;
-  background-position: center;
-  background-color: transparent;
-  height: 100%;
-  border-radius: 5px;
-  overflow: hidden;
-  & .show-logo {
-    width: 100%;
-    max-width: 250px;
-    height: 97px;
-  }
-}
-.details-container {
-  /* padding: 0 map.get($space-sm, x) map.get($space-sm, x) 0; */
-  display: flex;
-  height: 100%;
-  & > div:first-child {
-    flex: 1;
-  }
-}
-.poster {
-  width: 50%;
-  min-width: 200px;
-  max-width: 400px;
-  & > div {
-    border-radius: 5px;
-    overflow: hidden;
-  }
-}
-.ratings {
-  display: flex;
-  & > div {
-    display: flex;
-    align-items: center;
-  }
-  & > div > img {
-    width: 35px;
-  }
-  & > div > div:nth-child(2) {
-    font-size: 24px;
-    margin: 0 10px 0 10px;
-  }
-}
-.certification {
-  /* border: 1px solid $secondary; */
-  /* color: $secondary; */
-  border-radius: 3px;
-  padding: 3px 5px;
-  font-size: 0.75em;
-}
-.show-info {
-  flex-wrap: wrap;
-  & > div {
-    /* margin-right: map.get($space-md, x); */
-  }
-  & span {
-    /* @include darkText; */
-  }
-}
-</style>

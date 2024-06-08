@@ -203,19 +203,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full w-full p-2">
+  <div class="flex flex-nowrap h-full w-full p-2">
     <div
-      class="flex-1 bg-cover bg-center h-full rounded-md"
+      class="bg-cover bg-center grow rounded-md"
       :style="{
         backgroundImage: detailsBackground,
       }"
     >
-      <div class="flex flex-nowrap h-full p-3">
+      <div class="flex h-full w-full">
         <div class="hidden md:block static w-5/12 min-w-52 max-w-xl py-3 pl-3">
           <img class="rounded-md" :src="poster" alt="">
         </div>
         <ScrollArea>
-          <div>
+          <div class="p-2">
             <div class="flex">
               <div
                 class="block md:hidden float-left pr-3 pb-3"
@@ -250,7 +250,7 @@ onMounted(() => {
                     :key="genre.id"
                     class="mr-1"
                   >
-                    <Badge :value="genre.name" />
+                    <Badge :value="genre.name" class="text-xs" />
                   </span>
                 </div>
 
@@ -300,7 +300,7 @@ onMounted(() => {
                         target="blank"
                         class="mr-3 hover:no-underline"
                       >
-                        <Badge :value="links[key].label" outline />
+                        <Badge :value="links[key].label" outline class="text-xs" />
                       </a>
                     </template>
                   </template>
@@ -350,82 +350,10 @@ onMounted(() => {
 
     <Actors
       v-if="info.actors?.length > 0"
-      class="hidden sm:block"
       :actors="info.actors"
+      class="hidden sm:block"
     />
   </div>
 
   <TrailerModal v-if="trailerUrl" :url="trailerUrl" :fallback-query="info.title" :show-trailer="showTrailer" @close="closeTrailer" />
-
-  <!-- TRAILER this has to come out of this component into app or something. Set showTrailer and trailer url by store -->
-<!--  <transition name="fade-scale">
-    <div
-      v-show="showTrailer"
-      class="fade-scale-enter-active fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90"
-      role="dialog"
-    >
-      <div
-        v-if="trailerHasError"
-        :style="{ backgroundImage: `url(${trailerErrorBack})` }"
-      >
-        <div class="h-full">
-          Oops, trailer crashed. Search YouTube for a trailer
-          <a
-            :href="`https://www.youtube.com/results?search_query=${info.title} trailer`"
-            target="blank"
-          >
-            here</a>.
-        </div>
-      </div>
-      <div
-        v-else
-        class="h-full"
-      >
-        <YoutubeIframe
-          ref="trailer"
-          :style="{
-            width: '100%',
-            height: '100%',
-          }"
-          :video-id="trailerUrl"
-          @ready="trailerReady"
-          @error="trailerError"
-        />
-      </div>
-    </div>
-  </transition> -->
-
-  <!-- <q-dialog
-    v-model="showTrailer"
-    :transition-duration="500"
-    class="trailer"
-    @hide="closeTrailer"
-  >
-    <div class="trailer">
-      <div
-        v-if="trailerHasError"
-        :style="{ backgroundImage: `url(${trailerErrorBack})` }"
-      >
-        <div class="trailer-error-text">
-          Oops, trailer crashed. Search YouTube for a trailer
-          <a
-            :href="`https://www.youtube.com/results?search_query=${info.title} trailer`"
-            target="blank"
-          >
-            here</a>.
-        </div>
-      </div>
-      <div v-else :style="{ opacity: isTrailerVisible ? 1 : 0 }">
-        <YoutubeIframe
-          :style="{
-            width: '100%',
-            height: '100%',
-          }"
-          :video-id="trailerUrl"
-          @ready="trailerReady"
-          @error="trailerError"
-        />
-      </div>
-    </div>
-  </q-dialog> -->
 </template>

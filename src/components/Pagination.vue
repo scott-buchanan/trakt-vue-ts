@@ -40,7 +40,7 @@ const nextButtonPosition = computed(() => (lastPageButtonDisabled.value ? -2.75 
 function goToPage(page: number, disabled: boolean = false) {
   if (disabled)
     return
-  emit('click', { page })
+  emit('click', page)
 }
 </script>
 

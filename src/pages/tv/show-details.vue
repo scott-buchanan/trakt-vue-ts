@@ -15,13 +15,9 @@ interface detailsType {
   value: any
 }
 
-// for route param
-defineProps<{
-  show: string
-}>()
-
 const route = useRoute()
 const store = useStore()
+
 const info: Ref<ShowDetails> = ref({} as ShowDetails)
 const arrDetails: Ref<detailsType[]> = ref([])
 const seasons: Ref<Tmdb.Season[]> = ref([])
@@ -133,18 +129,19 @@ onMounted(async () => {
     type="show"
   >
     <template #show-seasons>
-      <div class="q-mt-lg">
+      <div class="mt-5">
         <h2>
           {{ seasonLength }}
           {{ seasonLength > 1 ? "Seasons" : "Season" }}
         </h2>
-        <div class="flex gap-3 mb-6">
+        <div class="flex flex-wrap gap-3 mb-6">
           <div v-for="(season, index) in seasons" :key="season.id">
             <router-link
               :to="{
                 path: `/tv/show/${info.ids.slug}/season/${season.season_number}`,
               }"
             >
+              <Tooltip :value="seasons[index]?.watched_percent" top />
               <Image
                 v-if="season.poster_path"
                 :src="season.poster_path"
@@ -156,8 +153,8 @@ onMounted(async () => {
                   class="absolute top-1 right-1 p-2 rounded-full h-11 w-11 bg-black/50"
                 >
                   <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" :style="{ filter: `grayscale(${watchedProgress(index)})` }" />
-                  <Tooltip :value="seasons[index]?.watched_percent" />
                 </div>
+
                 <div class="absolute bottom-0 bg-black/50 w-full rounded-b-md text-sm p-2 overflow-hidden text-ellipsis whitespace-nowrap">
                   <div class="caption-text">
                     {{ season.name }}
