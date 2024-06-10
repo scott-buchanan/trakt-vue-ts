@@ -153,14 +153,12 @@ onMounted(() => {
 <template>
   <div class="flex flex-col h-full">
     <div class="p-2 grow">
-      {{ store.filterType }}
       <CardContainer
         v-if="store.loaded && data"
         :data="data.items"
         :m-type="store.filterType"
         class="rounded-md"
       />
-      <Loading v-else />
     </div>
     <footer v-if="data" class="pt-0 p-2">
       <div class="bg-black/50 p-2 rounded-md">

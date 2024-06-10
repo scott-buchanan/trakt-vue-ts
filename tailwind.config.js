@@ -22,6 +22,7 @@ module.exports = {
       },
       screens: {
         '3xl': '2561px',
+        '4xl': '3400px',
       },
       keyframes: {
         animateBgPulse: {

@@ -130,6 +130,17 @@ namespace Tmdb {
     id: number
     name: string
     poster_path: string
+    backdrop_path: string
+    overview: string
+    poster_path: string
+    parts: {
+      title: string
+      poster_path: string
+      id: number
+      watched_progress: Trakt.WatchedProgress
+      slug: string
+      release_date: string
+    }[]
   }
 
   export interface Video {
@@ -139,7 +150,7 @@ namespace Tmdb {
   }
 
   export interface BackgroundInfo {
-    id: number
+    ids: Trakt.Ids
     title: string
     backgroundUrl: string
     type: string

@@ -42,10 +42,8 @@ withDefaults(defineProps<Props>(), {
             :key="actor.ids.trakt"
             :class="{ 'mb-2': index !== actors.length - 1 }"
           >
-            {{ actor.popularity }}
             <ActorImage :actor="actor" />
           </div>
-          <Button label="See All" class="w-full mt-2 p-3 text-center" />
         </div>
       </ScrollArea>
     </div>

@@ -154,25 +154,25 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
 
 <template>
   <header class="pb-0 p-2 bg-transparent">
-    <div class="relative flex p-2 bg-black/50 rounded-md sm:h-16">
+    <div class="relative flex flex-wrap p-2 bg-black/50 rounded-md h-full">
       <!-- background image for mobile -->
       <div
-        class="absolute inset-x-0 inset-y-0 z-0 sm:hidden bg-cover bg-center rounded-md"
+        class="absolute inset-x-0 inset-y-0 z-0 md:hidden bg-cover bg-center rounded-md"
         :style="backgroundStyle"
       />
       <!-------------------------------->
       <form
-        class="z-20 mb-2 sm:mb-0 h-12 sm:h-full w-full sm:w-auto sm:flex-grow items-center justify-between"
+        class="z-20 mb-2 md:mb-0 w-full md:w-auto md:flex-grow items-center justify-between"
         @submit="searchSubmit"
       >
-        <div class="w-full h-full mb-2 sm:mb-0 mr-2">
+        <div class="w-full">
           <div
-            class="flex flex-nowrap h-full rounded-md w-full sm:max-w-3xl p-1 border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
+            class="h-12 md:h-full flex flex-nowrap rounded-md w-full md:max-w-3xl p-1 border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
           >
             <input
               v-model="searchTypedValue"
               name="txtSearch"
-              class="grow p-3 bg-transparent border-0 focus:ring-0 h-full placeholder-slate-300/75"
+              class="md:h-full grow p-3 w-full bg-transparent border-0 focus:ring-0 placeholder-slate-300/75"
               :placeholder="
                 backgroundInfo ? `Search: e.g. ${backgroundInfo?.title}` : ''
               "
@@ -188,7 +188,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
             <Transition name="slide-up">
               <div
                 v-if="showMenu"
-                class="sm:max-w-3xl mt-1 max-h-fit rounded-md"
+                class="md:max-w-3xl mt-1 max-h-fit rounded-md"
               >
                 <ul>
                   <li
@@ -259,15 +259,17 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
       </form>
 
       <!-- if mobile show dropdown for filter -->
-      <div class="sm:hidden grow h-12 sm:h-full">
+      <div class="md:hidden w-full sm:w-auto grow h-12">
         <button
           aria-label="Filter"
-          class="rounded-md p-3 w-full border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
+          class="rounded-md p-3 w-full h-full border border-solid border-white/25 bg-black/50 backdrop-blur-sm"
           @click="handleClickFilterDropdown"
           @blur="showMobileFilterMenu = false"
         >
           <div class="flex no-wrap justify-between items-center">
-            <div>{{ store.filter.label }}</div>
+            <div>
+              {{ store.filter.label }}
+            </div>
             <div>
               <iconify-icon
                 icon="bi:caret-down-fill"
@@ -308,8 +310,8 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
         </div>
       </div>
 
-      <div class="self-center ml-2 h-full">
-        <Button v-if="store.myInfo" class="h-12 sm:h-full" @click="logout">
+      <div class="self-center sm:ml-2 h-12 md:h-full w-full sm:w-auto mt-2 sm:mt-0">
+        <Button v-if="store.myInfo" class="h-full w-full flex flex-nowrap items-center" @click="logout">
           <iconify-icon
             icon="ic:round-logout"
             width="1.5em"
@@ -318,7 +320,7 @@ function handleClickFilterItem(e: Event, key: FilterType, option: Filter) {
           />
           <div>logout</div>
         </Button>
-        <Button v-else class="h-12 sm:h-full" @click="goToLogin">
+        <Button v-else class="h-full" @click="goToLogin">
           <iconify-icon
             icon="simple-icons:trakt"
             width="1.5em"

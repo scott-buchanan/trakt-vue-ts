@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 
 // api
 import { getMovieCollection } from '~/api/combinedCalls'
+import type Tmdb from '~/api/tmdb.types'
 
 const props = defineProps({
   movie: {
@@ -15,7 +16,7 @@ const props = defineProps({
   },
 })
 
-const info = ref(null)
+const info: Ref<Tmdb.Collection | null> = ref(null)
 
 onMounted(async () => {
   info.value = await getMovieCollection(props.collectionId)
@@ -23,10 +24,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="info?.parts.length > 1" class="mt-6">
+  <div v-if="info?.parts && info.parts.length > 1" class="mt-6">
     <h2>{{ info.name }}</h2>
     <div class="flex gap-3">
-      <div v-for="item, index in info.parts" :key="item.release_date">
+      <div v-for="item in info?.parts" :key="item.release_date">
         <div v-if="movie.ids.tmdb === item.id" class="relative">
           <img
             :src="item.poster_path"
@@ -51,25 +52,3 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
-<style lang="scss" scoped>
-@use 'sass:map';
-
-.posters {
-  display: flex;
-  gap: 10px;
-  & .poster {
-    border-radius: 5px;
-    &.current {
-      /* outline: 3px solid $secondary; */
-    }
-    & .poster-watched {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      padding: 5px;
-      border-radius: 5px;
-    }
-  }
-}
-</style>

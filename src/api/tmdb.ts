@@ -31,38 +31,63 @@ axiosInstance.interceptors.response.use((response) => {
 })
 
 export async function getImageUrls(): Promise<Tmdb.TmdbConfig> {
-  const response = await axiosInstance.get('/configuration')
-  return response.data as Tmdb.TmdbConfig
+  const response = await axiosInstance.get<Tmdb.TmdbConfig>('/configuration')
+  return response.data
 }
 
 export async function getAppBackgroundImg(
   tmdbConfig: Tmdb.TmdbConfig,
 ): Promise<Tmdb.BackgroundInfo | null> {
-  const response = await axiosInstance.get('/trending/all/day')
+  interface Item {
+    id: number
+    title: string
+    name: string
+    media_type: string
+    release_date: string
+    poster_path: string
+    backdrop_path: string
+  }
+  interface ApiResponse {
+    page: number
+    results: Item[]
+    total_pages: number
+    total_results: number
+  }
+  const response = await axiosInstance.get<ApiResponse>('/trending/all/day')
   if (response.data) {
     const rando = Math.floor(Math.random() * response.data.results.length)
+    const ids: Trakt.Ids | null = await getIdLookupTmdb(response.data.results[rando].id)
     const imgObj = response.data.results[rando]
-    return {
-      id: imgObj.id,
-      title: imgObj.title ? imgObj.title : imgObj.name,
-      type: imgObj.media_type,
-      year: dayjs(imgObj.release_date).format('YYYY'),
-      posterUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.poster_sizes[3]}${imgObj.poster_path}`,
-      backgroundUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.backdrop_sizes[3]}${imgObj.backdrop_path}`,
+    if (ids) {
+      return {
+        ids,
+        title: imgObj.title ? imgObj.title : imgObj.name,
+        type: imgObj.media_type,
+        year: dayjs(imgObj.release_date).format('YYYY'),
+        posterUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.poster_sizes[3]}${imgObj.poster_path}`,
+        backgroundUrl: `${tmdbConfig.images.secure_base_url}${tmdbConfig.images.backdrop_sizes[3]}${imgObj.backdrop_path}`,
+      }
     }
   }
   return null
 }
 
 export async function getShowPoster(show: Trakt.Show): Promise<string | null> {
-  const response = await axiosInstance.get(`/tv/${show.ids.tmdb}/images`)
-
+  interface ImagesResponse {
+    posters: {
+      file_path: string
+    }[]
+  }
+  const response = await axiosInstance.get<ImagesResponse>(`/tv/${show.ids.tmdb}/images`)
   if (response.data) {
     if (response.data.posters.length > 0)
       return `https://image.tmdb.org/t/p/w780/${response.data.posters[0].file_path}`
 
-    // Sometimes the details call has a poster where the images call does not. Weird.
-    const details = await axiosInstance.get(`/tv/${show.ids.tmdb}`)
+    // Sometimes the details call has a poster where the images call does not.
+    interface DetailsResponse {
+      poster_path: string
+    }
+    const details = await axiosInstance.get<DetailsResponse>(`/tv/${show.ids.tmdb}`)
     return details.data?.poster_path
       ? `https://image.tmdb.org/t/p/w780/${details.data.poster_path}`
       : fallback.default
@@ -338,7 +363,6 @@ export async function tmdbActors(
       })
     }),
   )
-  console.log(actors)
   return actors.sort((a, b) => b.popularity - a.popularity)
 }
 

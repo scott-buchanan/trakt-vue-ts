@@ -28,7 +28,7 @@ function imageLoaded() {
     :class="imgLoaded ? 'opacity-100' : 'opacity-0'"
     @load="imageLoaded"
   >
-  <div v-else class="relative" v-bind="$attrs">
+  <div v-else class="relative overflow-hidden" v-bind="$attrs">
     <img
       :src
       :alt

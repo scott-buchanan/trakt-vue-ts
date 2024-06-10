@@ -9,20 +9,27 @@ withDefaults(defineProps<Props>(), {
 })
 
 const tooltip: Ref<HTMLElement | null> = ref(null)
+const position: Ref<Pick<DOMRect, 'top' | 'left' | 'height' | 'width'>> = ref({ top: 0, left: 0, height: 0, width: 0 })
 
-onMounted(() => {
-  const parent = tooltip.value?.parentNode
-  if (parent instanceof HTMLElement)
-    parent.classList.add('group', 'relative')
+watch(() => tooltip.value?.previousSibling, async () => {
+  // fixes random position issues
+  requestAnimationFrame(() => {
+    const parentElem = tooltip.value?.parentElement
+    const anchorElem = tooltip.value?.previousSibling
+    if (anchorElem instanceof HTMLElement && (anchorElem.getBoundingClientRect()?.top !== 0 && anchorElem.getBoundingClientRect()?.left !== 0)) {
+      position.value = anchorElem.getBoundingClientRect()
+      if (parentElem)
+        parentElem.classList.add('group/tooltip')
+    }
+  })
 })
 </script>
-
-<!-- Must place these classes on parent: group relative -->
 
 <template>
   <div
     ref="tooltip"
-    class="absolute -ml-1 left-1/2 -translate-x-1/2 mt-2 text-xs bg-slate-900/95 text-nowrap p-2 rounded-md opacity-0 group-hover:opacity-100 transition-opacity delay-200 z-50 overflow-visible"
+    class="fixed text-xs bg-slate-900/95 text-nowrap p-2 rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity delay-200 z-50 overflow-visible"
+    :style="{ top: `${position.top - position.height}px`, left: `${position.left - position.width}px` }"
   >
     <div class="relative">
       <div

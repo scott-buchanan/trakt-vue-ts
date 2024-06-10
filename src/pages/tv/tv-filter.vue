@@ -46,6 +46,10 @@ watch(
   },
 )
 
+watch(() => filter.value, () => {
+  loadData(currentPage.value)
+})
+
 async function loadData(page: number) {
   store.updateLoading(false)
 
@@ -205,7 +209,6 @@ onMounted(() => {
         :m-type="store.filterType"
         class="rounded-md"
       />
-      <Loading v-else />
     </div>
     <footer v-if="data" class="pt-0 p-2">
       <div class="bg-black/50 p-2 rounded-md">

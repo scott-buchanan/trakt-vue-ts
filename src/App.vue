@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { getToken, getTraktSettings } from './api/trakt'
+// types
 import type Trakt from './api/trakt.types'
+import type Tmdb from './api/tmdb.types'
 import { useStore } from '~/stores/mainStore'
 // api
 import { getAppBackgroundImg } from '~/api/tmdb'
@@ -9,7 +10,6 @@ import { getAppBackgroundImg } from '~/api/tmdb'
 import defaultImage from '~/assets/drawer-image-1.jpg'
 import vuejsLogo from '~/assets/vuejs.png'
 import traktLogo from '~/assets/trakt-icon-red.svg'
-// types
 
 import 'iconify-icon'
 
@@ -17,29 +17,11 @@ const store = useStore()
 const route = useRoute()
 const router = useRouter()
 
+// static
 const defaultBack = defaultImage
 
-interface BackgroundInfoType {
-  backgroundUrl: string
-  posterUrl: string
-  id: number
-  title: string
-  type: string
-  year: string
-}
-
-const backgroundInfo: Ref<BackgroundInfoType | null> = ref(null)
-
-// computed
-const filterOptions = computed(() => {
-  const options = { ...store.filterOptions }
-  if (!store.myInfo) {
-    let key: keyof typeof options
-    for (key in options)
-      options[key] = options[key].filter(item => item.auth === false)
-  }
-  return options
-})
+// refs
+const backgroundInfo: Ref<Tmdb.BackgroundInfo | null> = ref(null)
 
 // Watch for code in route query and login
 watch(
@@ -70,6 +52,22 @@ store.$subscribe(async (mutation, state) => {
     store.updateBackgroundInfo(backgroundInfo.value)
   }
 })
+
+// computed
+const filterOptions = computed(() => {
+  const options = { ...store.filterOptions }
+  if (!store.myInfo) {
+    let key: keyof typeof options
+    for (key in options)
+      options[key] = options[key].filter(item => item.auth === false)
+  }
+  return options
+})
+
+// methods
+function backgroundPosterClick() {
+  router.push(backgroundInfo.value?.type === 'movie' ? { name: 'movie-details', params: { movie: backgroundInfo.value.ids.slug } } : { name: 'show-details', params: { show: backgroundInfo.value?.ids.slug } })
+}
 </script>
 
 <template>
@@ -77,7 +75,7 @@ store.$subscribe(async (mutation, state) => {
     class="bg-no-repeat bg-fixed bg-cover bg-center h-full flex"
     :style="{ backgroundImage: `url(${backgroundInfo?.backgroundUrl})` }"
   >
-    <aside class="p-2 pr-0 w-[250px] hidden sm:block">
+    <aside class="p-2 pr-0 w-[250px] hidden md:block">
       <div class="relative bg-black/50 rounded-md h-full overflow-hidden">
         <a
           href="/"
@@ -139,7 +137,7 @@ store.$subscribe(async (mutation, state) => {
             Background
           </h1>
           <template v-if="backgroundInfo">
-            <Button img>
+            <Button img @click="backgroundPosterClick">
               <img
                 v-if="backgroundInfo.posterUrl"
                 :src="backgroundInfo.posterUrl"
@@ -158,7 +156,8 @@ store.$subscribe(async (mutation, state) => {
       <Header :page="store.$state.page" />
 
       <div class="grow">
-        <router-view />
+        <router-view :class="{ hidden: !store.loaded }" />
+        <Loading class="p-2" :class="{ hidden: store.loaded }" />
       </div>
     </div>
   </div>

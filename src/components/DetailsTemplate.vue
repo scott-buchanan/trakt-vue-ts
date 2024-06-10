@@ -210,11 +210,11 @@ onMounted(() => {
         backgroundImage: detailsBackground,
       }"
     >
-      <div class="flex h-full w-full">
+      <div class="flex h-full w-full gap-2">
         <div class="hidden md:block static w-5/12 min-w-52 max-w-xl py-3 pl-3">
           <img class="rounded-md" :src="poster" alt="">
         </div>
-        <ScrollArea>
+        <ScrollArea bg-transparent>
           <div class="p-2">
             <div class="flex">
               <div
@@ -228,21 +228,25 @@ onMounted(() => {
               </div>
 
               <!-- TITLES -->
-              <div class="w-full break-words">
-                <h1 class="flex text-lg">
-                  <span class="mr-4">{{ title }}</span>
-                  <span v-if="year" class="font-thin">{{ year }}</span>
-                  <div class="p-[6px] text-xs text-pprimary border border-pprimary rounded-md">
+              <div class="w-full break-words mt-2">
+                <h1 class="flex mb-3">
+                  {{ title }}
+                </h1>
+
+                <div class="flex items-baseline mb-1">
+                  <h2 v-if="year" class="font-extralight text-base mb-0 mr-2">
+                    {{ year }}
+                  </h2>
+                  <div class="py-1 px-2 text-xs text-pprimary border border-pprimary rounded-md">
                     <span v-if="info.certification">
                       {{ info.certification }}
                     </span>
                   </div>
-                </h1>
-
-                <!-- TAGLINE -->
-                <p v-if="info.tmdb_data?.tagline" class="text-italic font-light">
-                  "{{ info.tmdb_data.tagline }}"
-                </p>
+                  <!-- TAGLINE -->
+                  <div v-if="info.tmdb_data?.tagline" class="text-sm font-light mb-3">
+                    <span class="ml-2"> - </span> <span class="italic">"{{ info.tmdb_data.tagline }}"</span>
+                  </div>
+                </div>
 
                 <div v-if="info.tmdb_data?.genres" class="mb-4">
                   <span
@@ -255,7 +259,7 @@ onMounted(() => {
                 </div>
 
                 <!-- RATINGS -->
-                <div class="flex mb-5">
+                <div class="flex mb-5 font-extralight">
                   <div v-if="isReleased" class="flex flex-wrap">
                     <div v-if="info.imdb_rating" class="flex items-center">
                       <img :src="imdb" alt="IMDb" class="w-9">
@@ -275,14 +279,14 @@ onMounted(() => {
                         {{ info.tmdb_rating }}
                       </div>
                     </div>
-                    <div v-if="isReleased && user" class="flex items-center">
+                    <div v-if="isReleased && user" class="flex items-center font-normal mr-2">
                       <Rating
                         :item="info"
                         :type="props.type"
                         :rating="info.my_rating"
                       />
                     </div>
-                    <div v-if="trailerUrl" class="flex items-center">
+                    <div v-if="trailerUrl" class="flex items-center font-normal">
                       <Button class="p-3 rounded-md" @click="showTrailer = true">
                         Trailer
                       </Button>
@@ -291,7 +295,7 @@ onMounted(() => {
                 </div>
 
                 <!-- LINKS -->
-                <div class="mb-6">
+                <div class="mb-4">
                   <span class="mr-2">Links: </span>
                   <template v-for="(value, key) in linkIds" :key="key">
                     <template v-if="links[key]">
@@ -306,16 +310,13 @@ onMounted(() => {
                   </template>
                 </div>
 
-                <!-- WATCHED INFO -->
-                <DarkList :items="watchedInfo()" stacked />
-
                 <!-- TECHNICAL DETAILS -->
-                <DarkList :items="technicalDetails()" />
+                <DarkList :items="[...watchedInfo(), ...technicalDetails()]" class="mb-4" />
               </div>
             </div>
 
             <!-- OVERVIEW -->
-            <p v-if="info.tmdb_data.overview" class="text-lg leading-6 mb-0">
+            <p v-if="info.tmdb_data.overview" class="leading-5 mt-2 mb-8 font-extralight">
               {{ info.tmdb_data.overview }}
             </p>
 

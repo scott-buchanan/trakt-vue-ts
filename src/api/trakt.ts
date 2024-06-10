@@ -399,13 +399,13 @@ export async function getShowWatchedProgress(
 export async function getIdLookupTmdb(
   id: number,
   mType: string | null = null,
-): Promise<Trakt.Ids | false> {
+): Promise<Trakt.Ids | null> {
   const mediaType = mType === 'tv' ? 'show' : mType
   const url: string = `https://api.trakt.tv/search/tmdb/${id}${mType !== null ? `?type=${mediaType}` : ''}`
   const response = await axiosNoAuth.get(url)
   return response.data.length > 0
     ? response.data[0][response.data[0].type].ids
-    : false
+    : null
 }
 
 export async function getIdLookupTrakt(id: string, mType = null) {

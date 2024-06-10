@@ -25,11 +25,11 @@ const getActorTooltip = computed(() => `${props.actor.name} as ${props.actor.cha
           :class="small ? 'h-36' : 'h-64'"
         >
         <div
-          class="whitespace-nowrap overflow-hidden ellipsis absolute bottom-0 w-full bg-black/50"
+          class="absolute bottom-0 w-full bg-black/50 rounded-b-md"
           :class="[small ? 'text-xs font-thin p-1' : 'p-2']"
         >
-          <strong>{{ actor.name }}</strong>
-          <span v-if="actor.character">as {{ actor.character }}</span>
+          <strong class="block whitespace-nowrap overflow-hidden text-ellipsis leading-5">{{ actor.name }}</strong>
+          <span v-if="actor.character" class="block text-xs leading-5">as {{ actor.character }}</span>
         </div>
       </div>
     </a>
@@ -41,7 +41,7 @@ const getActorTooltip = computed(() => `${props.actor.name} as ${props.actor.cha
         :class="small ? 'h-36' : 'h-64'"
       >
       <div
-        class="text-xs font-thin whitespace-nowrap overflow-hidden ellipsis absolute bottom-0 w-full p-1 bg-black/50"
+        class="text-xs font-thin whitespace-nowrap overflow-hidden ellipsis absolute bottom-0 w-full p-1 bg-black/50 rounded-b-md"
         :class="[small ? 'text-xs font-thin p-1' : 'p-2']"
       >
         <strong>{{ actor.name }}</strong>

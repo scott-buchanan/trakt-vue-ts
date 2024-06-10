@@ -109,7 +109,6 @@ export async function getShowInfoCard(show: Trakt.Show): Promise<ShowCardInfo | 
     tmdbShowDetails(show),
   ])
 
-  console.log(fanartInfo)
   const result: ShowCardInfo = {
     show,
     backdrop,

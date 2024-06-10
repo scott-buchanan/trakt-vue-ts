@@ -62,9 +62,8 @@ async function rate(number: number) {
   if (success) {
     myRating.value = number
     showSuccess.value = true
+    ratingPopOpen.value = false
   }
-
-  closeRatingPopup()
 }
 
 function hover(value: boolean) {
@@ -84,7 +83,7 @@ onMounted(() => {
   <div v-if="user" class="relative">
     <div
       v-if="myRating"
-      class="flex"
+      class="flex items-center"
       @mouseenter="openRatingPopup(true)"
       @mouseleave="closeRatingPopup(true)"
       @focus="openRatingPopup(true)"
@@ -98,7 +97,7 @@ onMounted(() => {
       >
 
       <div class="rating">
-        <div class="text-2xl mx-2">
+        <div class="text-2xl mx-2 font-extralight">
           {{ myRating === 10 ? myRating : myRating.toFixed(1) }}
         </div>
       </div>
@@ -106,16 +105,31 @@ onMounted(() => {
     <Button
       v-else
       id="btnRate"
+      class="p-3 rounded-md"
       @click="openRatingPopup()"
     >
       Rate
     </Button>
 
     <Transition name="slide-up">
-      <div v-if="ratingPopOpen" class="absolute top-10 left-1/2 -translate-x-1/2 w-80" @mouseover="hover(true)" @mouseleave="hover(false)">
+      <div
+        v-if="ratingPopOpen"
+        class="flex p-2 absolute top-10 left-1/2 -translate-x-1/2 bg-black/50 rounded-xl"
+        :class="myRating ? 'w-[22rem]' : 'w-80'"
+        @mouseover="hover(true)"
+        @mouseleave="hover(false)"
+      >
+        <button v-if="myRating" class="w-8 h-8" @click="rate(0)">
+          <iconify-icon
+            icon="mdi-star-off-outline"
+            width="100%"
+            height="100%"
+            class="p-1 text-zinc-400 transition-transform ease-linear hover:scale-125"
+          />
+        </button>
         <button v-for="number in 10" :key="number" class="w-8 h-8" @click="rate(number)">
           <iconify-icon
-            icon="material-symbols:star"
+            :icon="myRating >= number ? 'mdi:star' : 'mdi:star-outline'"
             width="100%"
             height="100%"
             class="p-1 text-yellow-400 transition-transform ease-linear hover:scale-125"

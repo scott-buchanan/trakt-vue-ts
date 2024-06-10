@@ -141,18 +141,19 @@ onMounted(async () => {
                 path: `/tv/show/${info.ids.slug}/season/${season.season_number}`,
               }"
             >
-              <Tooltip :value="seasons[index]?.watched_percent" top />
               <Image
                 v-if="season.poster_path"
                 :src="season.poster_path"
                 :alt="season.name"
-                class="rounded-md w-36"
+                class="rounded-md w-36 aspect-[1/1.5]"
               >
-                <div
-                  v-if="user && season.name.toLowerCase() !== 'specials' && watchedProgress(index) !== 1"
-                  class="absolute top-1 right-1 p-2 rounded-full h-11 w-11 bg-black/50"
-                >
-                  <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" :style="{ filter: `grayscale(${watchedProgress(index)})` }" />
+                <div v-if="user && season.name.toLowerCase() !== 'specials' && watchedProgress(index) !== 1">
+                  <div
+                    class="absolute top-1 right-1 p-2 rounded-md h-11 w-11 bg-black/50"
+                  >
+                    <iconify-icon icon="fa:check" width="2em" height="2em" class="text-green-500" :style="{ filter: `grayscale(${watchedProgress(index)})` }" />
+                  </div>
+                  <Tooltip :value="seasons[index]?.watched_percent" top />
                 </div>
 
                 <div class="absolute bottom-0 bg-black/50 w-full rounded-b-md text-sm p-2 overflow-hidden text-ellipsis whitespace-nowrap">

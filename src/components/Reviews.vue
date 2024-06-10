@@ -116,27 +116,27 @@ onMounted(() => {
       <h2>
         User Reviews
         <sup>
-          <Badge class="p-0.5 text-xs">
+          <Badge class="p-0.5 text-xs font-medium">
             {{ props.reviewCount }}
           </Badge>
         </sup>
       </h2>
-      <div v-if="showUnratedButton" class="mr-1 uppercase text-slate-400 font-medium">
+      <div v-if="showUnratedButton" class="flex mr-1 uppercase text-dark-list font-light">
         Unrated
-        <Toggle v-model="showUnrated" />
+        <Toggle v-model="showUnrated" class="ml-2" />
       </div>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div v-for="review in truncateReviews" :key="review.id">
-        <div class="flex items-center">
+    <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 4xl:grid-cols-5 gap-4 mt-3">
+      <div v-for="review in truncateReviews" :key="review.id" class="inline-block break-inside-avoid">
+        <div class="flex items-center justify-between">
           <div
             class="flex mb-2 w-full sm:w-auto sm:flex-wrap mr-2"
           >
             <img :src="review.avatar" alt="" referrerpolicy="no-referrer" class="mr-2 w-10 h-10 rounded-full">
-            <div class="max-w-44 overflow-hidden ellipsis whitespace-nowrap">
+            <div class="max-w-44 overflow-hidden ellipsis whitespace-nowrap leading-5">
               {{ review.user?.name ? review.user.name : review.user.username
               }}<br>
-              <small>{{ formattedDate(review.created_at) }}</small>
+              <small class="text-xs">{{ formattedDate(review.created_at) }}</small>
             </div>
           </div>
 
@@ -155,7 +155,7 @@ onMounted(() => {
                   class="text-yellow-400"
                 />
               </div>
-              <div class="text-3xl">
+              <div class="text-3xl font-semibold">
                 <span>
                   {{
                     review.userating
@@ -163,16 +163,16 @@ onMounted(() => {
                       : review.user_stats?.rating
                   }}
                 </span>
-                <small class="ml-1">/10</small>
+                <small class="ml-0.5 font-extralight">/10</small>
               </div>
             </div>
           </div>
         </div>
-        <div class="flex items-center justify-end">
-          <div class="mr-2">
-            <button v-if="user" @click="likeReview(review)">
+        <div class="flex items-center justify-end mb-2">
+          <div class="mr-2 flex justify-center items-center">
+            <button v-if="user" class="mr-1" @click="likeReview(review)">
               <iconify-icon
-                :icon="likedReview(review) ? 'ic:outline-thumb-up-off-alt' : 'ic:outline-thumb-up-alt'"
+                :icon="likedReview(review) ? 'ic:baseline-thumb-up' : 'ic:outline-thumb-up-alt'"
                 width="1.5em"
                 height="1.5em"
               />
@@ -181,9 +181,9 @@ onMounted(() => {
             {{ review.likes === 1 ? review.likes : review.likes }}
           </div>
           <div v-if="review.replies > 0">
-            <button @click="getReplies(review)">
-              <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" />
-              {{ review.replies === 1 ? review.replies : review.replies }}
+            <button class="flex justify-center items-center" @click="getReplies(review)">
+              <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" class="mr-1" />
+              <span class="mr-1">{{ review.replies === 1 ? `${review.replies} reply` : `${review.replies} replies` }}</span>
               <iconify-icon
                 icon="ion:chevron-down"
                 :class="reviewReplies[review.id]?.show ? 'rotate-0 transition-transform' : 'rotate-180 transition-transform'"
@@ -192,8 +192,8 @@ onMounted(() => {
               />
             </button>
           </div>
-          <div v-else>
-            <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" />
+          <div v-else class="flex justify-center items-center">
+            <iconify-icon icon="material-symbols:comment" width="1.5em" height="1.5em" class="mr-1" />
             {{ `${review.replies} replies` }}
           </div>
         </div>
@@ -221,19 +221,20 @@ onMounted(() => {
           :reviews="reviewReplies[review.id]?.replies"
           class="mt-5"
         />
-        <div class="text-right">
-          <Button class="py-2" @click="reviewsMore = !reviewsMore">
-            <iconify-icon
-              icon="ion:chevron-down"
-              :class="reviewsMore ? 'rotate-0 transition-transform' : 'rotate-180 transition-transform'"
-              width="1.5em"
-              height="1.5em"
-              class="mr-1"
-            />
-            {{ reviewsMore ? 'See Less' : 'See More' }}
-          </Button>
-        </div>
       </div>
+    </div>
+
+    <div class="flex justify-end">
+      <Button class="py-3 mt-3 flex items-center rounded-md" @click="reviewsMore = !reviewsMore">
+        <iconify-icon
+          icon="ion:chevron-down"
+          :class="!reviewsMore ? 'rotate-0 transition-transform' : 'rotate-180 transition-transform'"
+          width="1.5em"
+          height="1.5em"
+          class="mr-1"
+        />
+        {{ reviewsMore ? 'See Less' : 'See More' }}
+      </Button>
     </div>
     <ToastMessage :show-message="likeAddedSuccess" :message="likeAddedMessage" @close="closeToast" />
   </div>

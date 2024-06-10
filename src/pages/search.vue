@@ -46,7 +46,6 @@ async function getData() {
     route.params.term,
     currentPage.value,
   )
-  console.log(searchResults.value)
   store.updateLoading(true)
 }
 async function goToDetails(item) {
@@ -131,7 +130,6 @@ onUpdated(async () => {
           </div>
         </div>
       </ScrollArea>
-      <Loading v-else />
     </div>
 
     <footer class="pt-2">

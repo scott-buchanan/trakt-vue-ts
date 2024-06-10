@@ -114,7 +114,6 @@ function hasRatings(index: number) {
 }
 
 function clickDetails(item: CardInfo) {
-  console.log(props.mType, item)
   const ids: Trakt.Ids = item[props.mType]!.ids
 
   store.updateCurrentIds(ids)
@@ -197,56 +196,55 @@ onMounted(() => {
           class="absolute top-0 right-0 m-2 flex text-center bg-black/50 rounded-md p-3"
           :class="{ invisible: !hasRatings(index) }"
         >
-          <table>
-            <tr>
-              <td
-                v-for="i in ratings(item)"
-                :key="JSON.stringify(i)"
-                class="p-1"
+          <div
+            v-for="i in ratings(item)"
+            :key="JSON.stringify(i)"
+            class="h-full"
+          >
+            <div class="h-7 m-1">
+              <img
+                v-if="i.img"
+                :src="i.img"
+                aria-hidden="true"
+                class="block h-full py-1"
               >
-                <div>
-                  <img
-                    v-if="i.img"
-                    :src="i.img"
-                    aria-hidden="true"
-                    class="block h-5"
-                  >
-                  <iconify-icon
-                    v-else
-                    :icon="i.icon"
-                    width="2em"
-                    height="2em"
-                    class="block"
-                    :class="[i.color]"
-                  />
-                </div>
-                <Tooltip v-if="i.tooltip" :value="i.tooltip" />
-              </td>
-            </tr>
-            <tr>
-              <td v-for="i in ratings(item)" :key="JSON.stringify(i)">
-                {{ i.value }}
-              </td>
-            </tr>
-          </table>
+              <iconify-icon
+                v-else
+                :icon="i.icon"
+                width="100%"
+                height="100%"
+                class="block h-full"
+                :class="[i.color]"
+              />
+            </div>
+            <div class="font-extralight">
+              {{ i.value }}
+            </div>
+            <Tooltip v-if="i.tooltip" :value="i.tooltip" />
+          </div>
         </div>
         <div
-          class="absolute bottom-0 left-0 right-0 p-3 bg-black/50 flex flex-nowrap justify-between items-center"
+          class="absolute bottom-0 left-0 right-0 p-3 bg-black/50 flex flex-nowrap justify-between items-center leading-10"
         >
-          <div class="flex flex-col justify-between">
-            <h1 class="text-xl mb-1">
+          <div class="max-w-[50%]">
+            <div class="text-lg font-bold" role="heading">
               {{ item[mType]?.title }}
-            </h1>
-            <div>{{ item[mType]?.year }}</div>
+            </div>
+            <div class="text-sm">
+              {{ item[mType]?.year }}
+            </div>
           </div>
-          <div v-if="isEpisode" class="pl-2 text-right">
-            <b class="text-lg">
-              {{ item.episode?.season }}x{{
-                item.episode?.number.toString().padStart(2, "0")
-              }}
-            </b>
-            {{ item.episode?.title }}
-            <div class="flex items-center text-xs">
+
+          <div v-if="isEpisode" class="pl-2 text-right max-w-[50%]">
+            <div class="whitespace-nowrap text-ellipsis overflow-hidden ">
+              <b>
+                {{ item.episode?.season }}x{{
+                  item.episode?.number.toString().padStart(2, "0")
+                }}
+              </b>
+              <span class="text-sm pl-1">{{ item.episode?.title }}</span>
+            </div>
+            <div class="text-xs flex align-middle justify-end">
               <iconify-icon
                 icon="carbon:recently-viewed"
                 height="1.3em"
@@ -255,14 +253,11 @@ onMounted(() => {
               <span>{{ formattedDateTime(item.watched_at!) }}</span>
             </div>
           </div>
-          <div v-else class="text-right">
-            <span
+          <div v-else class="max-w-[50%] flex flex-wrap justify-end">
+            <Badge
               v-for="genre in item.genres"
-              :key="genre.id"
-              class="mr-1 last:mr-0"
-            >
-              <Badge :value="genre.name" class="text-xs" />
-            </span>
+              :key="genre.id" :value="genre.name" class="text-xs py-px px-1 ml-1 first:ml-0 my-0.5 text-nowrap"
+            />
           </div>
         </div>
       </div>

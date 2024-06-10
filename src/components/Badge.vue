@@ -18,7 +18,7 @@ defineProps({
         ? 'outline outline-1 outline-pprimary text-pprimary'
         : 'bg-pprimary text-slate-900',
     ]"
-    class="rounded"
+    class="rounded py-px px-1"
   >
     {{ value }}
     <slot />
